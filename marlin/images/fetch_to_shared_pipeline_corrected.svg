@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 34px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans CJK SC", sans-serif; fill: #0f172a; }
+      .h1 { font: 700 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans CJK SC", sans-serif; fill: #0f172a; }
+      .h2 { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans CJK SC", sans-serif; fill: #0f172a; }
+      .txt { font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans CJK SC", sans-serif; fill: #1e293b; }
+      .small { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans CJK SC", sans-serif; fill: #334155; }
+      .tiny { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .code { font: 15px Menlo, Consolas, "SFMono-Regular", monospace; fill: #0f172a; }
+      .codeSmall { font: 13px Menlo, Consolas, "SFMono-Regular", monospace; fill: #0f172a; }
+      .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
+      .blueLine { stroke: #2563eb; stroke-width: 2; fill: none; }
+      .green { fill: #f0fdf4; stroke: #16a34a; stroke-width: 2; }
+      .orange { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
+      .purple { fill: #faf5ff; stroke: #9333ea; stroke-width: 2; }
+      .red { fill: #fff1f2; stroke: #e11d48; stroke-width: 2; }
+      .gray { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.4; }
+      .dash { stroke-dasharray: 7 5; }
+      .arrow { marker-end: url(#arrow); }
+      .arrowPurple { stroke: #9333ea; stroke-width: 2.4; marker-end: url(#arrowPurple); fill: none; }
+      .arrowGreen { stroke: #16a34a; stroke-width: 2.4; marker-end: url(#arrowGreen); fill: none; }
+      .arrowOrange { stroke: #ea580c; stroke-width: 2.4; marker-end: url(#arrowOrange); fill: none; }
+      .arrowBlue { stroke: #2563eb; stroke-width: 2.4; marker-end: url(#arrowBlue); fill: none; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#0f172a"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#ea580c"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#9333ea"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1800" height="1120"/>
+  <text x="900" y="48" class="title" text-anchor="middle">SGLang Marlin fetch_to_shared(pipe, k_tile_id, n_tile_id) 数据搬运示意图（修正版）</text>
+
+  <!-- Global memory panel -->
+  <rect x="34" y="80" width="538" height="640" rx="12" class="blue"/>
+  <text x="58" y="116" class="h1">1. Global Memory 输入</text>
+  <text x="58" y="150" class="code">b_q_weight: [K / pack_factor, N]</text>
+  <text x="58" y="178" class="txt">每个元素是 uint32/int32；每格不是 int4。</text>
+  <text x="58" y="205" class="small">N 方向按单个 uint32 列索引，cp_async4 只是一次读 4 个连续列。</text>
+
+  <text x="184" y="244" class="tiny">0</text>
+  <text x="230" y="244" class="tiny">1</text>
+  <text x="276" y="244" class="tiny">2</text>
+  <text x="322" y="244" class="tiny">3</text>
+  <text x="368" y="244" class="tiny">4</text>
+  <text x="414" y="244" class="tiny">5</text>
+  <text x="486" y="244" class="tiny">N-1</text>
+  <text x="324" y="226" class="small" text-anchor="middle">N 列（uint32 列）</text>
+  <text x="62" y="336" class="small" transform="rotate(-90 62 336)">K / pack_factor 行</text>
+
+  <g transform="translate(150,260)">
+    <rect width="46" height="42" class="gray"/><text x="23" y="26" class="tiny" text-anchor="middle">u32</text>
+    <rect x="46" width="46" height="42" class="gray"/><text x="69" y="26" class="tiny" text-anchor="middle">u32</text>
+    <rect x="92" width="46" height="42" class="gray"/><text x="115" y="26" class="tiny" text-anchor="middle">u32</text>
+    <rect x="138" width="46" height="42" class="gray"/><text x="161" y="26" class="tiny" text-anchor="middle">u32</text>
+    <rect x="184" width="46" height="42" class="gray"/><text x="207" y="26" class="tiny" text-anchor="middle">u32</text>
+    <rect x="230" width="46" height="42" class="gray"/><text x="253" y="26" class="tiny" text-anchor="middle">u32</text>
+    <text x="300" y="27" class="small">...</text>
+    <rect x="336" width="46" height="42" class="gray"/><text x="359" y="26" class="tiny" text-anchor="middle">u32</text>
+
+    <rect y="42" width="46" height="42" class="gray"/><rect x="46" y="42" width="46" height="42" class="gray"/>
+    <rect x="92" y="42" width="46" height="42" class="gray"/><rect x="138" y="42" width="46" height="42" class="gray"/>
+    <rect x="184" y="42" width="46" height="42" class="gray"/><rect x="230" y="42" width="46" height="42" class="gray"/>
+    <text x="300" y="69" class="small">...</text><rect x="336" y="42" width="46" height="42" class="gray"/>
+
+    <rect y="84" width="46" height="42" class="gray"/><rect x="46" y="84" width="46" height="42" class="gray"/>
+    <rect x="92" y="84" width="46" height="42" class="gray"/><rect x="138" y="84" width="46" height="42" class="gray"/>
+    <rect x="184" y="84" width="46" height="42" class="gray"/><rect x="230" y="84" width="46" height="42" class="gray"/>
+    <text x="300" y="111" class="small">...</text><rect x="336" y="84" width="46" height="42" class="gray"/>
+
+    <rect y="126" width="46" height="42" class="gray"/><rect x="46" y="126" width="46" height="42" class="gray"/>
+    <rect x="92" y="126" width="46" height="42" class="gray"/><rect x="138" y="126" width="46" height="42" class="gray"/>
+    <rect x="184" y="126" width="46" height="42" class="gray"/><rect x="230" y="126" width="46" height="42" class="gray"/>
+    <text x="300" y="153" class="small">...</text><rect x="336" y="126" width="46" height="42" class="gray"/>
+
+    <rect x="92" y="84" width="184" height="42" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+    <text x="184" y="110" class="tiny" text-anchor="middle">4 consecutive uint32</text>
+  </g>
+  <text x="62" y="300" class="tiny">row 0</text>
+  <text x="62" y="343" class="tiny">...</text>
+  <text x="46" y="384" class="tiny">row = src_k_packed</text>
+  <text x="62" y="428" class="tiny">...</text>
+
+  <path d="M242 392 C225 450 190 462 150 493" class="arrowBlue"/>
+  <rect x="58" y="495" width="462" height="178" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="1.8" stroke-dasharray="7 5"/>
+  <text x="80" y="528" class="h2">cp_async4 读源地址</text>
+  <text x="80" y="560" class="codeSmall">&amp;b_q_weight_ptr[row * size_n + first_n + n_id * 4]</text>
+  <text x="80" y="592" class="txt">`n_id` 是第几个 int4 chunk，不是列号。</text>
+  <text x="80" y="622" class="txt">所以源列起点是 `first_n + n_id * 4`。</text>
+  <text x="80" y="652" class="codeSmall">cp_async4 = 16 bytes = 4 x uint32</text>
+
+  <!-- Middle panel -->
+  <rect x="600" y="80" width="560" height="640" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+  <text x="624" y="116" class="h1">2. 线程映射和分支逻辑</text>
+  <rect x="624" y="136" width="512" height="106" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.8"/>
+  <text x="642" y="166" class="codeSmall">stage_n_threads = tile_n_size / 4 = 64 / 4 = 16</text>
+  <text x="642" y="194" class="codeSmall">k_id = threadIdx.x / stage_n_threads</text>
+  <text x="642" y="222" class="codeSmall">n_id = threadIdx.x % stage_n_threads</text>
+
+  <rect x="624" y="270" width="512" height="178" rx="10" class="green"/>
+  <text x="642" y="302" class="h2">A. no-perm 分支（has_perm == false）</text>
+  <text x="642" y="334" class="codeSmall">first_k = k_tile_id * tile_k_size</text>
+  <text x="642" y="360" class="codeSmall">first_k_packed = first_k / pack_factor</text>
+  <text x="642" y="386" class="codeSmall">row = first_k_packed + k_id</text>
+  <path d="M914 344 L1050 344" class="arrowGreen"/>
+  <rect x="836" y="388" width="282" height="42" rx="8" fill="#ffffff" stroke="#16a34a"/>
+  <text x="977" y="414" class="codeSmall" text-anchor="middle">dest = sh_ptr[k_id * 16 + n_id]</text>
+
+  <rect x="624" y="470" width="512" height="204" rx="10" class="orange"/>
+  <text x="642" y="502" class="h2">B. has-perm 分支（has_perm == true）</text>
+  <text x="642" y="534" class="codeSmall">load_perm_to_shared(k_tile_id)  // 先搬 16 个 perm entry</text>
+  <text x="642" y="562" class="codeSmall">src_k = sh_perm_int_ptr[k_id]</text>
+  <text x="642" y="590" class="codeSmall">src_k_packed = src_k / pack_factor</text>
+  <text x="642" y="618" class="codeSmall">row = src_k_packed</text>
+  <rect x="836" y="624" width="282" height="34" rx="8" fill="#ffffff" stroke="#ea580c"/>
+  <text x="977" y="646" class="codeSmall" text-anchor="middle">dest = sh_ptr[k_id * 16 + n_id]</text>
+
+  <!-- Shared memory panel -->
+  <rect x="1190" y="80" width="576" height="640" rx="12" class="purple"/>
+  <text x="1214" y="116" class="h1">3. Shared Memory 布局</text>
+  <text x="1214" y="148" class="codeSmall">extern __shared__ int4 sh[];</text>
+  <text x="1214" y="174" class="codeSmall">sh_ptr = sh_pipe_ptr + stage_size * pipe</text>
+
+  <text x="1214" y="215" class="h2">has_perm == true</text>
+  <rect x="1214" y="238" width="92" height="48" fill="#ede9fe" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1260" y="267" class="codeSmall" text-anchor="middle">perm</text>
+  <rect x="1318" y="238" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1354" y="267" class="codeSmall" text-anchor="middle">Pipe0</text>
+  <rect x="1390" y="238" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1426" y="267" class="codeSmall" text-anchor="middle">Pipe1</text>
+  <text x="1480" y="267" class="codeSmall">...</text>
+  <rect x="1520" y="238" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1556" y="267" class="codeSmall" text-anchor="middle">Pipe6</text>
+  <rect x="1592" y="238" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1628" y="267" class="codeSmall" text-anchor="middle">Pipe7</text>
+  <text x="1214" y="313" class="small">perm prefix: 4 int4 = 16 个 uint32 perm 值</text>
+  <text x="1214" y="339" class="small">sh_pipe_ptr 跳过 perm prefix 后指向 Pipe0</text>
+
+  <text x="1214" y="386" class="h2">has_perm == false</text>
+  <rect x="1214" y="408" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1250" y="437" class="codeSmall" text-anchor="middle">Pipe0</text>
+  <rect x="1286" y="408" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1322" y="437" class="codeSmall" text-anchor="middle">Pipe1</text>
+  <text x="1378" y="437" class="codeSmall">...</text>
+  <rect x="1420" y="408" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1456" y="437" class="codeSmall" text-anchor="middle">Pipe6</text>
+  <rect x="1492" y="408" width="72" height="48" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1528" y="437" class="codeSmall" text-anchor="middle">Pipe7</text>
+  <text x="1214" y="484" class="small">无 perm prefix；sh_pipe_ptr == sh</text>
+
+  <rect x="1214" y="520" width="522" height="168" rx="10" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1234" y="552" class="h2">每个 pipe stage 的二维逻辑视图（元素类型 int4）</text>
+  <text x="1234" y="584" class="codeSmall">index = k_id * stage_n_threads + n_id</text>
+  <text x="1234" y="615" class="codeSmall">no-perm FP4:   [stage_k_threads=2][stage_n_threads=16]</text>
+  <text x="1234" y="644" class="codeSmall">has-perm FP4:  [stage_k_threads=16][stage_n_threads=16]</text>
+  <text x="1234" y="672" class="small">区别来自 stage_k_threads = has_perm ? tile_k_size : tile_ints</text>
+
+  <!-- Bottom tables -->
+  <rect x="34" y="746" width="760" height="324" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text x="58" y="782" class="h1">4. FP4 参数对照：stage_size 必须按分支区分</text>
+  <rect x="58" y="812" width="336" height="220" rx="8" class="green"/>
+  <text x="80" y="846" class="h2">no-perm: has_perm=false</text>
+  <text x="80" y="880" class="codeSmall">pack_factor = 8</text>
+  <text x="80" y="906" class="codeSmall">tile_k_size = 16, tile_n_size = 64</text>
+  <text x="80" y="932" class="codeSmall">tile_ints = 16 / 8 = 2</text>
+  <text x="80" y="958" class="codeSmall">stage_k_threads = tile_ints = 2</text>
+  <text x="80" y="984" class="codeSmall">stage_n_threads = 64 / 4 = 16</text>
+  <text x="80" y="1016" class="code">stage_size = 2 * 16 = 32 int4 = 512B</text>
+
+  <rect x="430" y="812" width="336" height="220" rx="8" class="orange"/>
+  <text x="452" y="846" class="h2">has-perm: has_perm=true</text>
+  <text x="452" y="880" class="codeSmall">pack_factor = 8</text>
+  <text x="452" y="906" class="codeSmall">tile_k_size = 16, tile_n_size = 64</text>
+  <text x="452" y="932" class="codeSmall">stage_k_threads = tile_k_size = 16</text>
+  <text x="452" y="958" class="codeSmall">stage_n_threads = 64 / 4 = 16</text>
+  <text x="452" y="984" class="codeSmall">perm prefix = 4 int4</text>
+  <text x="452" y="1016" class="code">stage_size = 16 * 16 = 256 int4 = 4096B</text>
+
+  <rect x="824" y="746" width="446" height="324" rx="12" class="red"/>
+  <text x="848" y="782" class="h1">5. 容易画错的点</text>
+  <text x="848" y="824" class="txt">不要把 global memory 画成 [K/pack_factor, N/4]。</text>
+  <text x="848" y="856" class="txt">真实 shape 是 [K/pack_factor, N]，元素是 uint32。</text>
+  <text x="848" y="900" class="txt">不要把 has-perm 的 stage_size 写成 32 int4。</text>
+  <text x="848" y="932" class="txt">has-perm 为了支持任意 K 重排，按逻辑 K 行存 16 行。</text>
+  <text x="848" y="976" class="txt">`perm[k_id]` 应理解为已缓存到 shared 的</text>
+  <text x="848" y="1004" class="codeSmall">sh_perm_int_ptr[k_id]</text>
+
+  <rect x="1300" y="746" width="466" height="324" rx="12" class="purple"/>
+  <text x="1324" y="782" class="h1">6. 8-stage ring buffer 行为</text>
+  <text x="1324" y="822" class="codeSmall">repack_stages = 8</text>
+  <text x="1324" y="850" class="codeSmall">init: fetch pipe 0..6  // repack_stages - 1</text>
+  <text x="1324" y="878" class="codeSmall">wait_for_stage()</text>
+  <text x="1324" y="924" class="codeSmall">steady state:</text>
+  <text x="1324" y="952" class="codeSmall">next_pipe = (pipe + repack_stages - 1) % 8</text>
+  <text x="1324" y="980" class="codeSmall">fetch_to_shared(next_pipe, ...)</text>
+  <text x="1324" y="1008" class="codeSmall">repack_tile(pipe, ...)</text>
+  <path d="M1640 840 C1728 852 1728 960 1640 972 C1552 960 1552 852 1640 840" class="arrowPurple"/>
+  <circle cx="1640" cy="840" r="22" fill="#ffffff" stroke="#9333ea" stroke-width="2"/>
+  <text x="1640" y="846" class="codeSmall" text-anchor="middle">0</text>
+  <circle cx="1710" cy="906" r="22" fill="#ffffff" stroke="#9333ea" stroke-width="2"/>
+  <text x="1710" y="912" class="codeSmall" text-anchor="middle">next</text>
+  <circle cx="1640" cy="972" r="22" fill="#ffffff" stroke="#9333ea" stroke-width="2"/>
+  <text x="1640" y="978" class="codeSmall" text-anchor="middle">pipe</text>
+</svg>
