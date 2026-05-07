@@ -9,6 +9,7 @@
 ## Local Setup
 
 ```bash
+git clone https://github.com/lightseekorg/tokenspeed.git /path/to/tokenspeed
 pip install -U modal
 modal setup
 modal volume create --version=2 tokenspeed-cache
