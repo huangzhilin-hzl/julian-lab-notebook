@@ -1,6 +1,0 @@
-case,q_shape,k_shape,compilation_s,execution_us,execution_ms,status,log_file
-"prefill_b1_q8k_k32k","(1, 8192, 128, 192)","(1, 32768, 128, 192)",4.7402,11646.4668,11.6465,PASS,"tokenspeed-modal/result/b200/mla-prefill/20260507-083415/prefill_b1_q8k_k32k.log"
-"prefill_b1_q8k_k64k","(1, 8192, 128, 192)","(1, 65536, 128, 192)",4.7360,24835.6903,24.8357,PASS,"tokenspeed-modal/result/b200/mla-prefill/20260507-083415/prefill_b1_q8k_k64k.log"
-"prefill_b1_q8k_k8k","(1, 8192, 128, 192)","(1, 8192, 128, 192)",4.6133,1849.4593,1.8495,PASS,"tokenspeed-modal/result/b200/mla-prefill/20260507-083415/prefill_b1_q8k_k8k.log"
-"prefill_b4_q1024_k80k","(4, 1024, 128, 192)","(4, 81920, 128, 192)",4.6876,14828.2501,14.8283,PASS,"tokenspeed-modal/result/b200/mla-prefill/20260507-083415/prefill_b4_q1024_k80k.log"
-"prefill_b4_q512_k80k","(4, 512, 128, 192)","(4, 81920, 128, 192)",4.6190,7457.3982,7.4574,PASS,"tokenspeed-modal/result/b200/mla-prefill/20260507-083415/prefill_b4_q512_k80k.log"
