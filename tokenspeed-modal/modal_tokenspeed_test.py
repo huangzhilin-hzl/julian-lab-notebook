@@ -25,13 +25,18 @@ import modal
 APP_NAME = "tokenspeed-test"
 WORKDIR = "/workspace/tokenspeed"
 TOKENSPEED_SRC_ENV = "TOKENSPEED_SRC_DIR"
+REMOTE_PYTHON = "python"
+IS_MODAL_REMOTE = os.environ.get("MODAL_IS_REMOTE") == "1"
 
 tokenspeed_src_raw = os.environ.get(TOKENSPEED_SRC_ENV)
-if not tokenspeed_src_raw:
+if tokenspeed_src_raw:
+    tokenspeed_src = Path(tokenspeed_src_raw).expanduser()
+elif IS_MODAL_REMOTE:
+    tokenspeed_src = Path(WORKDIR)
+else:
     raise RuntimeError(f"Set {TOKENSPEED_SRC_ENV} to the local TokenSpeed checkout path.")
 
-tokenspeed_src = Path(tokenspeed_src_raw).expanduser()
-if not tokenspeed_src.exists():
+if not IS_MODAL_REMOTE and not tokenspeed_src.exists():
     raise RuntimeError(
         f"TokenSpeed checkout does not exist: {tokenspeed_src}. "
         f"Set {TOKENSPEED_SRC_ENV} to the local checkout path."
@@ -68,7 +73,15 @@ if os.environ.get("TOKENSPEED_MLA_FMHA_BINARY_SO"):
 image = (
     modal.Image.from_registry(
         "lightseekorg/tokenspeed-runner:latest",
-        setup_dockerfile_commands=["USER root"],
+        setup_dockerfile_commands=[
+            "USER root",
+            (
+                "RUN set -eux; "
+                "if ! command -v python >/dev/null 2>&1; then "
+                'ln -sf "$(command -v python3)" /usr/local/bin/python; '
+                "fi"
+            ),
+        ],
     )
     .apt_install("libssl-dev", "libopenmpi-dev")
     .apt_install("wget")
@@ -318,7 +331,7 @@ def kernel_tests(
     extra_args = _json_list(extra_pytest_args_json, "extra_pytest_args_json")
 
     if target:
-        cmd = ["python", "-m", "pytest", target, "-v"]
+        cmd = [REMOTE_PYTHON, "-m", "pytest", target, "-v"]
         if keyword:
             cmd.extend(["-k", keyword])
         cmd.extend(extra_args)
@@ -327,12 +340,18 @@ def kernel_tests(
 
     if mode == "numerics":
         commands = [
-            ["python", "-m", "pytest", "tokenspeed-kernel/test/test_numerics.py", "-v"]
+            [
+                REMOTE_PYTHON,
+                "-m",
+                "pytest",
+                "tokenspeed-kernel/test/test_numerics.py",
+                "-v",
+            ]
         ]
     elif mode == "cuda":
         commands = [
             [
-                "python",
+                REMOTE_PYTHON,
                 "-m",
                 "pytest",
                 "tokenspeed-kernel/test/thirdparty/test_cuda.py",
@@ -341,33 +360,33 @@ def kernel_tests(
         ]
     elif mode == "ops":
         commands = [
-            ["python", "-m", "pytest", "tokenspeed-kernel/test/ops/", "-v"]
+            [REMOTE_PYTHON, "-m", "pytest", "tokenspeed-kernel/test/ops/", "-v"]
         ]
     elif mode == "ci":
         commands = [
             [
-                "python",
+                REMOTE_PYTHON,
                 "-m",
                 "pytest",
                 "tokenspeed-kernel/test/test_numerics.py",
                 "-v",
             ],
             [
-                "python",
+                REMOTE_PYTHON,
                 "-m",
                 "pytest",
                 "tokenspeed-kernel/test/thirdparty/test_trtllm_comm.py",
                 "-v",
             ],
             [
-                "python",
+                REMOTE_PYTHON,
                 "-m",
                 "pytest",
                 "tokenspeed-kernel/test/thirdparty/test_cuda.py",
                 "-v",
             ],
             [
-                "python",
+                REMOTE_PYTHON,
                 "-m",
                 "pytest",
                 "tokenspeed-kernel/test/",
@@ -378,7 +397,7 @@ def kernel_tests(
             ],
         ]
     elif mode == "all":
-        commands = [["python", "-m", "pytest", "tokenspeed-kernel/test/", "-v"]]
+        commands = [[REMOTE_PYTHON, "-m", "pytest", "tokenspeed-kernel/test/", "-v"]]
     else:
         raise ValueError("kernel mode must be one of: ci, numerics, cuda, ops, all")
 
@@ -419,7 +438,7 @@ def agentic_benchmark() -> str:
             csv_path = result_dir / f"{latest.name}.csv"
             _run(
                 [
-                    "python3",
+                    REMOTE_PYTHON,
                     "collect_outputs.py",
                     f"outputs/{latest.name}",
                     "-o",
@@ -470,7 +489,7 @@ def mla_benchmark(mode: str = "both", prefill_backend: str = "cutedsl") -> str:
                 (
                     name,
                     [
-                        "python",
+                        REMOTE_PYTHON,
                         "./tokenspeed-mla/python/tokenspeed_mla/fmha.py",
                         "--is_causal",
                         "--bottom_right_align",
@@ -505,7 +524,7 @@ def mla_benchmark(mode: str = "both", prefill_backend: str = "cutedsl") -> str:
                 (
                     name,
                     [
-                        "python",
+                        REMOTE_PYTHON,
                         "./tokenspeed-mla/python/tokenspeed_mla/mla_decode_fp8.py",
                         "--batch_size",
                         str(batch_size),

@@ -10,7 +10,11 @@
 
 ```bash
 git clone https://github.com/lightseekorg/tokenspeed.git /path/to/tokenspeed
-pip install -U modal
+brew install python@3.13
+/usr/local/bin/python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -U "cbor2<6" modal
 modal setup
 modal volume create --version=2 tokenspeed-cache
 ```
