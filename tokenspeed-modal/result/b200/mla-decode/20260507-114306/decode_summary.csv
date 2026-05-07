@@ -1,0 +1,7 @@
+case,batch_size,num_heads,seq_len_q,seq_len_k,page_size,dtype,warmup_iterations,iterations,execution_us,execution_ms,status,log_file
+"decode_b4_h16",4,16,4,81920,64,"Float8E4M3FN",1,10,59.9264,0.0599,PASS,"tokenspeed-modal/result/b200/mla-decode/20260507-114306/decode_b4_h16.log"
+"decode_b8_h16",8,16,4,81920,64,"Float8E4M3FN",1,10,89.7024,0.0897,PASS,"tokenspeed-modal/result/b200/mla-decode/20260507-114306/decode_b8_h16.log"
+"decode_b16_h16",16,16,4,81920,64,"Float8E4M3FN",1,10,163.2256,0.1632,PASS,"tokenspeed-modal/result/b200/mla-decode/20260507-114306/decode_b16_h16.log"
+"decode_b4_h32",4,32,4,81920,64,"Float8E4M3FN",1,10,62.8768,0.0629,PASS,"tokenspeed-modal/result/b200/mla-decode/20260507-114306/decode_b4_h32.log"
+"decode_b8_h32",8,32,4,81920,64,"Float8E4M3FN",1,10,92.5696,0.0926,PASS,"tokenspeed-modal/result/b200/mla-decode/20260507-114306/decode_b8_h32.log"
+"decode_b16_h32",16,32,4,81920,64,"Float8E4M3FN",1,10,168.2592,0.1683,PASS,"tokenspeed-modal/result/b200/mla-decode/20260507-114306/decode_b16_h32.log"
