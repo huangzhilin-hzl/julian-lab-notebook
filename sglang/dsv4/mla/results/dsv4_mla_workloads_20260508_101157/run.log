@@ -1,0 +1,73 @@
+[1/36] workload=dsv4-pro scenario=swa batch=1 seq_len=4096
+  18.2 us, 1.8 TFLOPS, 18 GB/s, correct=1
+[2/36] workload=dsv4-pro scenario=swa batch=1 seq_len=32768
+  18.3 us, 1.8 TFLOPS, 18 GB/s, correct=1
+[3/36] workload=dsv4-pro scenario=swa batch=32 seq_len=4096
+  22.0 us, 47.2 TFLOPS, 486 GB/s, correct=1
+[4/36] workload=dsv4-pro scenario=swa batch=32 seq_len=32768
+  22.1 us, 48.5 TFLOPS, 487 GB/s, correct=1
+[5/36] workload=dsv4-pro scenario=swa batch=128 seq_len=4096
+  66.5 us, 62.6 TFLOPS, 644 GB/s, correct=1
+[6/36] workload=dsv4-pro scenario=swa batch=128 seq_len=32768
+  66.5 us, 63.1 TFLOPS, 645 GB/s, correct=1
+[7/36] workload=dsv4-pro scenario=c4 batch=1 seq_len=4096
+  22.4 us, 13.3 TFLOPS, 41 GB/s, correct=1
+[8/36] workload=dsv4-pro scenario=c4 batch=1 seq_len=32768
+  22.4 us, 13.5 TFLOPS, 42 GB/s, correct=1
+[9/36] workload=dsv4-pro scenario=c4 batch=32 seq_len=4096
+  98.6 us, 70.6 TFLOPS, 242 GB/s, correct=1
+[10/36] workload=dsv4-pro scenario=c4 batch=32 seq_len=32768
+  104.8 us, 88.2 TFLOPS, 276 GB/s, correct=1
+[11/36] workload=dsv4-pro scenario=c4 batch=128 seq_len=4096
+  299.8 us, 108.9 TFLOPS, 354 GB/s, correct=1
+[12/36] workload=dsv4-pro scenario=c4 batch=128 seq_len=32768
+  326.4 us, 111.7 TFLOPS, 352 GB/s, correct=1
+[13/36] workload=dsv4-pro scenario=c128 batch=1 seq_len=4096
+  18.6 us, 2.2 TFLOPS, 19 GB/s, correct=1
+[14/36] workload=dsv4-pro scenario=c128 batch=1 seq_len=32768
+  140.9 us, 0.4 TFLOPS, 3 GB/s, correct=1
+[15/36] workload=dsv4-pro scenario=c128 batch=32 seq_len=4096
+  27.2 us, 47.0 TFLOPS, 413 GB/s, correct=1
+[16/36] workload=dsv4-pro scenario=c128 batch=32 seq_len=32768
+  61.6 us, 57.1 TFLOPS, 264 GB/s, correct=1
+[17/36] workload=dsv4-pro scenario=c128 batch=128 seq_len=4096
+  86.9 us, 61.5 TFLOPS, 523 GB/s, correct=1
+[18/36] workload=dsv4-pro scenario=c128 batch=128 seq_len=32768
+  400.2 us, 31.1 TFLOPS, 153 GB/s, correct=1
+[19/36] workload=dsv4-flash scenario=swa batch=1 seq_len=4096
+  137.2 us, 0.1 TFLOPS, 2 GB/s, correct=1
+[20/36] workload=dsv4-flash scenario=swa batch=1 seq_len=32768
+  19.0 us, 0.9 TFLOPS, 11 GB/s, correct=1
+[21/36] workload=dsv4-flash scenario=swa batch=32 seq_len=4096
+  22.1 us, 24.3 TFLOPS, 299 GB/s, correct=1
+[22/36] workload=dsv4-flash scenario=swa batch=32 seq_len=32768
+  22.2 us, 23.5 TFLOPS, 294 GB/s, correct=1
+[23/36] workload=dsv4-flash scenario=swa batch=128 seq_len=4096
+  39.1 us, 54.0 TFLOPS, 669 GB/s, correct=1
+[24/36] workload=dsv4-flash scenario=swa batch=128 seq_len=32768
+  39.3 us, 53.4 TFLOPS, 665 GB/s, correct=1
+[25/36] workload=dsv4-flash scenario=c4 batch=1 seq_len=4096
+  21.6 us, 3.9 TFLOPS, 23 GB/s, correct=1
+[26/36] workload=dsv4-flash scenario=c4 batch=1 seq_len=32768
+  18.5 us, 0.0 TFLOPS, 7 GB/s, correct=1
+[27/36] workload=dsv4-flash scenario=c4 batch=32 seq_len=4096
+  46.9 us, 50.4 TFLOPS, 314 GB/s, correct=1
+[28/36] workload=dsv4-flash scenario=c4 batch=32 seq_len=32768
+  47.5 us, 53.0 TFLOPS, 325 GB/s, correct=1
+[29/36] workload=dsv4-flash scenario=c4 batch=128 seq_len=4096
+  245.0 us, 42.1 TFLOPS, 256 GB/s, correct=1
+[30/36] workload=dsv4-flash scenario=c4 batch=128 seq_len=32768
+  122.1 us, 85.2 TFLOPS, 517 GB/s, correct=1
+[31/36] workload=dsv4-flash scenario=c128 batch=1 seq_len=4096
+  21.5 us, 1.0 TFLOPS, 10 GB/s, correct=1
+[32/36] workload=dsv4-flash scenario=c128 batch=1 seq_len=32768
+  21.0 us, 1.9 TFLOPS, 15 GB/s, correct=1
+[33/36] workload=dsv4-flash scenario=c128 batch=32 seq_len=4096
+  27.1 us, 24.6 TFLOPS, 264 GB/s, correct=1
+[34/36] workload=dsv4-flash scenario=c128 batch=32 seq_len=32768
+  42.4 us, 37.7 TFLOPS, 267 GB/s, correct=1
+[35/36] workload=dsv4-flash scenario=c128 batch=128 seq_len=4096
+  49.1 us, 54.3 TFLOPS, 583 GB/s, correct=1
+[36/36] workload=dsv4-flash scenario=c128 batch=128 seq_len=32768
+  101.2 us, 65.4 TFLOPS, 457 GB/s, correct=1
+Wrote benchmark/h20_reports/dsv4_mla_workloads_20260508_101157/flash_mla_workload_perf.csv

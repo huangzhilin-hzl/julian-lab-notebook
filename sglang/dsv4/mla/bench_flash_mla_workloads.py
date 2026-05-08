@@ -118,8 +118,8 @@ WORKLOADS: Dict[str, WorkloadProfile] = {
         h_q=128,
         index_topk=1024,
     ),
-    "flash": WorkloadProfile(
-        name="flash",
+    "dsv4-flash": WorkloadProfile(
+        name="dsv4-flash",
         model_id="sgl-project/DeepSeek-V4-Flash-FP8",
         h_q=64,
         index_topk=512,
@@ -619,7 +619,7 @@ def run_case(case: BenchCase, args) -> Dict[str, object]:
 
 def get_args():
     parser = argparse.ArgumentParser(
-        description="Benchmark flash_mla_with_kvcache with DSV4 Pro and Flash workload shapes."
+        description="Benchmark flash_mla_with_kvcache with DSV4 Pro and DSV4 Flash workload shapes."
     )
     parser.add_argument(
         "--workload",
