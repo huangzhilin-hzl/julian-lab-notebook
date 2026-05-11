@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WGMMA .m64nNk16 and FP8 .m64nNk32 Register Fragment Layout</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #52606d;
+      --line: #d8dee7;
+      --paper: #ffffff;
+      --soft: #f5f7fb;
+      --blue: #d7eef7;
+      --orange: #ffe0ca;
+      --green: #dcf1d2;
+      --pink: #f4d8ef;
+      --accent: #1f6feb;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef2f7;
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 22px 48px;
+    }
+
+    header {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      padding: 26px 28px;
+      border-radius: 8px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p { margin: 0 0 12px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    code, .mono {
+      font-family: var(--mono);
+      font-size: 0.94em;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 22px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: var(--soft);
+      min-height: 118px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .metric .value {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 4px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #e9edf5;
+      font-weight: 650;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: #eef6ff;
+      padding: 12px 14px;
+      margin: 14px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .shape-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding-top: 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .formula {
+      background: #101820;
+      color: #e8edf3;
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+
+    .diagram-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .matrix {
+      min-width: 860px;
+      border: 2px solid #1d2733;
+      background: #ffffff;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .matrix .row {
+      display: grid;
+      grid-template-columns: 86px repeat(4, minmax(150px, 1fr));
+      border-bottom: 1px solid #29313b;
+      min-height: 58px;
+    }
+
+    .matrix .row:last-child { border-bottom: 0; }
+
+    .matrix .cell {
+      padding: 9px 10px;
+      border-right: 1px solid #29313b;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .matrix .cell:last-child { border-right: 0; }
+    .matrix .head { background: #e8ecf3; font-weight: 700; }
+    .band0 { background: var(--blue); }
+    .band1 { background: var(--orange); }
+    .band2 { background: var(--green); }
+    .band3 { background: var(--pink); }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; color: var(--muted); }
+    .tight { margin-bottom: 6px; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 14px;
+    }
+
+    .legend span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .source {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 860px) {
+      main { padding: 22px 14px 36px; }
+      header, .section { padding: 18px; }
+      h1 { font-size: 25px; }
+      .grid, .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>WGMMA <span class="mono">.m64nNk16</span> / FP8 <span class="mono">.m64nNk32</span> register fragment layout 速查</h1>
+      <p>
+        面向 PTX <span class="mono">wgmma.mma_async</span> 的两个常用浮点族：
+        <span class="mono">.f16/.bf16</span> 使用 <span class="mono">.m64nNk16</span>，
+        FP8 <span class="mono">.e4m3/.e5m2</span> 使用 <span class="mono">.m64nNk32</span>。
+        一个 warpgroup 的 128 个线程共同计算 <span class="mono">D = A * B + D</span>。
+      </p>
+      <p class="meta">
+        摘要基于 NVIDIA PTX ISA 9.2 文档，访问日期：2026-05-11。
+      </p>
+    </header>
+
+    <section class="section">
+      <h2>1. 指令形状与类型</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">有效 N</div>
+          <div class="value">8..256</div>
+          <p class="small">步长为 8，即 <span class="mono">N = 8 * i, i = 1..32</span>。</p>
+        </div>
+        <div class="metric">
+          <div class="label">乘法输入</div>
+          <div class="value">f16 / bf16 / fp8</div>
+          <p class="small">16-bit multiplicand 对应 <span class="mono">k16</span>；FP8 对应 <span class="mono">k32</span>。</p>
+        </div>
+        <div class="metric">
+          <div class="label">register fragment 覆盖</div>
+          <div class="value">A + D</div>
+          <p class="small">B 必须通过 shared memory descriptor <span class="mono">b-desc</span> 提供。</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>变体</th>
+            <th>PTX 形状</th>
+            <th>accumulator <span class="mono">.dtype</span></th>
+            <th>register operand</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono">.f16 .f16</span></td>
+            <td><span class="mono">.m64nNk16</span>, <span class="mono">N = 8..256 step 8</span></td>
+            <td><span class="mono">.f16</span> 或 <span class="mono">.f32</span></td>
+            <td><span class="mono">a</span> 可为 A register fragment；<span class="mono">d</span> 为 accumulator/destination。</td>
+          </tr>
+          <tr>
+            <td><span class="mono">.bf16 .bf16</span></td>
+            <td><span class="mono">.m64nNk16</span>, <span class="mono">N = 8..256 step 8</span></td>
+            <td><span class="mono">.f32</span></td>
+            <td><span class="mono">a</span> 可为 A register fragment；<span class="mono">d</span> 为 accumulator/destination。</td>
+          </tr>
+          <tr>
+            <td><span class="mono">.e4m3/.e5m2</span> FP8</td>
+            <td><span class="mono">.m64nNk32</span>, <span class="mono">N = 8..256 step 8</span></td>
+            <td><span class="mono">.f16</span> 或 <span class="mono">.f32</span></td>
+            <td><span class="mono">a</span> 可为 A register fragment；<span class="mono">atype</span> 和 <span class="mono">btype</span> 可分别为 <span class="mono">.e4m3</span>/<span class="mono">.e5m2</span>。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <details>
+        <summary>完整 shape 列表</summary>
+        <div class="shape-list" aria-label="m64nNk16 shapes">
+          <span class="pill">.m64n8k16</span><span class="pill">.m64n16k16</span><span class="pill">.m64n24k16</span><span class="pill">.m64n32k16</span>
+          <span class="pill">.m64n40k16</span><span class="pill">.m64n48k16</span><span class="pill">.m64n56k16</span><span class="pill">.m64n64k16</span>
+          <span class="pill">.m64n72k16</span><span class="pill">.m64n80k16</span><span class="pill">.m64n88k16</span><span class="pill">.m64n96k16</span>
+          <span class="pill">.m64n104k16</span><span class="pill">.m64n112k16</span><span class="pill">.m64n120k16</span><span class="pill">.m64n128k16</span>
+          <span class="pill">.m64n136k16</span><span class="pill">.m64n144k16</span><span class="pill">.m64n152k16</span><span class="pill">.m64n160k16</span>
+          <span class="pill">.m64n168k16</span><span class="pill">.m64n176k16</span><span class="pill">.m64n184k16</span><span class="pill">.m64n192k16</span>
+          <span class="pill">.m64n200k16</span><span class="pill">.m64n208k16</span><span class="pill">.m64n216k16</span><span class="pill">.m64n224k16</span>
+          <span class="pill">.m64n232k16</span><span class="pill">.m64n240k16</span><span class="pill">.m64n248k16</span><span class="pill">.m64n256k16</span>
+        </div>
+      </details>
+      <details>
+        <summary>FP8 完整 shape 列表</summary>
+        <div class="shape-list" aria-label="m64nNk32 shapes">
+          <span class="pill">.m64n8k32</span><span class="pill">.m64n16k32</span><span class="pill">.m64n24k32</span><span class="pill">.m64n32k32</span>
+          <span class="pill">.m64n40k32</span><span class="pill">.m64n48k32</span><span class="pill">.m64n56k32</span><span class="pill">.m64n64k32</span>
+          <span class="pill">.m64n72k32</span><span class="pill">.m64n80k32</span><span class="pill">.m64n88k32</span><span class="pill">.m64n96k32</span>
+          <span class="pill">.m64n104k32</span><span class="pill">.m64n112k32</span><span class="pill">.m64n120k32</span><span class="pill">.m64n128k32</span>
+          <span class="pill">.m64n136k32</span><span class="pill">.m64n144k32</span><span class="pill">.m64n152k32</span><span class="pill">.m64n160k32</span>
+          <span class="pill">.m64n168k32</span><span class="pill">.m64n176k32</span><span class="pill">.m64n184k32</span><span class="pill">.m64n192k32</span>
+          <span class="pill">.m64n200k32</span><span class="pill">.m64n208k32</span><span class="pill">.m64n216k32</span><span class="pill">.m64n224k32</span>
+          <span class="pill">.m64n232k32</span><span class="pill">.m64n240k32</span><span class="pill">.m64n248k32</span><span class="pill">.m64n256k32</span>
+        </div>
+      </details>
+    </section>
+
+    <section class="section">
+      <h2>2. 操作数整体形状</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>operand</th>
+            <th><span class="mono">k16</span> 形状</th>
+            <th>FP8 <span class="mono">k32</span> 形状</th>
+            <th>来源</th>
+            <th>register fragment 结论</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono">A</span></td>
+            <td><span class="mono">64 x 16</span></td>
+            <td><span class="mono">64 x 32</span></td>
+            <td><span class="mono">a</span> register tuple 或 <span class="mono">a-desc</span> shared memory descriptor</td>
+            <td>只有使用 <span class="mono">a</span> 时才用本页的 A register fragment layout。</td>
+          </tr>
+          <tr>
+            <td><span class="mono">B</span></td>
+            <td><span class="mono">16 x N</span></td>
+            <td><span class="mono">32 x N</span></td>
+            <td><span class="mono">b-desc</span> shared memory descriptor</td>
+            <td>没有 B register fragment；B 不作为 register tuple 传入。</td>
+          </tr>
+          <tr>
+            <td><span class="mono">D</span></td>
+            <td><span class="mono">64 x N</span></td>
+            <td><span class="mono">64 x N</span></td>
+            <td><span class="mono">d</span> register tuple</td>
+            <td>每个线程持有 <span class="mono">N/2</span> 个标量 D 元素。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        下面所有 fragment 数量都是“每线程”的数量；整个 warpgroup 有 128 个线程。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>3. A register fragment: 固定 <span class="mono">64x16</span></h2>
+      <div class="two-col">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>A type</th>
+                <th>每线程寄存器</th>
+                <th>每线程标量元素</th>
+                <th>元素顺序</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">.f16</span> / <span class="mono">.bf16</span></td>
+                <td><span class="mono">4 x f16x2</span> / <span class="mono">4 x bf16x2</span></td>
+                <td><span class="mono">8</span></td>
+                <td><span class="mono">a0, a1, ..., a7</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="small">
+            总量校验：<span class="mono">128 threads * 8 scalars = 1024 = 64 * 16</span>。
+          </p>
+        </div>
+        <div>
+          <h3 class="tight">每个 tid 的坐标公式</h3>
+          <div class="formula">t    = tid % 128
+warp = floor(t / 32)
+lane = t % 32
+r0   = 16 * warp + floor(lane / 4)
+r1   = r0 + 8
+c    = 2 * (lane % 4)
+
+a0,a1 -> A[r0, c:c+2)
+a2,a3 -> A[r1, c:c+2)
+a4,a5 -> A[r0, c+8:c+10)
+a6,a7 -> A[r1, c+8:c+10)</div>
+        </div>
+      </div>
+
+      <h3>简化示意：每个 warp 覆盖 16 行，列方向分成两个 8-column 半区</h3>
+      <div class="legend">
+        <span class="band0">warp 0: tid 0..31</span>
+        <span class="band1">warp 1: tid 32..63</span>
+        <span class="band2">warp 2: tid 64..95</span>
+        <span class="band3">warp 3: tid 96..127</span>
+      </div>
+      <div class="diagram-wrap">
+        <div class="matrix" role="img" aria-label="A register fragment shape">
+          <div class="row head">
+            <div class="cell">rows</div>
+            <div class="cell">cols 0..7, upper 8 rows</div>
+            <div class="cell">cols 8..15, upper 8 rows</div>
+            <div class="cell">cols 0..7, lower 8 rows</div>
+            <div class="cell">cols 8..15, lower 8 rows</div>
+          </div>
+          <div class="row band0">
+            <div class="cell">0..15</div>
+            <div class="cell"><strong>T0..T31</strong><span>a0,a1</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>a4,a5</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>a2,a3</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>a6,a7</span></div>
+          </div>
+          <div class="row band1">
+            <div class="cell">16..31</div>
+            <div class="cell"><strong>T32..T63</strong><span>a0,a1</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>a4,a5</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>a2,a3</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>a6,a7</span></div>
+          </div>
+          <div class="row band2">
+            <div class="cell">32..47</div>
+            <div class="cell"><strong>T64..T95</strong><span>a0,a1</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>a4,a5</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>a2,a3</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>a6,a7</span></div>
+          </div>
+          <div class="row band3">
+            <div class="cell">48..63</div>
+            <div class="cell"><strong>T96..T127</strong><span>a0,a1</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>a4,a5</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>a2,a3</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>a6,a7</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>4. D register fragment: <span class="mono">64xN</span>，按 8 列重复</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>D type</th>
+            <th>每线程寄存器</th>
+            <th>每线程标量元素</th>
+            <th>元素顺序尾部</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono">.f16</span></td>
+            <td><span class="mono">N/4 x f16x2</span></td>
+            <td><span class="mono">N/2</span></td>
+            <td><span class="mono">d0, d1, ..., dX, dY, dZ, dW</span></td>
+          </tr>
+          <tr>
+            <td><span class="mono">.f32</span></td>
+            <td><span class="mono">N/2 x f32</span></td>
+            <td><span class="mono">N/2</span></td>
+            <td><span class="mono">X=N/2-4, Y=N/2-3, Z=N/2-2, W=N/2-1</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="two-col">
+        <div>
+          <h3 class="tight">D 的重复映射公式</h3>
+          <div class="formula">t    = tid % 128
+warp = floor(t / 32)
+lane = t % 32
+r0   = 16 * warp + floor(lane / 4)
+r1   = r0 + 8
+p    = lane % 4
+
+for j in 0 .. N/8 - 1:
+  c = 8 * j + 2 * p
+
+  d[4*j + 0], d[4*j + 1] -> D[r0, c:c+2)
+  d[4*j + 2], d[4*j + 3] -> D[r1, c:c+2)</div>
+        </div>
+        <div>
+          <h3 class="tight">寄存器数量例子</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>N</th>
+                <th>D scalars/thread</th>
+                <th><span class="mono">.f16</span> regs/thread</th>
+                <th><span class="mono">.f32</span> regs/thread</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>8</td><td>4</td><td>2</td><td>4</td></tr>
+              <tr><td>16</td><td>8</td><td>4</td><td>8</td></tr>
+              <tr><td>32</td><td>16</td><td>8</td><td>16</td></tr>
+              <tr><td>64</td><td>32</td><td>16</td><td>32</td></tr>
+              <tr><td>128</td><td>64</td><td>32</td><td>64</td></tr>
+              <tr><td>256</td><td>128</td><td>64</td><td>128</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>简化示意：每个 8-column block 消耗 4 个 D 标量索引</h3>
+      <div class="diagram-wrap">
+        <div class="matrix" role="img" aria-label="D register fragment shape">
+          <div class="row head">
+            <div class="cell">rows</div>
+            <div class="cell">cols 0..7</div>
+            <div class="cell">cols 8..15</div>
+            <div class="cell">...</div>
+            <div class="cell">cols N-8..N-1</div>
+          </div>
+          <div class="row band0">
+            <div class="cell">0..15</div>
+            <div class="cell"><strong>T0..T31</strong><span>upper rows: d0,d1</span><span>lower rows: d2,d3</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>upper rows: d4,d5</span><span>lower rows: d6,d7</span></div>
+            <div class="cell"><span>repeat by 8 cols</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>upper rows: dX,dY</span><span>lower rows: dZ,dW</span></div>
+          </div>
+          <div class="row band1">
+            <div class="cell">16..31</div>
+            <div class="cell"><strong>T32..T63</strong><span>upper rows: d0,d1</span><span>lower rows: d2,d3</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>upper rows: d4,d5</span><span>lower rows: d6,d7</span></div>
+            <div class="cell"><span>repeat by 8 cols</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>upper rows: dX,dY</span><span>lower rows: dZ,dW</span></div>
+          </div>
+          <div class="row band2">
+            <div class="cell">32..47</div>
+            <div class="cell"><strong>T64..T95</strong><span>upper rows: d0,d1</span><span>lower rows: d2,d3</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>upper rows: d4,d5</span><span>lower rows: d6,d7</span></div>
+            <div class="cell"><span>repeat by 8 cols</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>upper rows: dX,dY</span><span>lower rows: dZ,dW</span></div>
+          </div>
+          <div class="row band3">
+            <div class="cell">48..63</div>
+            <div class="cell"><strong>T96..T127</strong><span>upper rows: d0,d1</span><span>lower rows: d2,d3</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>upper rows: d4,d5</span><span>lower rows: d6,d7</span></div>
+            <div class="cell"><span>repeat by 8 cols</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>upper rows: dX,dY</span><span>lower rows: dZ,dW</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>5. FP8 指令：<span class="mono">.m64nNk32</span></h2>
+      <p>
+        FP8 WGMMA 的 K 维度是 32，因此操作数整体形状是
+        <span class="mono">A: 64x32</span>，
+        <span class="mono">B: 32xN</span>，
+        <span class="mono">D: 64xN</span>。
+        它的 B 仍然只能来自 <span class="mono">b-desc</span>，A 可以来自 <span class="mono">a-desc</span> 或 register fragment <span class="mono">a</span>。
+      </p>
+
+      <h3 class="tight">PTX 语法</h3>
+      <div class="formula">wgmma.mma_async.sync.aligned.shape.dtype.atype.btype
+  d, a-desc, b-desc, scale-d, imm-scale-a, imm-scale-b;
+
+wgmma.mma_async.sync.aligned.shape.dtype.atype.btype
+  d, a, b-desc, scale-d, imm-scale-a, imm-scale-b;
+
+shape = .m64nNk32, N = 8*i, i = 1..32
+atype = {.e4m3, .e5m2}
+btype = {.e4m3, .e5m2}
+dtype = {.f16, .f32}</div>
+
+      <div class="two-col">
+        <div>
+          <h3 class="tight">A register fragment: 固定 <span class="mono">64x32</span></h3>
+          <table>
+            <thead>
+              <tr>
+                <th>A type</th>
+                <th>每线程寄存器</th>
+                <th>每线程标量元素</th>
+                <th>元素顺序</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">.e4m3</span> / <span class="mono">.e5m2</span></td>
+                <td><span class="mono">4 x .b32</span></td>
+                <td><span class="mono">16</span></td>
+                <td><span class="mono">a0, a1, ..., a15</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="small">
+            总量校验：<span class="mono">128 threads * 16 scalars = 2048 = 64 * 32</span>。
+          </p>
+        </div>
+        <div>
+          <h3 class="tight">A 的坐标公式</h3>
+          <div class="formula">t    = tid % 128
+warp = floor(t / 32)
+lane = t % 32
+r0   = 16 * warp + floor(lane / 4)
+r1   = r0 + 8
+c0   = 4 * (lane % 4)
+c1   = c0 + 16
+
+a0..a3    -> A[r0, c0:c0+4)
+a4..a7    -> A[r1, c0:c0+4)
+a8..a11   -> A[r0, c1:c1+4)
+a12..a15  -> A[r1, c1:c1+4)</div>
+        </div>
+      </div>
+
+      <h3>FP8 A 简化示意：每个线程拿 2 行 x 8 列，分布在两个 16-column 半区</h3>
+      <div class="diagram-wrap">
+        <div class="matrix" role="img" aria-label="FP8 A register fragment shape">
+          <div class="row head">
+            <div class="cell">rows</div>
+            <div class="cell">cols 0..15, upper 8 rows</div>
+            <div class="cell">cols 16..31, upper 8 rows</div>
+            <div class="cell">cols 0..15, lower 8 rows</div>
+            <div class="cell">cols 16..31, lower 8 rows</div>
+          </div>
+          <div class="row band0">
+            <div class="cell">0..15</div>
+            <div class="cell"><strong>T0..T31</strong><span>a0..a3</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>a8..a11</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>a4..a7</span></div>
+            <div class="cell"><strong>T0..T31</strong><span>a12..a15</span></div>
+          </div>
+          <div class="row band1">
+            <div class="cell">16..31</div>
+            <div class="cell"><strong>T32..T63</strong><span>a0..a3</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>a8..a11</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>a4..a7</span></div>
+            <div class="cell"><strong>T32..T63</strong><span>a12..a15</span></div>
+          </div>
+          <div class="row band2">
+            <div class="cell">32..47</div>
+            <div class="cell"><strong>T64..T95</strong><span>a0..a3</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>a8..a11</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>a4..a7</span></div>
+            <div class="cell"><strong>T64..T95</strong><span>a12..a15</span></div>
+          </div>
+          <div class="row band3">
+            <div class="cell">48..63</div>
+            <div class="cell"><strong>T96..T127</strong><span>a0..a3</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>a8..a11</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>a4..a7</span></div>
+            <div class="cell"><strong>T96..T127</strong><span>a12..a15</span></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>FP8 D register fragment</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>D type</th>
+            <th>每线程寄存器</th>
+            <th>每线程标量元素</th>
+            <th>布局</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono">.f16</span></td>
+            <td><span class="mono">N/4 x f16x2</span></td>
+            <td><span class="mono">N/2</span></td>
+            <td>与第 4 节 D 布局相同，每 8 列重复一次。</td>
+          </tr>
+          <tr>
+            <td><span class="mono">.f32</span></td>
+            <td><span class="mono">N/2 x f32</span></td>
+            <td><span class="mono">N/2</span></td>
+            <td>与第 4 节 D 布局相同，每 8 列重复一次。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        FP8 的 <span class="mono">atype</span> 和 <span class="mono">btype</span> 可以分别选择
+        <span class="mono">.e4m3</span> 或 <span class="mono">.e5m2</span>；这点不同于多数其它 floating point WGMMA 变体。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>6. 读图时的几个关键点</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>结论</th>
+            <th>含义</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>以 warpgroup 为单位</td>
+            <td>4 个连续 warp 组成一个 warpgroup，<span class="mono">tid % 128</span> 决定 fragment 坐标。</td>
+          </tr>
+          <tr>
+            <td>A 随 K 变化，不随 N 变化</td>
+            <td><span class="mono">k16</span> 的 A 是每线程 8 个 16-bit 元素；FP8 <span class="mono">k32</span> 的 A 是每线程 16 个 8-bit 元素。</td>
+          </tr>
+          <tr>
+            <td>D 随 N 线性增长</td>
+            <td>N 每增加 8，每线程 D 增加 4 个标量元素，也就是 2 个 <span class="mono">f16x2</span> 或 4 个 <span class="mono">f32</span> 寄存器。</td>
+          </tr>
+          <tr>
+            <td>B 不在 register fragment 表里</td>
+            <td><span class="mono">wgmma.mma_async</span> 的 B operand 是 <span class="mono">b-desc</span>，对应 shared memory layout 和 matrix descriptor。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section source">
+      <h2>Sources</h2>
+      <p>
+        NVIDIA PTX ISA 9.2:
+        <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-shape">matrix shape table</a>,
+        <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-register-fragment-wgmma-64n16">register fragments for <span class="mono">.m64nNk16</span></a>,
+        <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-register-fragment-wgmma-64n32">register fragments for FP8 <span class="mono">.m64nNk32</span></a>,
+        <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-instructions-wgmma-mma">instruction syntax and description</a>.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
