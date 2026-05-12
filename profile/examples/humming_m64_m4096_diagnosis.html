@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>humming_ws pipeline 利用诊断 — H20, MXFP4×FP8, M=64 vs M=4096</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #57606a;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --code-bg: #f6f8fa;
+    --code-fg: #1f2328;
+    --table-stripe: #f6f8fa;
+    --table-head-bg: #f0f3f6;
+    --warn: #9a6700;
+    --good: #1a7f37;
+    --bad: #cf222e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --code-bg: #161b22;
+      --code-fg: #e6edf3;
+      --table-stripe: #161b22;
+      --table-head-bg: #21262d;
+      --warn: #d29922;
+      --good: #3fb950;
+      --bad: #f85149;
+    }
+  }
+
+  html { background: var(--bg); }
+  body {
+    margin: 0 auto;
+    max-width: 980px;
+    padding: 2.5rem 1.5rem 5rem;
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    background: var(--bg);
+  }
+  h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.4rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.6rem;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 2.4rem 0 0.8rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 1.6rem 0 0.5rem;
+  }
+  h4 {
+    font-size: 1rem;
+    margin: 1.2rem 0 0.3rem;
+    color: var(--muted);
+  }
+  p { margin: 0.6rem 0; }
+  blockquote {
+    margin: 0.8rem 0;
+    padding: 0.6rem 1rem;
+    border-left: 3px solid var(--accent);
+    background: var(--code-bg);
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: 0.2rem 0; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 0.15em 0.35em;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.8rem 0 1.2rem;
+    font-size: 0.92rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--table-head-bg);
+    font-weight: 600;
+  }
+  tbody tr:nth-child(even) { background: var(--table-stripe); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .good  { color: var(--good); font-weight: 600; }
+  .bad   { color: var(--bad);  font-weight: 600; }
+  .warn  { color: var(--warn); font-weight: 600; }
+  .muted { color: var(--muted); }
+  .star  { color: var(--warn); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.2rem 0; }
+
+  .toc {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1.2rem;
+    margin: 1.2rem 0 2rem;
+    font-size: 0.92rem;
+  }
+  .toc ol { margin: 0.3rem 0 0; padding-left: 1.6rem; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .meta {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin: 0 0 1.4rem;
+  }
+
+  details {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    margin: 0.8rem 0;
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<h1>humming_ws pipeline 利用诊断</h1>
+<p class="meta">H20 · MXFP4×FP8 GEMM · M=64 vs M=4096 端到端 ncu profile 实战</p>
+
+<blockquote>
+这是一份<strong>端到端的实操记录</strong>：完整收集了 humming MXFP4×FP8 GEMM 在 H20 上 M=64 和 M=4096 两种 problem size 的 ncu profile，列出所有原始命令、输出数值、对照分析、结论。<br>
+目的：手把手演示「pipeline 是否充分使用」的判断方法。
+</blockquote>
+
+<div class="toc">
+<strong>目录</strong>
+<ol>
+  <li><a href="#env">环境</a></li>
+  <li><a href="#workload">Workload + bench 基线</a></li>
+  <li><a href="#collect">采集 ncu profile</a></li>
+  <li><a href="#sol">Top-level 一表对照</a></li>
+  <li><a href="#stall">Warp Stall 分布</a></li>
+  <li><a href="#interp">解读</a></li>
+  <li><a href="#conclusion">综合结论 + 优化方向</a></li>
+  <li><a href="#commands">用过的所有 ncu 命令</a></li>
+  <li><a href="#pitfalls">踩坑笔记</a></li>
+</ol>
+</div>
+
+<hr>
+
+<h2 id="env">0. 环境</h2>
+
+<table>
+<thead><tr><th>项</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>Runtime</td><td>Linux container, single H20 GPU exposed</td></tr>
+<tr><td>GPU</td><td>NVIDIA H20 96 GB (Driver 550.x)</td></tr>
+<tr><td>Workdir</td><td><code>/path/to/humming</code></td></tr>
+<tr><td>H20 BF16 TC peak</td><td>~148 TFLOPS</td></tr>
+<tr><td>H20 FP8 TC peak</td><td>~296 TFLOPS</td></tr>
+<tr><td>H20 HBM peak</td><td>~4 TB/s</td></tr>
+</tbody>
+</table>
+
+<p>进容器后切到 humming 工作目录：</p>
+
+<pre><code># 用你自己的 exec 方式进入有 GPU 的容器/机器
+cd /path/to/humming</code></pre>
+
+<hr>
+
+<h2 id="workload">1. Workload：MXFP4 weight × FP8 activation GEMM</h2>
+
+<pre><code>python benchmarks/bench_humming.py \
+    --shape_n 4096 --shape_k 4096 \
+    --a_dtype float8e4m3 \
+    --b_dtype float4e2m1 \
+    --bs_dtype float8e8m0 \
+    --c_dtype bfloat16 \
+    --weight_scale_group_size 32 \
+    --input_scale_group_size 0 \
+    --shape_m_list 1 4 16 64 256 1024 4096</code></pre>
+
+<p>bench 结果（无 ncu 包裹）：</p>
+
+<table>
+<thead>
+<tr>
+  <th class="num">shape_m</th>
+  <th class="num">time (ms)</th>
+  <th class="num">mem_gbps</th>
+  <th class="num">compute_tops</th>
+  <th class="num">vs FP8 peak (296)</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class="num">1</td><td class="num">0.040</td><td class="num">222</td><td class="num">0.83</td><td class="num">0.3%</td></tr>
+<tr><td class="num">4</td><td class="num">0.032</td><td class="num">277</td><td class="num">4.14</td><td class="num">1.4%</td></tr>
+<tr><td class="num">16</td><td class="num">0.033</td><td class="num">275</td><td class="num">16.21</td><td class="num">5%</td></tr>
+<tr><td class="num"><strong>64</strong></td><td class="num">0.047</td><td class="num">207</td><td class="num"><strong>45.71</strong></td><td class="num"><strong>15%</strong></td></tr>
+<tr><td class="num">256</td><td class="num">0.048</td><td class="num">250</td><td class="num">178.17</td><td class="num">60%</td></tr>
+<tr><td class="num">1024</td><td class="num">0.146</td><td class="num">147</td><td class="num">235.38</td><td class="num">80%</td></tr>
+<tr><td class="num"><strong>4096</strong></td><td class="num">0.542</td><td class="num">109</td><td class="num"><strong>253.43</strong></td><td class="num"><strong>86%</strong></td></tr>
+</tbody>
+</table>
+
+<p>选 <strong>M=64</strong>（"被浪费的小 batch"）和 <strong>M=4096</strong>（"接近峰值的大 batch"）做 ncu 对照。</p>
+
+<hr>
+
+<h2 id="collect">2. 收集 ncu profile</h2>
+
+<pre><code># M=64
+ncu --set full -k regex:humming \
+    --launch-skip 50 --launch-count 1 \
+    -o ncu_m64_fp8fp4 \
+    python benchmarks/bench_humming.py \
+        --shape_n 4096 --shape_k 4096 \
+        --a_dtype float8e4m3 --b_dtype float4e2m1 --bs_dtype float8e8m0 \
+        --c_dtype bfloat16 \
+        --weight_scale_group_size 32 --input_scale_group_size 0 \
+        --shape_m_list 64
+
+# M=4096（命令同上，--shape_m_list 4096，输出 ncu_m4096_fp8fp4.ncu-rep）</code></pre>
+
+<blockquote>
+<strong>注意</strong>：<code>ncu --set full</code> 会<strong>重放 kernel ~39 次</strong>采集各种 counter；bench 表格里看到的 time 会被严重放大（M=64 显示 0.19 ms），<strong>那不是真实 kernel 时间</strong>，要看 <code>.ncu-rep</code> 里的 Duration 指标。
+</blockquote>
+
+<hr>
+
+<h2 id="sol">3. Top-level 一表对照</h2>
+
+<p>抽 SOL + pipe + cache + 关键 stall 指标做并排对比。<strong>这是看懂 pipeline 状态的核心一张表</strong>。</p>
+
+<table>
+<thead>
+<tr>
+  <th>指标</th>
+  <th class="num">M=64</th>
+  <th class="num">M=4096</th>
+  <th>解读</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>Duration</strong></td><td class="num">20.03 μs</td><td class="num">592.06 μs</td><td>M 涨 64×，时间涨 29× → 小 M 用得不充分</td></tr>
+<tr><td>Tile shape (block_m,n,k)</td><td class="num">(64, 128, 128)</td><td class="num">(64, 256, 128)</td><td>auto-tuner 选了不同 kernel</td></tr>
+<tr><td>Tile shape (warp_m,n,k)</td><td class="num">(64, 32, 64)</td><td class="num">(64, 64, 128)</td><td>大 M 时 warp 块更大</td></tr>
+<tr><td>Block size (threads)</td><td class="num">384 (12 warps)</td><td class="num">256 (8 warps)</td><td>大 M 用更少 warp，每 warp 更多工作</td></tr>
+<tr><td>Grid size</td><td class="num">78 (= #SMs)</td><td class="num">156 (= 2×#SMs)</td><td>M=64 Stream-K 摊到所有 SM；M=4096 每 SM 2 个 block</td></tr>
+<tr><td>Waves per SM</td><td class="num">1.0</td><td class="num">2.0</td><td>M=4096 才有 block-to-block 流水</td></tr>
+<tr><td><strong>SM Throughput</strong></td><td class="num"><span class="bad">39.76%</span></td><td class="num"><span class="good">88.82%</span></td><td>M=4096 接近压满</td></tr>
+<tr><td>Memory Throughput</td><td class="num">13.07%</td><td class="num">20.17%</td><td>都不是 memory-bound</td></tr>
+<tr><td><strong>DRAM Throughput</strong></td><td class="num">11.48%</td><td class="num"><span class="good">1.87%</span></td><td>M=4096 DRAM 几乎不动 → 都从 cache 出</td></tr>
+<tr><td>L1/TEX Cache Throughput</td><td class="num">17.01%</td><td class="num">20.74%</td><td></td></tr>
+<tr><td>L2 Cache Throughput</td><td class="num">15.00%</td><td class="num">13.13%</td><td></td></tr>
+<tr><td><strong>L1 Hit Rate</strong></td><td class="num">74.53%</td><td class="num"><span class="good">96.77%</span></td><td>大 M 的 cache 完全暖起来了</td></tr>
+<tr><td><strong>L2 Hit Rate</strong></td><td class="num">49.01%</td><td class="num"><span class="good">95.25%</span></td><td>同上</td></tr>
+<tr><td><strong>Tensor pipe active</strong></td><td class="num"><span class="bad">9.94%</span></td><td class="num">22.21%</td><td>TC 在两个 size 下都未压满</td></tr>
+<tr><td>ALU pipe active</td><td class="num">25.99%</td><td class="num"><strong>45.20%</strong></td><td>ALU 才是大头！（dequant + 地址算）</td></tr>
+<tr><td>FMA pipe active</td><td class="num">10.78%</td><td class="num">10.06%</td><td>标量 FP 较少</td></tr>
+<tr><td>Issue Slots Busy</td><td class="num">37.08%</td><td class="num">~38%</td><td>单看 issue 都不高</td></tr>
+<tr><td>Achieved Occupancy</td><td class="num">18.73%</td><td class="num">24.50%</td><td>warp specialization 设计上就是低 occupancy</td></tr>
+<tr><td>Active Warps/Sched</td><td class="num">3.01</td><td class="num">3.92</td><td>M=4096 多 30% 活 warp</td></tr>
+<tr><td>Eligible Warps/Sched</td><td class="num">0.48</td><td class="num">0.50</td><td><strong>基本一样！都是大量 stall</strong></td></tr>
+<tr><td>Warp Cycles/Issued Inst</td><td class="num">7.98</td><td class="num">10.14</td><td>两者都属于"高延迟"区间</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2 id="stall">4. Warp Stall 分布 —— pipeline 泡泡的真相</h2>
+
+<p>这是判断"pipeline 是否充分使用"<strong>最关键的一组指标</strong>。用 <code>ncu --page raw --csv</code> 拉出原始数值（不是 ncu 自动诊断文本），单位是 "每发出 1 条指令期间，warp 花在该状态的平均 cycles"。</p>
+
+<h4>命令</h4>
+
+<pre><code>ncu --import ncu_m64_fp8fp4.ncu-rep --page raw --csv --metrics \
+smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_wait_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_no_instruction_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_drain_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_membar_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio,\
+smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio</code></pre>
+
+<h4>结果</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Stall Reason</th>
+  <th class="num">M=64 (cycles)</th>
+  <th class="num">M=64 (%)</th>
+  <th class="num">M=4096 (cycles)</th>
+  <th class="num">M=4096 (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>long_scoreboard</strong></td>
+  <td class="num">1.94</td><td class="num">31.1%</td>
+  <td class="num"><strong>4.64</strong></td><td class="num"><span class="warn"><strong>51.0% ★</strong></span></td>
+</tr>
+<tr>
+  <td><strong>barrier</strong></td>
+  <td class="num"><strong>2.24</strong></td><td class="num"><span class="warn"><strong>35.9% ★</strong></span></td>
+  <td class="num">2.79</td><td class="num">30.7%</td>
+</tr>
+<tr><td>wait</td><td class="num">1.14</td><td class="num">18.2%</td><td class="num">0.75</td><td class="num">8.2%</td></tr>
+<tr><td>short_scoreboard</td><td class="num">0.34</td><td class="num">5.5%</td><td class="num">0.07</td><td class="num">0.7%</td></tr>
+<tr><td>not_selected</td><td class="num">0.28</td><td class="num">4.5%</td><td class="num">0.29</td><td class="num">3.1%</td></tr>
+<tr><td>no_instruction</td><td class="num">0.22</td><td class="num">3.6%</td><td class="num">0.13</td><td class="num">1.4%</td></tr>
+<tr><td>dispatch_stall</td><td class="num">0.06</td><td class="num">1.0%</td><td class="num">0.10</td><td class="num">1.1%</td></tr>
+<tr><td>membar</td><td class="num">0.01</td><td class="num">0.2%</td><td class="num">0.00</td><td class="num">0.0%</td></tr>
+<tr><td>mio_throttle</td><td class="num">0.00</td><td class="num">0.0%</td><td class="num">0.00</td><td class="num">0.0%</td></tr>
+<tr><td>drain</td><td class="num">0.00</td><td class="num">0.0%</td><td class="num">0.00</td><td class="num">0.0%</td></tr>
+<tr>
+  <td><strong>合计 stall cycles</strong></td>
+  <td class="num"><strong>6.24</strong></td><td class="num"></td>
+  <td class="num"><strong>9.09</strong></td><td class="num"></td>
+</tr>
+</tbody>
+</table>
+
+<p class="muted">★ 表示 dominant stall。</p>
+
+<h4>Stall 含义速查</h4>
+
+<table>
+<thead><tr><th>Stall 名</th><th>翻译</th><th>在 humming 里对应</th></tr></thead>
+<tbody>
+<tr><td><code>long_scoreboard</code></td><td>等长延迟内存（global / TMA / smem load）</td><td>producer 等 TMA 完成 / consumer 从 smem 加载</td></tr>
+<tr><td><code>short_scoreboard</code></td><td>等短延迟（普通 load）</td><td>s2r 普通加载</td></tr>
+<tr><td><code>barrier</code></td><td>在 <code>__syncthreads()</code> 或 <code>bar.sync</code> 等同步原语</td><td><strong>producer/consumer mbarrier 互等</strong></td></tr>
+<tr><td><code>wait</code></td><td>等 warp 屏障</td><td><code>wgmma.wait_group</code> 等 WGMMA 完成</td></tr>
+<tr><td><code>not_selected</code></td><td>scheduler 没选它（有得算但没轮到）</td><td>多个 warp 同时就绪 → 良性</td></tr>
+<tr><td><code>no_instruction</code></td><td>指令缓存 miss</td><td>一般无害</td></tr>
+<tr><td><code>mio_throttle</code></td><td>smem 访问太密</td><td>bank conflict</td></tr>
+<tr><td><code>dispatch_stall</code></td><td>dispatch unit 堵</td><td>比较罕见</td></tr>
+<tr><td><code>drain</code></td><td>退出阶段排空 pipeline</td><td>kernel 末尾</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2 id="interp">5. 解读</h2>
+
+<h3>5.1 M=4096：compute-bound 接近极限 <span class="good">✅</span></h3>
+
+<p><strong>Speed Of Light 自动诊断（ncu Rule 文本）</strong>：</p>
+
+<pre><code>This workload is utilizing greater than 80.0% of the available compute
+or memory performance of the device.</code></pre>
+
+<p>证据链：</p>
+<ul>
+  <li>SM Throughput <strong>88.82%</strong> —— GPU 整体很忙</li>
+  <li>ALU pipe 占 45.20% —— <strong>最忙的不是 Tensor Core，是 ALU</strong>（dequant 的位运算、地址计算）</li>
+  <li>Tensor pipe 22.21% —— TC 是被"按需喂"的</li>
+  <li>DRAM Throughput <strong>1.87%</strong> —— 几乎不从 DRAM 读，全在 L1/L2 里转</li>
+  <li>L1 hit <strong>96.77%</strong>, L2 hit <strong>95.25%</strong> —— 缓存命中率极高</li>
+  <li>compute_tops = 253.43 / 296 ≈ <strong>86%</strong> of FP8 peak</li>
+</ul>
+
+<p><strong>Top stall 是 <code>long_scoreboard</code> (51%)</strong> —— 大量周期在等数据（smem load）。但这不是病：WGMMA 是异步的，发完就能算别的，长 stall 被指令流后续藏住，所以 SM throughput 仍能到 88%。</p>
+
+<p><strong>Pipeline 是否充分使用？答案：<span class="good">✅ 是的，~86% 接近峰值</span>。</strong></p>
+
+<p>剩下的 14% gap 推测来自：</p>
+<ul>
+  <li>WGMMA 异步发射但仍要 wait_group 收尾（<code>wait</code> 占 8.2%）</li>
+  <li>mbarrier 偶有等待（<code>barrier</code> 30.7%，但被 long_scoreboard 摊掉了，因为两边经常并行）</li>
+  <li>ALU 跟 Tensor Core 抢 issue 槽（dequant 比较重）</li>
+  <li>14.35% 的 shared store 有 bank conflict（ncu 提示，影响很小）</li>
+</ul>
+
+<h3>5.2 M=64：被 problem-size + barrier 双杀 <span class="bad">❌</span></h3>
+
+<p><strong>Speed Of Light 自动诊断</strong>：</p>
+
+<pre><code>This workload exhibits low compute throughput and memory bandwidth
+utilization relative to the peak performance of this device. Achieved
+compute throughput and/or memory bandwidth below 60.0% of peak typically
+indicate latency issues.</code></pre>
+
+<p>证据链：</p>
+<ul>
+  <li>SM Throughput <strong>39.76%</strong> —— 一半多的周期 GPU 没事做</li>
+  <li>Tensor pipe <strong>9.94%</strong> —— TC 几乎没启动起来</li>
+  <li>DRAM Throughput 11.48% —— 不是 memory-bound</li>
+  <li>L1 hit <strong>74.5%</strong>, L2 hit <strong>49%</strong> —— <strong>cache 是凉的</strong>，kernel 太短没机会暖</li>
+  <li>compute_tops = 45.71 / 296 ≈ <strong>15%</strong> of FP8 peak</li>
+</ul>
+
+<p><strong>Top stall 是 <code>barrier</code> (36%)</strong>，紧跟 <code>long_scoreboard</code> (31%) —— <strong>mbarrier 等待主导</strong>。每发出 1 条指令，warp 平均花 2.24 cycles 在 mbarrier 上等。</p>
+
+<p>为什么 mbarrier 这么贵？因为：</p>
+<ol>
+  <li><strong>每 SM 只跑 1 个 block</strong>（寄存器限制），没有 block-to-block 流水可言。</li>
+  <li>单 block 的 K-loop 太短：<code>block_k=128</code>，<code>K=4096</code>，每 SM 通过 Stream-K 只分到 <code>4096 / 78 ≈ 52</code> 列的 K 工作，不到 1 个完整 K-tile 的工作量。</li>
+  <li>Pipeline 还没进入稳态就要 drain，producer 和 consumer 互相"踩着对方的脚"等待。</li>
+</ol>
+
+<p><strong>Pipeline 是否充分使用？答案：<span class="bad">❌ 远没有</span>。</strong></p>
+
+<p>但根因<strong>不是 humming 的 pipeline 设计本身有问题</strong>，而是：</p>
+<ol type="a">
+  <li>Problem size 太小，每个 block 工作量小于 pipeline depth</li>
+  <li>auto-tuner 选的 tile <code>(64, 128, 128)</code> 对 M=64 不够极致</li>
+  <li>kernel launch / drain 的固定成本对 20 μs 的 kernel 占比过大</li>
+</ol>
+
+<hr>
+
+<h2 id="conclusion">6. 综合结论 + 优化方向</h2>
+
+<h3>6.1 「pipeline 充分使用」的判定</h3>
+
+<table>
+<thead><tr><th>Workload</th><th>判定</th><th>主要瓶颈</th><th>优化空间</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>M=4096</strong></td>
+  <td><span class="good">✅ 充分使用</span></td>
+  <td>长延迟内存等待（合理）</td>
+  <td>小（5~10%，bank conflict、ALU/Tensor 平衡）</td>
+</tr>
+<tr>
+  <td><strong>M=64</strong></td>
+  <td><span class="bad">❌ 严重浪费</span></td>
+  <td>mbarrier + 短 K-loop + 寄存器锁死 occupancy</td>
+  <td>大（理论 3-5×，但需要 kernel 设计变更）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>6.2 可行的 M=64 优化方向</h3>
+
+<h4>改 tuning_config（轻量，先试这些）</h4>
+<ul>
+  <li>试更小的 <code>block_n</code>（64 而不是 128）→ 让单 block 工作量更短但 grid 更密</li>
+  <li>试更小的 <code>block_k</code>（64 而不是 128）→ K-loop 多几轮，pipeline 能多周转</li>
+  <li>降 <code>num_stages</code>（3 而不是更多）→ pipeline 浅了反而对短 kernel 更好</li>
+</ul>
+
+<h4>改 kernel 设计（重量）</h4>
+<ul>
+  <li>加 <strong>persistent kernel + multi-block scheduling</strong>：让一个 launch 处理多个 problem，摊销 launch / drain cost</li>
+  <li>加 <strong>dual consumer warpgroup</strong>：把 epilogue 和下一个 mainloop 重叠</li>
+</ul>
+
+<h4>改业务（最实用）</h4>
+<ul>
+  <li>Decode 阶段（小 M）本来就是 memory-latency-bound，与其压 GEMM 不如：
+    <ul>
+      <li>batch 多个 request 凑大 M</li>
+      <li>用专门的 GEMV kernel（针对 M=1~16 优化）替代 GEMM</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>6.3 对比的更广含义</h3>
+
+<table>
+<thead>
+<tr><th>现象</th><th class="num">M=64</th><th class="num">M=4096</th></tr>
+</thead>
+<tbody>
+<tr><td>Tensor Core active</td><td class="num">9.94%</td><td class="num">22.21%</td></tr>
+<tr><td>ALU active</td><td class="num">25.99%</td><td class="num">45.20%</td></tr>
+<tr><td><strong>ALU / Tensor 比</strong></td><td class="num">2.6×</td><td class="num">2.0×</td></tr>
+</tbody>
+</table>
+
+<p>两个 size <strong>ALU 都比 Tensor 高 2-3 倍</strong>，说明 MXFP4 dequant + 地址计算 + 标量算术在 humming 里非 trivial。如果想进一步压榨 H20 FP8 峰值，可能要：</p>
+<ul>
+  <li>把 dequant 完全移出 mainloop（pre-process pass）</li>
+  <li>用 SASS 级整数 LUT 替代浮点 dequant</li>
+</ul>
+<p>但这是 <strong>86% → 95%</strong> 的最后一公里优化，对 M=4096 而言投入产出比一般。</p>
+
+<hr>
+
+<h2 id="commands">7. 用过的所有 ncu 命令</h2>
+
+<details>
+<summary>点击展开</summary>
+
+<pre><code># 1. SOL summary（人看，含 Rule 文本）
+ncu --import ncu_m64_fp8fp4.ncu-rep --print-summary per-kernel | head -200
+
+# 2. 只看 SOL details
+ncu --import ncu_m64_fp8fp4.ncu-rep --page details --section SpeedOfLight
+
+# 3. Raw metric values（脚本看，纯数值）
+ncu --import ncu_m64_fp8fp4.ncu-rep --page raw --csv --metrics <metric_list>
+
+# 4. 通用「快速查关键指标」
+ncu --import <file>.ncu-rep --page raw --csv --metrics \
+    sm__throughput.avg.pct_of_peak_sustained_elapsed,\
+    dram__throughput.avg.pct_of_peak_sustained_elapsed,\
+    sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed,\
+    sm__pipe_alu_cycles_active.avg.pct_of_peak_sustained_elapsed,\
+    l1tex__t_sector_hit_rate.pct,\
+    lts__t_sector_hit_rate.pct,\
+    gpu__time_duration.sum
+
+# 5. 拉所有 stall reason
+ncu --import <file>.ncu-rep --page raw --csv --metrics \
+    smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_wait_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_no_instruction_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_drain_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_membar_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio,\
+    smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio</code></pre>
+
+</details>
+
+<hr>
+
+<h2 id="pitfalls">8. ncu 使用上的踩坑笔记</h2>
+
+<ol>
+  <li><strong><code>--print-summary</code> 默认走 "Rule"（自动诊断）视图</strong>，输出的是 ncu 自己的建议文本，<strong>不是原始数值</strong>。要拿数值用 <code>--page raw --csv</code>。</li>
+  <li><strong>bench 在 ncu 包裹下显示的 time 不可信</strong>：ncu 重放 kernel ~39 次，<code>triton.testing.do_bench</code> 测到的是一个被放大的值。<strong>真实时间看 ncu 报告里的 <code>gpu__time_duration.sum</code> 或 SOL section 的 <code>Duration</code></strong>。</li>
+  <li><strong><code>--set full</code> 缓存的指标集是固定的</strong>。如果想查的指标不在缓存里（比如 <code>sm__pipe_tensor_op_qmma_*</code>），需要<strong>重新跑 ncu profile</strong>，用 <code>--metrics ...</code> 显式指定，不能事后从 <code>.ncu-rep</code> 补。</li>
+  <li><strong>H20 没有 NVLink C2C / cluster 接口</strong>，所以 <code>ctc__rx_bytes_*</code> / <code>cluster__*</code> 等指标采集会报 warning，<strong>正常忽略</strong>。</li>
+  <li><strong>ncu 需要 GPU performance counter 权限</strong>。pod 里通常已经放开；本地机器报 <code>ERR_NVGPUCTRPERM</code> 时要 <code>sudo</code> 或修 <code>nvidia</code> 驱动参数。</li>
+  <li><strong>CSV 字段顺序按指标名字母序输出</strong>，不是按 <code>--metrics</code> 传入的顺序 —— 解析时要按列名匹配。</li>
+</ol>
+
+<hr>
+
+<p class="meta">
+Environment captured: H20 driver 550.127.08, torch 2.10.0+cu128, humming @ <code>fix/stable-api-version-threshold</code>.
+</p>
+
+</body>
+</html>
