@@ -39,18 +39,16 @@
     td:last-child { border-right: 0; }
     .items { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
     .roadmap-item { border-left: 4px solid var(--green); background: #fff; border-radius: 8px; padding: 11px 12px; box-shadow: inset 0 0 0 1px #edf0ea; }
-    .roadmap-item.conf-med { border-left-color: #e1a948; }
     .item-top { display: flex; align-items: flex-start; gap: 8px; justify-content: space-between; }
     .item-top strong { font-size: 14px; line-height: 1.25; }
-    .conf { flex: 0 0 auto; font-size: 11px; padding: 2px 6px; border-radius: 999px; text-transform: uppercase; background: #edf7e6; color: var(--green-dark); border: 1px solid #d6eac7; }
-    .conf-med .conf { background: #fff5dc; color: var(--amber); border-color: #ecd08f; }
     .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
     .chip { display: inline-flex; flex-direction: column; gap: 1px; min-width: 78px; padding: 5px 7px; border: 1px solid #c9d8ef; border-radius: 6px; background: #f6f9ff; color: var(--blue); text-decoration: none; line-height: 1.1; }
     .chip span { font-size: 12px; font-weight: 700; }
     .chip small { font-size: 10px; color: var(--muted); }
     .chip.state-closed { border-color: #e8c7be; background: #fff7f4; color: var(--red); }
     .chip.state-merged { border-color: #d8caf5; background: #faf7ff; color: var(--purple); }
-    .note { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .intent { margin-top: 8px; color: #303835; font-size: 12px; line-height: 1.38; }
+    .intent strong { color: var(--green-dark); margin-right: 4px; }
     .footnotes { margin-top: 18px; padding: 16px 18px; background: #fff; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; line-height: 1.5; }
     .footnotes strong { color: var(--text); }
   </style>
@@ -58,255 +56,254 @@
 <body>
   <header>
     <h1>Q2 2026 FlashInfer Roadmap Links</h1>
-    <div class="subtitle">Slide items are mapped to concrete public FlashInfer GitHub issues or pull requests. The primary source is the public GitHub Project view; GitHub issue search is used only where the Project title did not expose an exact match.</div>
+    <div class="subtitle">Slide items are mapped to concrete public FlashInfer GitHub issues or pull requests, with a short main-intent explanation for each roadmap item.</div>
     <div class="sourcebar">
       <a href="https://github.com/orgs/flashinfer-ai/projects/2/views/2">GitHub Project: FlashInfer Roadmap</a>
       <a href="https://github.com/flashinfer-ai/flashinfer">flashinfer-ai/flashinfer</a>
       <span>Generated: 2026-05-13 Asia/Shanghai</span>
-      <span>40 roadmap bullets · 72 linked issues/PRs · 44 project links · 28 search fallbacks</span>
+      <span>40 roadmap bullets · 72 linked issues/PRs</span>
     </div>
   </header>
   <main>
     <div class="legend">
-      <span><i class="dot high"></i> High-confidence mapping</span>
-      <span><i class="dot med"></i> Medium-confidence / nearest public item</span>
       <span><i class="dot open"></i> Open issue or PR</span>
       <span><i class="dot merged"></i> Merged PR</span>
+      <span>Project/Search indicates where the public reference was found</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Category</th><th>May 2026</th><th>June 2026</th><th>July 2026</th></tr></thead>
         <tbody><tr><th>Attention</th><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Kimi K2.5 / 2.6 MLA decode</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Kimi K2.5 / 2.6 MLA decode</strong></div>
             <div class="links"><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/3161" title="Support kimi k2.5 config for cutaDSL MLA decode"><span>Issue #3161</span><small>closed · Project</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/pull/3235" title="Support Kimi K2.5 H64 CuTe DSL MLA decode"><span>PR #3235</span><small>closed · Search</small></a></div>
-            <div class="note">K2.5 matched directly; no public K2.6 item found by title search.</div>
+            <div class="intent"><strong>主要意图：</strong>补齐 Kimi MLA decode 的配置、head 维度和内核路径，让 serving 框架可以直接走优化 MLA decode。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Unified MLA prefill API</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Unified MLA prefill API</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2858" title="[Feature Request] Unified MLA context (prefill) API"><span>Issue #2858</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>统一 MLA prefill/context 接口，减少不同 backend 和框架集成时的参数/命名差异。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Block-sparse attention support</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Block-sparse attention support</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2754" title="[Feature] Support block sparse attention kernel for trtllm-gen backend"><span>Issue #2754</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3199" title="Enable TRT-LLM Gen sparse MLA block-sparse path"><span>PR #3199</span><small>open · Project</small></a></div>
-            <div class="note">Issue is on the project board; PR is linked by the project data.</div>
+            <div class="intent"><strong>主要意图：</strong>接入 block-sparse/sparse MLA attention 路径，降低 DeepSeek/GLM 类稀疏 attention 的计算和访存开销。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>MLA decode with variable-length Q</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>MLA decode with variable-length Q</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3131" title="Support cum_seq_lens_q in trtllm_batch_decode_with_kv_cache_mla trtllm-gen backend"><span>Issue #3131</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3238" title="trtllm_batch_decode_with_kv_cache_mla trtllm-gen backend cum_seq_lens_q support"><span>PR #3238</span><small>open · Search</small></a></div>
-            <div class="note">Variable-length Q maps to cum_seq_lens_q support.</div>
+            <div class="intent"><strong>主要意图：</strong>支持 batched decode 中每个请求不同 Q 长度，避免只适配固定长度 query 的路径。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>Skip-softmax with paged radix cache</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Skip-softmax with paged radix cache</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2483" title="[Feature Request] Skip-Softmax (BLASST) Optimization in XQA"><span>Issue #2483</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/2814" title="Add optimized clusters TopK kernel and DeepSeekV3.2 sparse indexer fused kernel"><span>PR #2814</span><small>open · Search</small></a></div>
-            <div class="note">Skip-softmax matches #2483; paged radix wording only surfaced via GitHub search metadata, not board title.</div>
+            <div class="intent"><strong>主要意图：</strong>在 XQA/稀疏检索场景减少不必要 softmax 和缓存访问开销，提升 paged cache 路径延迟。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Consumer-Blackwell MLA coverage</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Consumer-Blackwell MLA coverage</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2655" title="BF16 MLA decode support on SM120/SM121 consumer Blackwell"><span>Issue #2655</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3170" title="DGX Spark (SM121) Current Support Audit"><span>Issue #3170</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/2675" title="Support BF16 MLA on SM120 with shared-mem fallback"><span>PR #2675</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3016" title="enable fmha_v2 HMMA attention for SM120 standard shapes"><span>PR #3016</span><small>open · Search</small></a></div>
-            <div class="note">Consumer Blackwell maps to SM120/SM121/DGX Spark coverage.</div>
+            <div class="intent"><strong>主要意图：</strong>把 MLA/FMHA 能力扩展到 SM120/SM121 等消费级 Blackwell/DGX Spark 环境。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Unified GDN decode/prefill API</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Unified GDN decode/prefill API</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2687" title="[RFC] Unified GDN Decode/Prefill API"><span>Issue #2687</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/2706" title="Unified GDN Decode/Prefill API"><span>PR #2706</span><small>open · Project</small></a><a class="chip state-merged" href="https://github.com/flashinfer-ai/flashinfer/pull/2370" title="Add Cute DSL GDN decode kernel and tests"><span>PR #2370</span><small>merged · Project</small></a></div>
-            <div class="note">Direct title match; PR #2706 is linked by project data.</div>
+            <div class="intent"><strong>主要意图：</strong>给 Gated Delta Net 提供统一 decode/prefill 调用入口，方便 Qwen3-Next 类模型接入。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>DSv3.2 sparse attention support</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>DSv3.2 sparse attention support</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3111" title="HiSparse sparse attention (DeepSeek V3.2 / GLM 5.1) on Blackwell"><span>Issue #3111</span><small>open · Project</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/2426" title="Consider Supporting Sparse MLA with FP8 KV cache with DSv3.2&#x27;s recipe"><span>Issue #2426</span><small>closed · Search</small></a></div>
-            <div class="note">Direct DSv3.2 sparse attention match.</div>
+            <div class="intent"><strong>主要意图：</strong>支持 DeepSeek V3.2 / GLM 5.1 的 HiSparse/sparse attention 模式，覆盖 Blackwell 推理路径。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Auto-select fastest MLA backend</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Auto-select fastest MLA backend</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2891" title="Autotune between trtllm-gen and cute-dsl in trtllm_batch_decode_with_kv_cache_mla"><span>Issue #2891</span><small>open · Search</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/pull/3086" title="autotune between trtllm-gen and cute-dsl in MLA decode"><span>PR #3086</span><small>closed · Search</small></a></div>
-            <div class="note">Auto-select maps to MLA backend autotuning.</div>
+            <div class="intent"><strong>主要意图：</strong>在 TRT-LLM Gen 和 CuTe DSL 等 MLA backend 之间自动选择最快可用实现。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>FP8 output for paged MLA</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>FP8 output for paged MLA</strong></div>
             <div class="links"><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/2778" title="FP8 output support for CUTLASS MLA paged attention kernel"><span>Issue #2778</span><small>closed · Search</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/pull/2779" title="FP8 output support for CUTLASS MLA paged attention"><span>PR #2779</span><small>closed · Search</small></a></div>
-            <div class="note">Direct GitHub search match.</div>
+            <div class="intent"><strong>主要意图：</strong>让 paged MLA attention 可以直接输出 FP8，减少输出带宽和后续量化开销。</div>
           </li></ul></td></tr><tr><th>MoE</th><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Per-channel quantization for MoE</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Per-channel quantization for MoE</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2419" title="MoE with per-channel quant is not supported yet"><span>Issue #2419</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/2809" title="feat(MoE): FP8 MoE per-channel quant support"><span>PR #2809</span><small>open · Project</small></a></div>
-            <div class="note">Project issue has linked PR #2809.</div>
+            <div class="intent"><strong>主要意图：</strong>为 MoE 路径增加 per-channel quant，改善低精度 expert 计算的精度/性能折中。</div>
           </li>
 
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>Sparsity support for FP4 MoE</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Sparsity support for FP4 MoE</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2589" title="FlashInfer API for sparsity updated cubins in nvfp4 moe"><span>Issue #2589</span><small>open · Project</small></a></div>
-            <div class="note">Closest project-board item: sparsity + NVFP4 MoE API/cubins.</div>
+            <div class="intent"><strong>主要意图：</strong>补齐 NVFP4/FP4 MoE 的 sparsity API 和 cubin 交付路径。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Unified MoE Python interface</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Unified MoE Python interface</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2358" title="MoE unified interface"><span>Issue #2358</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3093" title="MoE unified interface implementation"><span>PR #3093</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match; project data links PR #3093.</div>
+            <div class="intent"><strong>主要意图：</strong>用一个 Python 接口屏蔽不同 MoE backend、量化格式和 routing/finalize 变体。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Multi-tenant LoRA on Blackwell</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Multi-tenant LoRA on Blackwell</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3107" title="[Tracking] Multi-tenant LoRA for MoE under Expert Parallelism on Blackwell"><span>Issue #3107</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>支持 Expert Parallelism 下多租户 LoRA 与 MoE 共同 serving，面向 Blackwell 部署。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Fused shared-expert routing</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Fused shared-expert routing</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2551" title="Shared expert fusion integration"><span>Issue #2551</span><small>open · Project</small></a></div>
-            <div class="note">Direct shared-expert fusion match.</div>
+            <div class="intent"><strong>主要意图：</strong>把 shared expert 的 routing/融合逻辑合并进 MoE 流程，减少额外 kernel 和数据搬运。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Distributed-weight MoE on Blackwell</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Distributed-weight MoE on Blackwell</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3036" title="[CuteDSL MoE] Update the CuteDSL MoE kernels support DWDP"><span>Issue #3036</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3041" title="support multi-B weight tensors DWDP in CuTe DSL NVFP4 MoE"><span>PR #3041</span><small>open · Search</small></a></div>
-            <div class="note">DWDP maps to distributed/multi-B weights.</div>
+            <div class="intent"><strong>主要意图：</strong>支持 DWDP/multi-B 权重布局，使 MoE 权重可按分布式方式组织和执行。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>FP4 MoE autotune for DSv4</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>FP4 MoE autotune for DSv4</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3197" title="Incorrect outputs for autotuned FP4 MoE for DSV4"><span>Issue #3197</span><small>open · Project</small></a></div>
-            <div class="note">Direct DSv4 + FP4 MoE autotune match.</div>
+            <div class="intent"><strong>主要意图：</strong>修正 DSv4 FP4 MoE autotune 的正确性问题，让自动选择的 tactic 可以安全使用。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>Correct MoE autotune at variable load</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Correct MoE autotune at variable load</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3197" title="Incorrect outputs for autotuned FP4 MoE for DSV4"><span>Issue #3197</span><small>open · Project</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/2077" title="MoE autotune print a lot failed kernel on SM120"><span>Issue #2077</span><small>closed · Project</small></a></div>
-            <div class="note">No exact variable-load wording found; mapped to MoE autotune correctness issues.</div>
+            <div class="intent"><strong>主要意图：</strong>让 MoE autotune 在 token/expert 负载变化时仍能选择正确、稳定的 tactic。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>MegaMoE support on Hopper</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>MegaMoE support on Hopper</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3196" title="need MegaMOE for hopper style(H100)"><span>Issue #3196</span><small>open · Search</small></a></div>
-            <div class="note">Direct search match.</div>
+            <div class="intent"><strong>主要意图：</strong>补齐 Hopper/H100 风格 MegaMoE kernel 支持，覆盖非 Blackwell 部署。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>MoE benchmark methodology fixes</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>MoE benchmark methodology fixes</strong></div>
             <div class="links"><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/pull/3292" title="bench(moe_deepseek): fix moe benchmark"><span>PR #3292</span><small>closed · Search</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/2361" title="Expand microbenchmark harness to include more APIs"><span>Issue #2361</span><small>closed · Project</small></a></div>
-            <div class="note">Direct benchmark-methodology search match plus project benchmark issue.</div>
+            <div class="intent"><strong>主要意图：</strong>修正 MoE benchmark 方法，避免缓存、shape、routing 或 harness 问题导致性能结论失真。</div>
           </li></ul></td></tr><tr><th>GEMM</th><td><ul class="items">
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>DSv3.2 / v4 weight-GEMM coverage</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>DSv3.2 / v4 weight-GEMM coverage</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2747" title="[Feature] Expand DeepGEMM&#x27;s GEMM support in FlashInfer"><span>Issue #2747</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2825" title="TRTLLM FP8 Block Scale 1x128 Kernel for DSV3.2"><span>Issue #2825</span><small>open · Project</small></a></div>
-            <div class="note">Board has DSv3.2/DeepGEMM coverage items; no exact DSv4 title in public board data.</div>
+            <div class="intent"><strong>主要意图：</strong>扩展 DeepSeek 系列 weight-GEMM/block-scaled GEMM shape 覆盖。</div>
           </li>
 
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>DSv3.2 weight-GEMM speedup</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>DSv3.2 weight-GEMM speedup</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2825" title="TRTLLM FP8 Block Scale 1x128 Kernel for DSV3.2"><span>Issue #2825</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2747" title="[Feature] Expand DeepGEMM&#x27;s GEMM support in FlashInfer"><span>Issue #2747</span><small>open · Project</small></a></div>
-            <div class="note">Mapped to DSv3.2 GEMM implementation/perf work.</div>
+            <div class="intent"><strong>主要意图：</strong>优化 DSv3.2 权重 GEMM 路径，提升模型特定 GEMM 吞吐。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Fused-bias GEMM for diffusion</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Fused-bias GEMM for diffusion</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2430" title="[feature] fused bias in gemm APIs for diffusion models"><span>Issue #2430</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>把 bias 融入 diffusion GEMM API，减少后处理 kernel 和额外内存读写。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Router GEMM at 384 experts</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Router GEMM at 384 experts</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2480" title="[DSR1] DSR1 router gemm does not support 384 experts"><span>Issue #2480</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>支持 384 expert router GEMM，覆盖 DSR1/Kimi 类 MoE routing 规模。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>GLM-5 router GEMM kernel</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>GLM-5 router GEMM kernel</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3185" title="feat: enable glm5 router gemm"><span>PR #3185</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2480" title="DSR1 router gemm does not support 384 experts"><span>Issue #2480</span><small>open · Project</small></a></div>
-            <div class="note">Direct GLM-5 router GEMM PR.</div>
+            <div class="intent"><strong>主要意图：</strong>启用 GLM-5 router GEMM 专用路径，减少 MoE router 阶段瓶颈。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Distributed MoE finalize fusion</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Distributed MoE finalize fusion</strong></div>
             <div class="links"><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/2823" title="TRTLLM fused MoE Finalize+ResidualAdd + AR+Norm for DSV3.2"><span>Issue #2823</span><small>closed · Project</small></a><a class="chip state-merged" href="https://github.com/flashinfer-ai/flashinfer/pull/2982" title="add MOE Finalize/Reduction patterns to unified allreduce_fusion API"><span>PR #2982</span><small>merged · Project</small></a></div>
-            <div class="note">Project item has linked PR #2982.</div>
+            <div class="intent"><strong>主要意图：</strong>融合 MoE finalize、reduction、residual/norm 等尾部流程，降低分布式 MoE 收尾开销。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Correct FP4 padding scales</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Correct FP4 padding scales</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2861" title="mm_fp4 trtllm backend leaks padding scales into real rows"><span>Issue #2861</span><small>open · Search</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/pull/2898" title="fix: snap weight_scale_vec_size to handle block_scale_interleave padding for SM120"><span>PR #2898</span><small>closed · Search</small></a></div>
-            <div class="note">Direct FP4 padding-scale search match.</div>
+            <div class="intent"><strong>主要意图：</strong>修正 FP4 padding/scale 处理，避免 padding scale 泄漏到真实行导致结果污染。</div>
           </li></ul></td></tr><tr><th>Comms</th><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Fused GEMM + reduce-scatter</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Fused GEMM + reduce-scatter</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2435" title="gemm+reduce_scatter high-throughput TP case for dense models"><span>Issue #2435</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>把 dense TP 场景中的 GEMM 和 reduce-scatter 融合，减少通信/计算边界开销。</div>
           </li>
 
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>Stable MNNVL allreduce in vLLM</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Stable MNNVL allreduce in vLLM</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2923" title="trtllm_mnnvl_allreduce_fusion hangs in vllm"><span>Issue #2923</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3053" title="Hang in oneshotAllreduceFusionKernel During Piecewise CUDA Graph Replay"><span>Issue #3053</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3277" title="comm: avoid torch symmetric memory by default for TRTLLM allreduce workspaces"><span>PR #3277</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3304" title="fix: MNNVL Allreduce uses bitwise sentinel checking"><span>PR #3304</span><small>open · Search</small></a></div>
-            <div class="note">No exact slide title on board; linked to public MNNVL/vLLM hang and replay-safety fixes.</div>
+            <div class="intent"><strong>主要意图：</strong>提高 vLLM 中 MNNVL allreduce 的稳定性，处理 hang、workspace 和 replay 相关问题。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Faster MoE all-to-all combine</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Faster MoE all-to-all combine</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3139" title="feat(moe-a2a): Update nvlink onesided all-to-all"><span>PR #3139</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3109" title="NVLink EP dispatch: carry per-token LoRA IDs through all-to-all"><span>Issue #3109</span><small>open · Search</small></a></div>
-            <div class="note">Mapped to MoE A2A/NVLink all-to-all work.</div>
+            <div class="intent"><strong>主要意图：</strong>优化 MoE dispatch/combine 的 NVLink one-sided all-to-all，降低 EP 通信延迟。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Replay-safe MNNVL allreduce</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Replay-safe MNNVL allreduce</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3053" title="Hang in oneshotAllreduceFusionKernel During Piecewise CUDA Graph Replay"><span>Issue #3053</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3304" title="MNNVL Allreduce uses bitwise sentinel checking to avoid subnormal value issue"><span>PR #3304</span><small>open · Search</small></a></div>
-            <div class="note">Replay-safety and MNNVL allreduce matched directly.</div>
+            <div class="intent"><strong>主要意图：</strong>让 MNNVL allreduce 在 CUDA Graph replay 场景下可重复、安全执行。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>TP-safe autotune across ranks</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>TP-safe autotune across ranks</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3186" title="AutoTuner.choose_one picks divergent tactics per rank under TP"><span>Issue #3186</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3187" title="Fix divergent tactics per rank under TP"><span>PR #3187</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match; project data links PR #3187.</div>
+            <div class="intent"><strong>主要意图：</strong>保证 TP 多 rank 选择一致 tactic，避免 rank 间分歧导致 NCCL/对称内存死锁。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Comms fusions under torch.compile</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Comms fusions under torch.compile</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2364" title="kernel requests for torch.compile based fusion in vLLM (comm kernels)"><span>Issue #2364</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>提供 torch.compile/vLLM 可捕获的通信融合 kernel，减少 eager-only 路径限制。</div>
           </li></ul></td></tr><tr><th>Ops</th><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Fused concat + FP8 quant</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Fused concat + FP8 quant</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2824" title="TRTLLM FusedCatFP8 for DSV3.2"><span>Issue #2824</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match by abbreviation.</div>
+            <div class="intent"><strong>主要意图：</strong>把 concat 和 FP8 quant 合并，减少 DSv3.2 等路径中的小 kernel 和中间写回。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>CUDA-graph-safe FP4 quantization</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>CUDA-graph-safe FP4 quantization</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3057" title="NaNs in CUDA Graph padded regions corrupt scales in nvfp4 quant functions"><span>Issue #3057</span><small>open · Project</small></a></div>
-            <div class="note">Maps to CUDA Graph + NVFP4 quant correctness.</div>
+            <div class="intent"><strong>主要意图：</strong>让 FP4 quant 在 CUDA Graph 和 padded region 下保持正确，不污染有效 scale。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>One-command JIT cache install</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>One-command JIT cache install</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3033" title="CLI utility that can aot download the jit cache"><span>Issue #3033</span><small>open · Project</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3142" title="AOT/JIT cache download CLI utility"><span>PR #3142</span><small>open · Project</small></a></div>
-            <div class="note">Project issue has linked PR #3142.</div>
+            <div class="intent"><strong>主要意图：</strong>提供一条命令提前下载/安装 JIT cache，减少首次运行编译等待和部署摩擦。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Segmented TopK from CCCL</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Segmented TopK from CCCL</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/3096" title="flashinfer.segmented_top_k: Segmented TopK Implementation from CCCL"><span>Issue #3096</span><small>open · Project</small></a></div>
-            <div class="note">Direct title match.</div>
+            <div class="intent"><strong>主要意图：</strong>引入 segmented TopK primitive，用于 routing、稀疏选择和批内分段 top-k 场景。</div>
           </li></ul></td><td><ul class="items">
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>torch.compile-safe FP4 quantization</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>torch.compile-safe FP4 quantization</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/issues/2999" title="fp4_quantize is incompatible with torch.compile"><span>Issue #2999</span><small>open · Search</small></a><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/3081" title="Add torch.compile-compatible custom op for fp4_quantize"><span>PR #3081</span><small>open · Search</small></a></div>
-            <div class="note">Direct torch.compile + FP4 quant search match.</div>
+            <div class="intent"><strong>主要意图：</strong>把 fp4_quantize 做成 torch.compile 兼容 custom op，避免 lazy JIT 和 data_ptr 破坏编译图。</div>
           </li>
 
-          <li class="roadmap-item conf-med">
-            <div class="item-top"><strong>Persistent autotune tactic blocklist</strong><span class="conf">medium</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Persistent autotune tactic blocklist</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/2997" title="offline tactics blocklist for GPU-aware autotuner pruning"><span>PR #2997</span><small>open · Search</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/issues/2620" title="Allow Autotuner to store to and load from Cache"><span>Issue #2620</span><small>closed · Project</small></a></div>
-            <div class="note">Blocklist PR is exact; persistence mapped to autotuner cache issue.</div>
+            <div class="intent"><strong>主要意图：</strong>为 autotuner 增加持久化/离线 tactic blocklist，避开已知慢或错误配置。</div>
           </li>
 
-          <li class="roadmap-item conf-high">
-            <div class="item-top"><strong>Fused RoPE + KV-cache append</strong><span class="conf">high</span></div>
+          <li class="roadmap-item">
+            <div class="item-top"><strong>Fused RoPE + KV-cache append</strong></div>
             <div class="links"><a class="chip state-open" href="https://github.com/flashinfer-ai/flashinfer/pull/2785" title="Add fused RoPE + paged KV cache append op for the non-quant path"><span>PR #2785</span><small>open · Search</small></a><a class="chip state-closed" href="https://github.com/flashinfer-ai/flashinfer/pull/2037" title="Add rope_quantize_fp8_append_paged_kv_cache"><span>PR #2037</span><small>closed · Search</small></a></div>
-            <div class="note">Direct fused RoPE + KV-cache append matches.</div>
+            <div class="intent"><strong>主要意图：</strong>融合 RoPE 和 KV cache append，减少 decode/prefill 中的 launch 和内存流量。</div>
           </li></ul></td></tr></tbody>
       </table>
     </div>
     <div class="footnotes">
-      <p><strong>Matching notes.</strong> “Project” chips came from the embedded public Projects v2 data in the FlashInfer Roadmap page, including linked PR metadata where present. “Search” chips came from public GitHub issue/PR search for phrases that were present on the slide but not directly visible in the project-board titles.</p>
-      <p><strong>Known gaps.</strong> “Kimi K2.5 / 2.6 MLA decode” has a direct K2.5 issue/PR match, but no public K2.6-titled issue/PR was found. “DSv3.2 / v4 weight-GEMM coverage” has DSv3.2/DeepGEMM matches, but no exact DSv4 weight-GEMM title was visible in public project data. Medium-confidence rows should be treated as nearest public traces rather than confirmed owner labels.</p>
+      <p><strong>Reference sources.</strong> Primary roadmap reference: <a href="https://github.com/orgs/flashinfer-ai/projects/2/views/2">FlashInfer Roadmap GitHub Project</a>. Issue and PR links point to public items in <a href="https://github.com/flashinfer-ai/flashinfer">flashinfer-ai/flashinfer</a>; rows marked Search use public GitHub search when the project card itself did not expose the exact public item.</p>
+      <p><strong>How to read this page.</strong> Each card explains the roadmap item's main intent first, then lists the associated public issue or PR references and their current open/closed/merged state.</p>
     </div>
   </main>
 </body>
