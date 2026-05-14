@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DSV4 Flash Humming MXFP4A8 MoE Microbench</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #5f6b7a;
+      --line: #d9ded7;
+      --blue: #2563eb;
+      --red: #dc2626;
+      --green: #168455;
+      --amber: #b7791f;
+      --shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 28px 28px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfbf8;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 42px; }
+    h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; letter-spacing: 0; }
+    h2 { margin: 28px 0 12px; font-size: 18px; letter-spacing: 0; }
+    .subtitle { color: var(--muted); max-width: 920px; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; box-shadow: var(--shadow); }
+    .card .label { color: var(--muted); font-size: 12px; }
+    .card .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .card .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .chart-card, .table-card, .notes { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; box-shadow: var(--shadow); }
+    .chart-title { font-weight: 700; margin-bottom: 8px; }
+    svg { width: 100%; height: auto; display: block; }
+    .chart-bg { fill: #fff; }
+    .grid { stroke: #e6e9e4; stroke-width: 1; }
+    .axis, .axis-label { fill: #607086; font-size: 11px; }
+    .axis-line { stroke: #9aa7b2; stroke-width: 1; }
+    .legend { display: flex; gap: 16px; margin-top: 8px; color: var(--muted); }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    .stack-row { display: grid; grid-template-columns: 104px minmax(140px, 1fr) 88px; gap: 10px; align-items: center; margin: 8px 0; }
+    .stack-label, .stack-value { color: var(--muted); font-size: 12px; }
+    .stack-track { height: 14px; min-width: 2px; background: #edf2f7; display: flex; border-radius: 4px; overflow: hidden; }
+    .stack-part.w13 { background: var(--blue); }
+    .stack-part.w2 { background: var(--green); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .pill { border: 1px solid var(--line); background: #fbfbf8; border-radius: 999px; padding: 5px 10px; color: var(--muted); font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 8px 9px; border-bottom: 1px solid #ecefea; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child, td:nth-child(2) { text-align: left; }
+    th { color: #465466; background: #f5f7f4; position: sticky; top: 0; }
+    .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+    .unit-note { margin: -4px 0 10px; color: var(--muted); font-size: 12px; }
+    .tp4 td:first-child { color: var(--blue); font-weight: 700; }
+    .tp8 td:first-child { color: var(--red); font-weight: 700; }
+    .notes ul { margin: 8px 0 0 18px; padding: 0; }
+    .notes li { margin: 4px 0; }
+    @media (max-width: 900px) {
+      .cards, .grid-two { grid-template-columns: 1fr; }
+      header { padding: 22px 18px 14px; }
+      main { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DSV4 Flash Humming MXFP4A8 MoE Microbench</h1>
+    <div class="subtitle">Kernel-only H20 measurement for serving-shard MoE GEMM shapes. The benchmark excludes serving startup, routing latency, and all-to-all latency.</div>
+    <div class="pill-row">
+      <span class="pill">workload: dsv4-flash</span>
+      <span class="pill">hidden=4096</span>
+      <span class="pill">moe_intermediate=2048</span>
+      <span class="pill">experts=256</span>
+      <span class="pill">top_k=6</span>
+      <span class="pill">dtype: FP8 x MXFP4</span>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="label">Best combined throughput</div><div class="value">29.45 TOPS</div><div class="note">TP4, 256 global tokens</div></div>
+      <div class="card"><div class="label">Lowest 1-token latency</div><div class="value">0.0281 ms</div><div class="note">TP4, combined w13+w2</div></div>
+      <div class="card"><div class="label">256-token TP8 vs TP4 latency</div><div class="value">2.67x</div><div class="note">lower combined per-rank time at max tested token count</div></div>
+      <div class="card"><div class="label">Rows validated</div><div class="value">36</div><div class="note">TP4/TP8 x w13/w2 x 9 token points</div></div>
+    </div>
+  </header>
+  <main>
+    <section class="grid-two">
+
+    <div class="chart-card">
+      <div class="chart-title">Combined latency, w13 + w2 (ms)</div>
+      <svg viewBox="0 0 760 260" role="img" aria-label="Combined latency, w13 + w2 (ms)">
+        <rect x="0" y="0" width="760" height="260" rx="8" class="chart-bg" />
+        <g><line x1="58" y1="216.0" x2="740" y2="216.0" class="grid" /><text x="48" y="220.0" text-anchor="end" class="axis">0.01</text></g><g><line x1="58" y1="167.5" x2="740" y2="167.5" class="grid" /><text x="48" y="171.5" text-anchor="end" class="axis">0.06</text></g><g><line x1="58" y1="119.0" x2="740" y2="119.0" class="grid" /><text x="48" y="123.0" text-anchor="end" class="axis">0.10</text></g><g><line x1="58" y1="70.5" x2="740" y2="70.5" class="grid" /><text x="48" y="74.5" text-anchor="end" class="axis">0.14</text></g><g><line x1="58" y1="22.0" x2="740" y2="22.0" class="grid" /><text x="48" y="26.0" text-anchor="end" class="axis">0.18</text></g>
+        <g><line x1="58.0" y1="22" x2="58.0" y2="216" class="grid" /><text x="58.0" y="244" text-anchor="middle" class="axis">1</text></g><g><line x1="143.2" y1="22" x2="143.2" y2="216" class="grid" /><text x="143.2" y="244" text-anchor="middle" class="axis">2</text></g><g><line x1="228.5" y1="22" x2="228.5" y2="216" class="grid" /><text x="228.5" y="244" text-anchor="middle" class="axis">4</text></g><g><line x1="313.8" y1="22" x2="313.8" y2="216" class="grid" /><text x="313.8" y="244" text-anchor="middle" class="axis">8</text></g><g><line x1="399.0" y1="22" x2="399.0" y2="216" class="grid" /><text x="399.0" y="244" text-anchor="middle" class="axis">16</text></g><g><line x1="484.2" y1="22" x2="484.2" y2="216" class="grid" /><text x="484.2" y="244" text-anchor="middle" class="axis">32</text></g><g><line x1="569.5" y1="22" x2="569.5" y2="216" class="grid" /><text x="569.5" y="244" text-anchor="middle" class="axis">64</text></g><g><line x1="654.8" y1="22" x2="654.8" y2="216" class="grid" /><text x="654.8" y="244" text-anchor="middle" class="axis">128</text></g><g><line x1="740.0" y1="22" x2="740.0" y2="216" class="grid" /><text x="740.0" y="244" text-anchor="middle" class="axis">256</text></g>
+        <line x1="58" y1="216" x2="740" y2="216" class="axis-line" />
+        <line x1="58" y1="22" x2="58" y2="216" class="axis-line" />
+        <text x="380.0" y="258" text-anchor="middle" class="axis-label">global decode tokens</text>
+        <text x="16" y="130.0" text-anchor="middle" class="axis-label" transform="rotate(-90 16 130.0)">combined latency (ms)</text>
+        <polyline points="58.0,199.8 143.2,197.0 228.5,186.7 313.8,173.9 399.0,142.1 484.2,85.9 569.5,38.7 654.8,38.2 740.0,38.5" fill="none" stroke="#2563eb" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" /><polyline points="58.0,199.0 143.2,196.8 228.5,197.9 313.8,193.8 399.0,185.3 484.2,162.3 569.5,158.0 654.8,158.5 740.0,160.2" fill="none" stroke="#dc2626" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
+        <circle cx="58.0" cy="199.8" r="3.2" fill="#2563eb"><title>TP=4 tokens=1: 0.0281</title></circle><circle cx="143.2" cy="197.0" r="3.2" fill="#2563eb"><title>TP=4 tokens=2: 0.0305</title></circle><circle cx="228.5" cy="186.7" r="3.2" fill="#2563eb"><title>TP=4 tokens=4: 0.0391</title></circle><circle cx="313.8" cy="173.9" r="3.2" fill="#2563eb"><title>TP=4 tokens=8: 0.0499</title></circle><circle cx="399.0" cy="142.1" r="3.2" fill="#2563eb"><title>TP=4 tokens=16: 0.0767</title></circle><circle cx="484.2" cy="85.9" r="3.2" fill="#2563eb"><title>TP=4 tokens=32: 0.1241</title></circle><circle cx="569.5" cy="38.7" r="3.2" fill="#2563eb"><title>TP=4 tokens=64: 0.1639</title></circle><circle cx="654.8" cy="38.2" r="3.2" fill="#2563eb"><title>TP=4 tokens=128: 0.1643</title></circle><circle cx="740.0" cy="38.5" r="3.2" fill="#2563eb"><title>TP=4 tokens=256: 0.1641</title></circle><circle cx="58.0" cy="199.0" r="3.2" fill="#dc2626"><title>TP=8 tokens=1: 0.0288</title></circle><circle cx="143.2" cy="196.8" r="3.2" fill="#dc2626"><title>TP=8 tokens=2: 0.0307</title></circle><circle cx="228.5" cy="197.9" r="3.2" fill="#dc2626"><title>TP=8 tokens=4: 0.0297</title></circle><circle cx="313.8" cy="193.8" r="3.2" fill="#dc2626"><title>TP=8 tokens=8: 0.0332</title></circle><circle cx="399.0" cy="185.3" r="3.2" fill="#dc2626"><title>TP=8 tokens=16: 0.0403</title></circle><circle cx="484.2" cy="162.3" r="3.2" fill="#dc2626"><title>TP=8 tokens=32: 0.0597</title></circle><circle cx="569.5" cy="158.0" r="3.2" fill="#dc2626"><title>TP=8 tokens=64: 0.0634</title></circle><circle cx="654.8" cy="158.5" r="3.2" fill="#dc2626"><title>TP=8 tokens=128: 0.0630</title></circle><circle cx="740.0" cy="160.2" r="3.2" fill="#dc2626"><title>TP=8 tokens=256: 0.0615</title></circle>
+      </svg>
+      <div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:#2563eb"></span>TP=4</span><span class="legend-item"><span class="legend-swatch" style="background:#dc2626"></span>TP=8</span></div>
+    </div>
+
+
+    <div class="chart-card">
+      <div class="chart-title">Combined compute throughput (TOPS)</div>
+      <svg viewBox="0 0 760 260" role="img" aria-label="Combined compute throughput (TOPS)">
+        <rect x="0" y="0" width="760" height="260" rx="8" class="chart-bg" />
+        <g><line x1="58" y1="216.0" x2="740" y2="216.0" class="grid" /><text x="48" y="220.0" text-anchor="end" class="axis">0.00</text></g><g><line x1="58" y1="167.5" x2="740" y2="167.5" class="grid" /><text x="48" y="171.5" text-anchor="end" class="axis">8.09</text></g><g><line x1="58" y1="119.0" x2="740" y2="119.0" class="grid" /><text x="48" y="123.0" text-anchor="end" class="axis">16.19</text></g><g><line x1="58" y1="70.5" x2="740" y2="70.5" class="grid" /><text x="48" y="74.5" text-anchor="end" class="axis">24.28</text></g><g><line x1="58" y1="22.0" x2="740" y2="22.0" class="grid" /><text x="48" y="26.0" text-anchor="end" class="axis">32.37</text></g>
+        <g><line x1="58.0" y1="22" x2="58.0" y2="216" class="grid" /><text x="58.0" y="244" text-anchor="middle" class="axis">1</text></g><g><line x1="143.2" y1="22" x2="143.2" y2="216" class="grid" /><text x="143.2" y="244" text-anchor="middle" class="axis">2</text></g><g><line x1="228.5" y1="22" x2="228.5" y2="216" class="grid" /><text x="228.5" y="244" text-anchor="middle" class="axis">4</text></g><g><line x1="313.8" y1="22" x2="313.8" y2="216" class="grid" /><text x="313.8" y="244" text-anchor="middle" class="axis">8</text></g><g><line x1="399.0" y1="22" x2="399.0" y2="216" class="grid" /><text x="399.0" y="244" text-anchor="middle" class="axis">16</text></g><g><line x1="484.2" y1="22" x2="484.2" y2="216" class="grid" /><text x="484.2" y="244" text-anchor="middle" class="axis">32</text></g><g><line x1="569.5" y1="22" x2="569.5" y2="216" class="grid" /><text x="569.5" y="244" text-anchor="middle" class="axis">64</text></g><g><line x1="654.8" y1="22" x2="654.8" y2="216" class="grid" /><text x="654.8" y="244" text-anchor="middle" class="axis">128</text></g><g><line x1="740.0" y1="22" x2="740.0" y2="216" class="grid" /><text x="740.0" y="244" text-anchor="middle" class="axis">256</text></g>
+        <line x1="58" y1="216" x2="740" y2="216" class="axis-line" />
+        <line x1="58" y1="22" x2="58" y2="216" class="axis-line" />
+        <text x="380.0" y="258" text-anchor="middle" class="axis-label">global decode tokens</text>
+        <text x="16" y="130.0" text-anchor="middle" class="axis-label" transform="rotate(-90 16 130.0)">combined throughput (TOPS)</text>
+        <polyline points="58.0,210.6 143.2,208.6 228.5,204.4 313.8,197.9 399.0,192.4 484.2,186.8 569.5,171.8 654.8,127.9 740.0,39.5" fill="none" stroke="#2563eb" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" /><polyline points="58.0,214.7 143.2,213.5 228.5,212.2 313.8,209.2 399.0,204.8 484.2,200.9 569.5,187.4 654.8,158.5 740.0,98.3" fill="none" stroke="#dc2626" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
+        <circle cx="58.0" cy="210.6" r="3.2" fill="#2563eb"><title>TP=4 tokens=1: 0.8952</title></circle><circle cx="143.2" cy="208.6" r="3.2" fill="#2563eb"><title>TP=4 tokens=2: 1.2374</title></circle><circle cx="228.5" cy="204.4" r="3.2" fill="#2563eb"><title>TP=4 tokens=4: 1.9285</title></circle><circle cx="313.8" cy="197.9" r="3.2" fill="#2563eb"><title>TP=4 tokens=8: 3.0235</title></circle><circle cx="399.0" cy="192.4" r="3.2" fill="#2563eb"><title>TP=4 tokens=16: 3.9361</title></circle><circle cx="484.2" cy="186.8" r="3.2" fill="#2563eb"><title>TP=4 tokens=32: 4.8654</title></circle><circle cx="569.5" cy="171.8" r="3.2" fill="#2563eb"><title>TP=4 tokens=64: 7.3697</title></circle><circle cx="654.8" cy="127.9" r="3.2" fill="#2563eb"><title>TP=4 tokens=128: 14.7015</title></circle><circle cx="740.0" cy="39.5" r="3.2" fill="#2563eb"><title>TP=4 tokens=256: 29.4499</title></circle><circle cx="58.0" cy="214.7" r="3.2" fill="#dc2626"><title>TP=8 tokens=1: 0.2186</title></circle><circle cx="143.2" cy="213.5" r="3.2" fill="#dc2626"><title>TP=8 tokens=2: 0.4100</title></circle><circle cx="228.5" cy="212.2" r="3.2" fill="#dc2626"><title>TP=8 tokens=4: 0.6351</title></circle><circle cx="313.8" cy="209.2" r="3.2" fill="#dc2626"><title>TP=8 tokens=8: 1.1359</title></circle><circle cx="399.0" cy="204.8" r="3.2" fill="#dc2626"><title>TP=8 tokens=16: 1.8715</title></circle><circle cx="484.2" cy="200.9" r="3.2" fill="#dc2626"><title>TP=8 tokens=32: 2.5276</title></circle><circle cx="569.5" cy="187.4" r="3.2" fill="#dc2626"><title>TP=8 tokens=64: 4.7655</title></circle><circle cx="654.8" cy="158.5" r="3.2" fill="#dc2626"><title>TP=8 tokens=128: 9.5903</title></circle><circle cx="740.0" cy="98.3" r="3.2" fill="#dc2626"><title>TP=8 tokens=256: 19.6421</title></circle>
+      </svg>
+      <div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:#2563eb"></span>TP=4</span><span class="legend-item"><span class="legend-swatch" style="background:#dc2626"></span>TP=8</span></div>
+    </div>
+
+    </section>
+
+    <h2>w13 / w2 Latency Split</h2>
+    <div class="chart-card">
+      <div class="chart-title">Combined latency decomposed by leg</div>
+      <div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:#2563eb"></span>w13</span><span class="legend-item"><span class="legend-swatch" style="background:#168455"></span>w2</span></div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 1 tok</div>
+          <div class="stack-track" style="width:17.11%">
+            <div class="stack-part w13" style="width:62.25%"></div>
+            <div class="stack-part w2" style="width:37.75%"></div>
+          </div>
+          <div class="stack-value">0.0281 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 2 tok</div>
+          <div class="stack-track" style="width:18.56%">
+            <div class="stack-part w13" style="width:58.39%"></div>
+            <div class="stack-part w2" style="width:41.61%"></div>
+          </div>
+          <div class="stack-value">0.0305 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 4 tok</div>
+          <div class="stack-track" style="width:23.82%">
+            <div class="stack-part w13" style="width:55.64%"></div>
+            <div class="stack-part w2" style="width:44.36%"></div>
+          </div>
+          <div class="stack-value">0.0391 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 8 tok</div>
+          <div class="stack-track" style="width:30.39%">
+            <div class="stack-part w13" style="width:56.06%"></div>
+            <div class="stack-part w2" style="width:43.94%"></div>
+          </div>
+          <div class="stack-value">0.0499 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 16 tok</div>
+          <div class="stack-track" style="width:46.69%">
+            <div class="stack-part w13" style="width:56.53%"></div>
+            <div class="stack-part w2" style="width:43.47%"></div>
+          </div>
+          <div class="stack-value">0.0767 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 32 tok</div>
+          <div class="stack-track" style="width:75.54%">
+            <div class="stack-part w13" style="width:59.26%"></div>
+            <div class="stack-part w2" style="width:40.74%"></div>
+          </div>
+          <div class="stack-value">0.1241 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 64 tok</div>
+          <div class="stack-track" style="width:99.74%">
+            <div class="stack-part w13" style="width:57.90%"></div>
+            <div class="stack-part w2" style="width:42.10%"></div>
+          </div>
+          <div class="stack-value">0.1639 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 128 tok</div>
+          <div class="stack-track" style="width:100.00%">
+            <div class="stack-part w13" style="width:57.86%"></div>
+            <div class="stack-part w2" style="width:42.14%"></div>
+          </div>
+          <div class="stack-value">0.1643 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP4 / 256 tok</div>
+          <div class="stack-track" style="width:99.84%">
+            <div class="stack-part w13" style="width:58.01%"></div>
+            <div class="stack-part w2" style="width:41.99%"></div>
+          </div>
+          <div class="stack-value">0.1641 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 1 tok</div>
+          <div class="stack-track" style="width:17.51%">
+            <div class="stack-part w13" style="width:69.80%"></div>
+            <div class="stack-part w2" style="width:30.20%"></div>
+          </div>
+          <div class="stack-value">0.0288 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 2 tok</div>
+          <div class="stack-track" style="width:18.67%">
+            <div class="stack-part w13" style="width:71.87%"></div>
+            <div class="stack-part w2" style="width:28.13%"></div>
+          </div>
+          <div class="stack-value">0.0307 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 4 tok</div>
+          <div class="stack-track" style="width:18.08%">
+            <div class="stack-part w13" style="width:62.99%"></div>
+            <div class="stack-part w2" style="width:37.01%"></div>
+          </div>
+          <div class="stack-value">0.0297 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 8 tok</div>
+          <div class="stack-track" style="width:20.22%">
+            <div class="stack-part w13" style="width:59.73%"></div>
+            <div class="stack-part w2" style="width:40.27%"></div>
+          </div>
+          <div class="stack-value">0.0332 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 16 tok</div>
+          <div class="stack-track" style="width:24.55%">
+            <div class="stack-part w13" style="width:52.51%"></div>
+            <div class="stack-part w2" style="width:47.49%"></div>
+          </div>
+          <div class="stack-value">0.0403 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 32 tok</div>
+          <div class="stack-track" style="width:36.35%">
+            <div class="stack-part w13" style="width:52.74%"></div>
+            <div class="stack-part w2" style="width:47.26%"></div>
+          </div>
+          <div class="stack-value">0.0597 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 64 tok</div>
+          <div class="stack-track" style="width:38.56%">
+            <div class="stack-part w13" style="width:53.19%"></div>
+            <div class="stack-part w2" style="width:46.81%"></div>
+          </div>
+          <div class="stack-value">0.0634 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 128 tok</div>
+          <div class="stack-track" style="width:38.32%">
+            <div class="stack-part w13" style="width:51.39%"></div>
+            <div class="stack-part w2" style="width:48.61%"></div>
+          </div>
+          <div class="stack-value">0.0630 ms</div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-label">TP8 / 256 tok</div>
+          <div class="stack-track" style="width:37.42%">
+            <div class="stack-part w13" style="width:52.99%"></div>
+            <div class="stack-part w2" style="width:47.01%"></div>
+          </div>
+          <div class="stack-value">0.0615 ms</div>
+        </div>
+
+    </div>
+
+    <h2>Combined Per-rank MoE GEMM Cost</h2>
+    <p class="unit-note">Units: time columns are milliseconds (ms), throughput columns are tera operations per second (TOPS), bandwidth columns are gigabytes per second (GB/s), and token/row/expert/shape columns are counts.</p>
+    <div class="table-card"><div class="table-scroll">
+      <table><thead><tr><th>tp_size</th><th>global_tokens (tokens)</th><th>local_routed_rows (rows)</th><th>combined_time_ms (ms)</th><th>combined_compute_tops (TOPS)</th><th>combined_memory_gbps (GB/s)</th><th>w13_time_ms (ms)</th><th>w2_time_ms (ms)</th></tr></thead><tbody><tr class="tp4"><td>4</td><td>1</td><td>2</td><td>0.0281</td><td>0.8952</td><td>238.8491</td><td>0.0175</td><td>0.0106</td></tr><tr class="tp4"><td>4</td><td>2</td><td>3</td><td>0.0305</td><td>1.2374</td><td>330.1656</td><td>0.0178</td><td>0.0127</td></tr><tr class="tp4"><td>4</td><td>4</td><td>6</td><td>0.0391</td><td>1.9285</td><td>514.5453</td><td>0.0218</td><td>0.0174</td></tr><tr class="tp4"><td>4</td><td>8</td><td>12</td><td>0.0499</td><td>3.0235</td><td>806.7118</td><td>0.0280</td><td>0.0219</td></tr><tr class="tp4"><td>4</td><td>16</td><td>24</td><td>0.0767</td><td>3.9361</td><td>1050.2139</td><td>0.0434</td><td>0.0334</td></tr><tr class="tp4"><td>4</td><td>32</td><td>48</td><td>0.1241</td><td>4.8654</td><td>1298.1745</td><td>0.0736</td><td>0.0506</td></tr><tr class="tp4"><td>4</td><td>64</td><td>96</td><td>0.1639</td><td>7.3697</td><td>1313.8008</td><td>0.0949</td><td>0.0690</td></tr><tr class="tp4"><td>4</td><td>128</td><td>192</td><td>0.1643</td><td>14.7015</td><td>1319.1042</td><td>0.0951</td><td>0.0692</td></tr><tr class="tp4"><td>4</td><td>256</td><td>384</td><td>0.1641</td><td>29.4499</td><td>1338.5926</td><td>0.0952</td><td>0.0689</td></tr><tr class="tp8"><td>8</td><td>1</td><td>1</td><td>0.0288</td><td>0.2186</td><td>58.5543</td><td>0.0201</td><td>0.0087</td></tr><tr class="tp8"><td>8</td><td>2</td><td>2</td><td>0.0307</td><td>0.4100</td><td>109.8161</td><td>0.0221</td><td>0.0086</td></tr><tr class="tp8"><td>8</td><td>4</td><td>3</td><td>0.0297</td><td>0.6351</td><td>170.1013</td><td>0.0187</td><td>0.0110</td></tr><tr class="tp8"><td>8</td><td>8</td><td>6</td><td>0.0332</td><td>1.1359</td><td>304.2088</td><td>0.0198</td><td>0.0134</td></tr><tr class="tp8"><td>8</td><td>16</td><td>12</td><td>0.0403</td><td>1.8715</td><td>501.2470</td><td>0.0212</td><td>0.0192</td></tr><tr class="tp8"><td>8</td><td>32</td><td>24</td><td>0.0597</td><td>2.5276</td><td>676.9531</td><td>0.0315</td><td>0.0282</td></tr><tr class="tp8"><td>8</td><td>64</td><td>48</td><td>0.0634</td><td>4.7655</td><td>854.3086</td><td>0.0337</td><td>0.0297</td></tr><tr class="tp8"><td>8</td><td>128</td><td>96</td><td>0.0630</td><td>9.5903</td><td>869.9655</td><td>0.0324</td><td>0.0306</td></tr><tr class="tp8"><td>8</td><td>256</td><td>192</td><td>0.0615</td><td>19.6421</td><td>912.0949</td><td>0.0326</td><td>0.0289</td></tr></tbody></table>
+    </div></div>
+
+    <h2>Per-leg Details</h2>
+    <p class="unit-note">Units: <code>time_ms</code> is ms, <code>compute_tops</code> is TOPS, <code>memory_gbps</code> is GB/s, and <code>shape_n</code>/<code>shape_k</code> are matrix dimensions.</p>
+    <div class="table-card"><div class="table-scroll">
+      <table><thead><tr><th>tp_size</th><th>leg</th><th>global_tokens (tokens)</th><th>local_routed_rows (rows)</th><th>local_experts (experts)</th><th>shape_n (dim)</th><th>shape_k (dim)</th><th>time_ms (ms)</th><th>compute_tops (TOPS)</th><th>memory_gbps (GB/s)</th></tr></thead><tbody><tr class="tp4"><td>4</td><td>w13</td><td>1</td><td>2</td><td>64</td><td>1024</td><td>4096</td><td>0.0175</td><td>0.9588</td><td>255.3795</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>2</td><td>3</td><td>64</td><td>1024</td><td>4096</td><td>0.0178</td><td>1.4129</td><td>376.3550</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>4</td><td>6</td><td>64</td><td>1024</td><td>4096</td><td>0.0218</td><td>2.3106</td><td>615.4662</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>8</td><td>12</td><td>64</td><td>1024</td><td>4096</td><td>0.0280</td><td>3.5955</td><td>957.7240</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>16</td><td>24</td><td>64</td><td>1024</td><td>4096</td><td>0.0434</td><td>4.6418</td><td>1236.4159</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>32</td><td>48</td><td>64</td><td>1024</td><td>4096</td><td>0.0736</td><td>5.4737</td><td>1458.0073</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>64</td><td>96</td><td>64</td><td>1024</td><td>4096</td><td>0.0949</td><td>8.4850</td><td>1508.8199</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>128</td><td>192</td><td>64</td><td>1024</td><td>4096</td><td>0.0951</td><td>16.9391</td><td>1512.2722</td></tr><tr class="tp4"><td>4</td><td>w13</td><td>256</td><td>384</td><td>64</td><td>1024</td><td>4096</td><td>0.0952</td><td>33.8456</td><td>1523.2218</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>1</td><td>2</td><td>64</td><td>4096</td><td>512</td><td>0.0106</td><td>0.7904</td><td>211.5948</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>2</td><td>3</td><td>64</td><td>4096</td><td>512</td><td>0.0127</td><td>0.9912</td><td>265.3601</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>4</td><td>6</td><td>64</td><td>4096</td><td>512</td><td>0.0174</td><td>1.4491</td><td>387.9572</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>8</td><td>12</td><td>64</td><td>4096</td><td>512</td><td>0.0219</td><td>2.2936</td><td>614.0460</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>16</td><td>24</td><td>64</td><td>4096</td><td>512</td><td>0.0334</td><td>3.0183</td><td>808.0582</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>32</td><td>48</td><td>64</td><td>4096</td><td>512</td><td>0.0506</td><td>3.9807</td><td>1065.7009</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>64</td><td>96</td><td>64</td><td>4096</td><td>512</td><td>0.0690</td><td>5.8355</td><td>1045.5539</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>128</td><td>192</td><td>64</td><td>4096</td><td>512</td><td>0.0692</td><td>11.6292</td><td>1053.8729</td></tr><tr class="tp4"><td>4</td><td>w2</td><td>256</td><td>384</td><td>64</td><td>4096</td><td>512</td><td>0.0689</td><td>23.3775</td><td>1083.5412</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>1</td><td>1</td><td>32</td><td>512</td><td>4096</td><td>0.0201</td><td>0.2088</td><td>55.7242</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>2</td><td>2</td><td>32</td><td>512</td><td>4096</td><td>0.0221</td><td>0.3803</td><td>101.5034</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>4</td><td>3</td><td>32</td><td>512</td><td>4096</td><td>0.0187</td><td>0.6722</td><td>179.3890</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>8</td><td>6</td><td>32</td><td>512</td><td>4096</td><td>0.0198</td><td>1.2678</td><td>338.3495</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>16</td><td>12</td><td>32</td><td>512</td><td>4096</td><td>0.0212</td><td>2.3763</td><td>634.1916</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>32</td><td>24</td><td>32</td><td>512</td><td>4096</td><td>0.0315</td><td>3.1951</td><td>852.7037</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>64</td><td>48</td><td>32</td><td>512</td><td>4096</td><td>0.0337</td><td>5.9733</td><td>1065.2020</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>128</td><td>96</td><td>32</td><td>512</td><td>4096</td><td>0.0324</td><td>12.4408</td><td>1116.8553</td></tr><tr class="tp8"><td>8</td><td>w13</td><td>256</td><td>192</td><td>32</td><td>512</td><td>4096</td><td>0.0326</td><td>24.7127</td><td>1124.3735</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>1</td><td>1</td><td>32</td><td>4096</td><td>256</td><td>0.0087</td><td>0.2414</td><td>65.0968</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>2</td><td>2</td><td>32</td><td>4096</td><td>256</td><td>0.0086</td><td>0.4859</td><td>131.0558</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>4</td><td>3</td><td>32</td><td>4096</td><td>256</td><td>0.0110</td><td>0.5721</td><td>154.2929</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>8</td><td>6</td><td>32</td><td>4096</td><td>256</td><td>0.0134</td><td>0.9401</td><td>253.5746</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>16</td><td>12</td><td>32</td><td>4096</td><td>256</td><td>0.0192</td><td>1.3135</td><td>354.2776</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>32</td><td>24</td><td>32</td><td>4096</td><td>256</td><td>0.0282</td><td>1.7827</td><td>480.8319</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>64</td><td>48</td><td>32</td><td>4096</td><td>256</td><td>0.0297</td><td>3.3933</td><td>614.7060</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>128</td><td>96</td><td>32</td><td>4096</td><td>256</td><td>0.0306</td><td>6.5765</td><td>608.9400</td></tr><tr class="tp8"><td>8</td><td>w2</td><td>256</td><td>192</td><td>32</td><td>4096</td><td>256</td><td>0.0289</td><td>13.9270</td><td>672.8337</td></tr></tbody></table>
+    </div></div>
+
+    <h2>Notes</h2>
+    <div class="notes">
+      <ul>
+        <li>Local routed rows are computed as <code>ceil(global_tokens * 6 / TP)</code>.</li>
+        <li>TP4 shapes: w13 N=1024 K=4096, w2 N=4096 K=512, local experts=64.</li>
+        <li>TP8 shapes: w13 N=512 K=4096, w2 N=4096 K=256, local experts=32.</li>
+        <li>Units: latency/time is reported in milliseconds (ms), compute throughput in TOPS, and memory bandwidth in GB/s.</li>
+        <li>Raw CSV and JSON artifacts are in the same result directory.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>
