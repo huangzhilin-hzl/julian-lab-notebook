@@ -1,0 +1,48 @@
+{
+  "started_at": "2026-05-16 20:38:26",
+  "dataset": "ShareGPT_V3_unfiltered_cleaned_split",
+  "port": "<port>",
+  "ttft_lens": [
+    16384,
+    32768,
+    65536,
+    131072
+  ],
+  "tpot_lens": [
+    1024,
+    32768,
+    65536,
+    131072
+  ],
+  "tpot_batches": [
+    1,
+    4,
+    8
+  ],
+  "rounds": 3,
+  "variants": [
+    "flashinfer_mxfp4a16"
+  ],
+  "note": "Flash CP8 TP8 reference style, no DeepEP launch args or env. Server launched with --disable-radix-cache. MXFP4/W4A16 backend comparison.",
+  "runtime": {
+    "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+    "humming_repo": "<humming-source>",
+    "expected_humming_commit": "f43305a55cd5e9eb49bad2a2554c31be6df244d7",
+    "sglang_version": "0.5.10.post2.dev1241+gd9153342e",
+    "sgl-kernel_version": null,
+    "humming-kernels_version": "0.1.0",
+    "flashinfer-python_version": "0.6.11.post3",
+    "torch_version": "2.11.0+cu130",
+    "triton_version": "3.6.0",
+    "humming_origin": "<humming-source>/humming/__init__.py",
+    "humming_commit": "f43305a55cd5e9eb49bad2a2554c31be6df244d7",
+    "humming_status_short": "",
+    "sglang_commit": "0a2fb2c4ea335e548cb86b1df8877428858d592c",
+    "sglang_branch": "HEAD",
+    "flashinfer_origin": "<python-site-packages>/flashinfer/__init__.py",
+    "flashinfer_sm90_mixed_input_helpers": {
+      "weights": "<function interleave_moe_weights_for_sm90_mixed_gemm at 0x7f1f61f18c20>",
+      "scales": "<function interleave_moe_scales_for_sm90_mixed_gemm at 0x7f1f61f18ae0>"
+    }
+  }
+}
