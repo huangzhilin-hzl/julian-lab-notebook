@@ -170,6 +170,24 @@ def _ensure_submodule(path: str, expected_child: str, url: str) -> None:
     )
 
 
+def _ensure_in_tree_package_data_layout() -> None:
+    """Mirror package-data paths expected by JIT when importing from source."""
+    data_dir = Path(WORKDIR) / "flashinfer" / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    for name, source in {
+        "csrc": Path(WORKDIR) / "csrc",
+        "include": Path(WORKDIR) / "include",
+        "cutlass": Path(WORKDIR) / "3rdparty" / "cutlass",
+        "spdlog": Path(WORKDIR) / "3rdparty" / "spdlog",
+        "cccl": Path(WORKDIR) / "3rdparty" / "cccl",
+    }.items():
+        target = data_dir / name
+        if target.exists() or target.is_symlink():
+            continue
+        target.symlink_to(source, target_is_directory=True)
+
+
 def _prepare_flashinfer_source() -> None:
     os.chdir(WORKDIR)
     pythonpath = os.environ.get("PYTHONPATH", "")
@@ -185,6 +203,7 @@ def _prepare_flashinfer_source() -> None:
         "3rdparty/spdlog", "include", "https://github.com/gabime/spdlog.git"
     )
     _ensure_submodule("3rdparty/cccl", "cub", "https://github.com/NVIDIA/cccl.git")
+    _ensure_in_tree_package_data_layout()
 
 
 def _benchmark_cmd(
