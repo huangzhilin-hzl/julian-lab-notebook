@@ -1,4 +1,4 @@
-"""Modal runner for FlashInfer's DeepSeek-V3 NVFP4 MoE benchmark.
+"""Modal runner for FlashInfer's DeepSeek NVFP4 MoE benchmark.
 
 Run from the lab-notebook repository:
 
@@ -6,12 +6,19 @@ Run from the lab-notebook repository:
     MODAL_GPU=B200 \
     modal run flashinfer/moe/deepseek_v3_nvfp4/scripts/modal_bench_moe_deepseek.py
 
-Generation-phase run:
+DeepSeek-V4 prefill/decode run:
 
     FLASHINFER_SRC_DIR=/path/to/flashinfer \
     MODAL_GPU=B200 \
     modal run flashinfer/moe/deepseek_v3_nvfp4/scripts/modal_bench_moe_deepseek.py \
-      --gen-phase --ep 8 --warmup 5 --iters 30
+      --model deepseek-v4-flash --phase both --ep 1 --warmup 5 --iters 30
+
+DeepSeek-V4 Pro decode-only run:
+
+    FLASHINFER_SRC_DIR=/path/to/flashinfer \
+    MODAL_GPU=B200 \
+    modal run flashinfer/moe/deepseek_v3_nvfp4/scripts/modal_bench_moe_deepseek.py \
+      --model deepseek-v4-pro --phase decode --ep 1 --warmup 5 --iters 30
 
 The wrapped benchmark requires an SM100-family GPU, so the default Modal GPU is
 B200. Benchmark logs are written to the Modal Volume path printed at the end.
@@ -35,6 +42,9 @@ WORKDIR = "/workspace/flashinfer"
 FLASHINFER_SRC_ENV = "FLASHINFER_SRC_DIR"
 REMOTE_PYTHON = "python"
 IS_MODAL_REMOTE = os.environ.get("MODAL_IS_REMOTE") == "1"
+DEFAULT_MODEL = "deepseek-v4-flash"
+DEFAULT_PREFILL_TOKENS = "128,256,512,1024,2048,4096,8192"
+DEFAULT_DECODE_TOKENS = "1,2,4,8,16,32,64,128"
 
 
 def _arg_value(flag: str) -> str | None:
@@ -45,6 +55,10 @@ def _arg_value(flag: str) -> str | None:
         if arg.startswith(prefix):
             return arg[len(prefix) :]
     return None
+
+
+def _arg_present(flag: str) -> bool:
+    return any(arg == flag or arg.startswith(f"{flag}=") for arg in sys.argv)
 
 
 flashinfer_src_raw = os.environ.get(FLASHINFER_SRC_ENV)
@@ -137,6 +151,10 @@ def _run_to_file(cmd: list[str], log_path: Path, *, cwd: str = WORKDIR) -> None:
     )
 
 
+def _model_slug(model: str) -> str:
+    return model.replace("-", "_")
+
+
 def _ensure_build_meta() -> None:
     build_meta_path = Path(WORKDIR) / "flashinfer" / "_build_meta.py"
     if build_meta_path.exists():
@@ -208,6 +226,7 @@ def _prepare_flashinfer_source() -> None:
 
 def _benchmark_cmd(
     *,
+    model: str,
     num_tokens: str,
     warmup: int,
     iters: int,
@@ -221,6 +240,7 @@ def _benchmark_cmd(
     routing_bias_scale: float,
 ) -> list[str]:
     cmd = [REMOTE_PYTHON, "benchmarks/bench_moe_deepseek.py"]
+    cmd.extend(["--model", model])
     if num_tokens:
         cmd.extend(["--num-tokens", num_tokens])
     cmd.extend(["--warmup", str(warmup), "--iters", str(iters), "--ep", str(ep)])
@@ -262,6 +282,7 @@ def smoke() -> None:
     volumes={"/cache/flashinfer": cache_volume},
 )
 def deepseek_moe_benchmark(
+    model: str = DEFAULT_MODEL,
     num_tokens: str = "",
     warmup: int = 10,
     iters: int = 100,
@@ -273,16 +294,17 @@ def deepseek_moe_benchmark(
     no_cupti: bool = False,
     functional_api: bool = False,
     routing_bias_scale: float = 0.01,
-    label: str = "deepseek_v3_nvfp4",
+    label: str = "deepseek_moe_nvfp4",
 ) -> str:
     _prepare_flashinfer_source()
     _run(["nvidia-smi"])
 
     run_id = time.strftime("%Y%m%d-%H%M%S")
-    result_dir = Path("/cache/flashinfer/results/moe/deepseek_v3_nvfp4") / run_id
+    result_dir = Path("/cache/flashinfer/results/moe") / _model_slug(model) / run_id
     result_dir.mkdir(parents=True, exist_ok=True)
 
     cmd = _benchmark_cmd(
+        model=model,
         num_tokens=num_tokens,
         warmup=warmup,
         iters=iters,
@@ -309,7 +331,11 @@ def deepseek_moe_benchmark(
 def main(
     task: str = "bench",
     gpu: str = gpu_type,
+    model: str = DEFAULT_MODEL,
+    phase: str = "both",
     num_tokens: str = "",
+    prefill_num_tokens: str = DEFAULT_PREFILL_TOKENS,
+    decode_num_tokens: str = DEFAULT_DECODE_TOKENS,
     warmup: int = 10,
     iters: int = 100,
     no_autotune: bool = False,
@@ -320,7 +346,7 @@ def main(
     no_cupti: bool = False,
     functional_api: bool = False,
     routing_bias_scale: float = 0.01,
-    label: str = "deepseek_v3_nvfp4",
+    label: str = "",
 ) -> None:
     if gpu != gpu_type:
         print(
@@ -336,18 +362,39 @@ def main(
     if task != "bench":
         raise ValueError("task must be either 'smoke' or 'bench'")
 
-    result_dir = deepseek_moe_benchmark.remote(
-        num_tokens=num_tokens,
-        warmup=warmup,
-        iters=iters,
-        no_autotune=no_autotune,
-        quiet=quiet,
-        gen_phase=gen_phase,
-        ep=ep,
-        no_cuda_graph=no_cuda_graph,
-        no_cupti=no_cupti,
-        functional_api=functional_api,
-        routing_bias_scale=routing_bias_scale,
-        label=label,
-    )
-    print(f"Modal result directory: {result_dir}", flush=True)
+    if model not in {"deepseek-v3", "deepseek-v4-flash", "deepseek-v4-pro"}:
+        raise ValueError(
+            "model must be one of deepseek-v3, deepseek-v4-flash, deepseek-v4-pro"
+        )
+    if phase not in {"prefill", "decode", "both"}:
+        raise ValueError("phase must be one of prefill, decode, or both")
+    if gen_phase and phase == "both" and not _arg_present("--phase"):
+        phase = "decode"
+
+    base_label = label or f"{_model_slug(model)}_nvfp4"
+    run_specs: list[tuple[str, str, bool]] = []
+    if phase in {"prefill", "both"}:
+        run_specs.append(("prefill", num_tokens or prefill_num_tokens, False))
+    if phase in {"decode", "both"}:
+        run_specs.append(("decode", num_tokens or decode_num_tokens, True))
+
+    for phase_name, phase_tokens, phase_gen in run_specs:
+        result_dir = deepseek_moe_benchmark.remote(
+            model=model,
+            num_tokens=phase_tokens,
+            warmup=warmup,
+            iters=iters,
+            no_autotune=no_autotune,
+            quiet=quiet,
+            gen_phase=gen_phase or phase_gen,
+            ep=ep,
+            no_cuda_graph=no_cuda_graph,
+            no_cupti=no_cupti,
+            functional_api=functional_api,
+            routing_bias_scale=routing_bias_scale,
+            label=f"{base_label}_{phase_name}",
+        )
+        print(
+            f"Modal {model} {phase_name} result directory: {result_dir}",
+            flush=True,
+        )
