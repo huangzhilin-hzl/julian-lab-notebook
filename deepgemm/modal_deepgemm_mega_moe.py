@@ -60,7 +60,7 @@ PERF_RE = re.compile(
     r"overlap:\s*(?P<overlap_tflops>[-+\d.]+)\s+TFLOPS,\s*"
     r"HBM\s*(?P<hbm_gbs>[-+\d.]+)\s+GB/s,\s*"
     r"NVL\s*(?P<nvl_gbs>[-+\d.]+)\s+GB/s\s*\|\s*"
-    r"(?P<time_us>[-+\d.]+)\s+us,.*\|\s*"
+    r"(?P<time_us>[-+\d.]+)\s+us,.*?\|\s*"
     r"(?P<speedup>[-+\d.]+|nan|inf)x legacy"
 )
 
@@ -311,13 +311,11 @@ def _enable_all_rank_printing() -> None:
 def _parse_perf_rows(log_path: Path) -> list[dict[str, float]]:
     rows = []
     for line in log_path.read_text(errors="replace").splitlines():
-        match = PERF_RE.search(line)
-        if not match:
-            continue
-        row: dict[str, float] = {}
-        for key, value in match.groupdict().items():
-            row[key] = float(value)
-        rows.append(row)
+        for match in PERF_RE.finditer(line):
+            row: dict[str, float] = {}
+            for key, value in match.groupdict().items():
+                row[key] = float(value)
+            rows.append(row)
     return rows
 
 

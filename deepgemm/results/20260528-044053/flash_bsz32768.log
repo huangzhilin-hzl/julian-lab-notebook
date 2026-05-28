@@ -1,0 +1,88 @@
+Config:Config:Config:
+Config:
+
+
+Config:Config:
+
+Config:Config:
+
+ > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768
+
+ > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768
+
+
+
+
+ > Tokens: 32768/32768
+ > Hidden: 4096 > Hidden: 4096 > Hidden: 4096
+
+
+ > Hidden: 4096 > Hidden: 4096 > Hidden: 4096 > Hidden: 4096
+
+
+
+ > Hidden: 4096
+ > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048
+ > Intermediate: 2048
+
+ > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048
+
+
+
+
+ > Experts: 6/256 > Experts: 6/256 > Experts: 6/256
+
+ > Experts: 6/256
+
+ > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256
+
+
+
+ > Buffer: 15.580 GiB > Buffer: 15.580 GiB > Buffer: 15.580 GiB > Buffer: 15.580 GiB
+
+ > Buffer: 15.580 GiB > Buffer: 15.580 GiB
+ > Buffer: 15.580 GiB
+
+
+ > Buffer: 15.580 GiB
+
+
+
+
+
+
+
+
+
+Failed to load legacy code: No module named 'deep_ep', skip baseline benchmarking
+Failed to load legacy code: No module named 'deep_ep', skip baseline benchmarkingFailed to load legacy code: No module named 'deep_ep', skip baseline benchmarkingFailed to load legacy code: No module named 'deep_ep', skip baseline benchmarking
+Failed to load legacy code: No module named 'deep_ep', skip baseline benchmarking
+
+
+Failed to load legacy code: No module named 'deep_ep', skip baseline benchmarking
+Failed to load legacy code: No module named 'deep_ep', skip baseline benchmarkingFailed to load legacy code: No module named 'deep_ep', skip baseline benchmarking
+
+
+
+
+
+
+
+
+
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+ > EP:  5/8 | 2024 TFLOPS | overlap: 2151 TFLOPS, HBM  788 GB/s, NVL 525 GB/s | 4868 us, reduction: 289.1 us | 0.00x legacy > EP:  3/8 | 2031 TFLOPS | overlap: 2159 TFLOPS, HBM  791 GB/s, NVL 527 GB/s | 4876 us, reduction: 289.1 us | 0.00x legacy > EP:  2/8 | 2028 TFLOPS | overlap: 2156 TFLOPS, HBM  789 GB/s, NVL 526 GB/s | 4890 us, reduction: 289.1 us | 0.00x legacy
+ > EP:  7/8 | 2020 TFLOPS | overlap: 2147 TFLOPS, HBM  786 GB/s, NVL 524 GB/s | 4888 us, reduction: 289.1 us | 0.00x legacy
+ > EP:  0/8 | 2032 TFLOPS | overlap: 2159 TFLOPS, HBM  791 GB/s, NVL 527 GB/s | 4883 us, reduction: 289.1 us | 0.00x legacy > EP:  1/8 | 2025 TFLOPS | overlap: 2152 TFLOPS, HBM  788 GB/s, NVL 525 GB/s | 4895 us, reduction: 289.1 us | 0.00x legacy
+ > EP:  6/8 | 2023 TFLOPS | overlap: 2150 TFLOPS, HBM  787 GB/s, NVL 525 GB/s | 4889 us, reduction: 289.1 us | 0.00x legacy > EP:  4/8 | 2030 TFLOPS | overlap: 2157 TFLOPS, HBM  790 GB/s, NVL 527 GB/s | 4877 us, reduction: 289.1 us | 0.00x legacy
+
+
+
+

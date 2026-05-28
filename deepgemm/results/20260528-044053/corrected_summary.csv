@@ -1,0 +1,9 @@
+model,batch_size,rank_rows,expected_ranks,time_us,compute_tflops,overlap_tflops,global_memory_gbs,interconnect_gbs,speedup_vs_legacy,deepgemm_commit,deepep_commit,gpu_model,gpu_count,modal_gpu_request,log_path
+DeepSeek-V4-Flash,1,8,8,69.5,4.25,4.25,1063.875,1.0,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/flash_bsz1.log
+DeepSeek-V4-Flash,512,8,8,225.75,685.875,699.75,2050.5,170.75,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/flash_bsz512.log
+DeepSeek-V4-Flash,8192,8,8,1320.375,1873.5,1982.125,968.0,484.0,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/flash_bsz8192.log
+DeepSeek-V4-Flash,32768,8,8,4883.25,2026.625,2153.875,788.75,525.75,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/flash_bsz32768.log
+DeepSeek-V4-Pro,1,8,8,186.75,4.375,4.375,1017.25,0.625,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/pro_bsz1.log
+DeepSeek-V4-Pro,512,8,8,412.0,985.5,1004.875,4134.875,163.5,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/pro_bsz512.log
+DeepSeek-V4-Pro,8192,8,8,2868.25,2264.375,2368.625,1073.875,385.375,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/pro_bsz8192.log
+DeepSeek-V4-Pro,32768,8,8,10610.875,2447.875,2570.75,694.875,418.5,0.0,714dd1a4a980,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260528-044053/pro_bsz32768.log
