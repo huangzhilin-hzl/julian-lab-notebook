@@ -1,0 +1,72 @@
+Config:Config:Config:Config:
+Config:
+
+
+
+Config:Config:Config:
+
+
+ > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1
+
+
+
+
+
+ > Tokens: 1/1
+
+ > Hidden: 4096 > Hidden: 4096
+ > Hidden: 4096 > Hidden: 4096 > Hidden: 4096
+ > Hidden: 4096 > Hidden: 4096
+
+
+
+
+ > Hidden: 4096
+ > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048
+ > Intermediate: 2048 > Intermediate: 2048
+
+
+ > Intermediate: 2048
+ > Intermediate: 2048
+
+
+ > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256
+
+ > Experts: 6/256 > Experts: 6/256
+
+
+
+
+
+ > Buffer: 0.233 GiB > Buffer: 0.233 GiB > Buffer: 0.233 GiB > Buffer: 0.233 GiB > Buffer: 0.233 GiB
+
+
+ > Buffer: 0.233 GiB
+ > Buffer: 0.233 GiB
+ > Buffer: 0.233 GiB
+
+
+
+
+
+
+
+
+
+
+Run fused kernel:
+Run fused kernel:
+Run fused kernel:
+Run fused kernel:
+Run fused kernel:
+Run fused kernel:
+Run fused kernel:
+Run fused kernel:
+ > Done, exiting
+ > Done, exiting
+ > Done, exiting
+ > Done, exiting
+ > Done, exiting
+ > Done, exiting
+ > Done, exiting
+ > Done, exiting
