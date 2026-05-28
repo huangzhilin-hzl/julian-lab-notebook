@@ -5,6 +5,7 @@
 | Relative Path | Content |
 | --- | --- |
 | `modal_tokenspeed_test.py` | Modal app for uploading a local TokenSpeed checkout, building it from the `lightseekorg/tokenspeed-runner:latest` image, running `tokenspeed env` smoke checks, running TokenSpeed kernel pytest suites, reproducing the Kimi K2.5 agentic benchmark sweep, running TokenSpeed MLA standalone benchmark cases, and optionally launching a server plus `tokenspeed bench serve`. |
+| `modal_qwen3_5_agentic_perf.py` | Focused Modal runner for the Qwen3.5-397B-A17B-NVFP4 B200:8 EvalScope agentic benchmark used by the TokenSpeed 580 TPS blog result. It clones TokenSpeed directly inside the Modal image instead of uploading a local checkout. |
 
 ## Local Setup
 
@@ -108,6 +109,38 @@ and keep only `attn_tp4_moe_tp4` / `attn_tp4_moe_ep4`, then run with
 Artifacts are copied to `/cache/results/agentic/<run_id>` in the
 `tokenspeed-cache` Modal Volume, including `sweep.csv` and server logs.
 
+## Blog Reproduction: Qwen3.5 397B On B200:8
+
+This focused runner mirrors
+`test/ci/perf/qwen3.5-397b-a17b-nvfp4-evalscope-agentic-b200-8gpu.yaml`.
+It launches Qwen3.5-397B-A17B-NVFP4 with `attn-tp-size=8`,
+`moe-tp-size=8`, NVFP4 weights, FP8 KV cache, and MTP with 3 speculative
+steps, then runs the EvalScope SWE-Smith multi-turn agentic workload.
+
+```bash
+cd /path/to/julian-lab-notebook
+
+MODAL_GPU=B200:8 \
+MODAL_HF_SECRET_NAME=hf-secret \
+modal run tokenspeed-modal/modal_qwen3_5_agentic_perf.py
+```
+
+By default this script clones `https://github.com/lightseekorg/tokenspeed.git`
+from `main`, so each Modal image build installs the current upstream main branch.
+To test another ref:
+
+```bash
+MODAL_GPU=B200:8 \
+MODAL_HF_SECRET_NAME=hf-secret \
+modal run tokenspeed-modal/modal_qwen3_5_agentic_perf.py \
+  --tokenspeed-ref main
+```
+
+Artifacts are written to
+`/cache/results/qwen3_5_agentic/<run_id>` in the `tokenspeed-cache` Modal
+Volume. The directory contains `server.log`, `warmup.log`, `benchmark.log`,
+EvalScope outputs, `run_config.json`, and `sweep.csv`.
+
 ## Blog Reproduction: TokenSpeed MLA On B200
 
 Run the standalone MLA prefill/decode cases from `tokenspeed-mla/README.md`:
@@ -174,6 +207,8 @@ Volume.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `TOKENSPEED_SRC_DIR` | required | Local TokenSpeed checkout uploaded into the Modal image. |
+| `TOKENSPEED_REPO_URL` | `https://github.com/lightseekorg/tokenspeed.git` | TokenSpeed repository cloned by `modal_qwen3_5_agentic_perf.py`. |
+| `TOKENSPEED_REF` | `main` | TokenSpeed branch, tag, or commit cloned by `modal_qwen3_5_agentic_perf.py`. |
 | `MODAL_GPU` | `B200` | GPU resource used by the Modal functions, for example `B200`, `H100!`, or `H200`. |
 | `MODAL_HF_SECRET_NAME` | unset | Modal Secret name that exposes `HF_TOKEN` in the remote container. |
 | `MODAL_CACHE_VOLUME_NAME` | `tokenspeed-cache` | Modal Volume mounted at `/cache` for Hugging Face cache and benchmark outputs. |
