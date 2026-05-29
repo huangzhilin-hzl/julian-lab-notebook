@@ -125,7 +125,10 @@ image = (
     .env(image_env)
     .workdir(WORKDIR)
     .run_commands(
-        "python -m pip install --upgrade pip setuptools wheel uv cmake ninja",
+        (
+            "python -m pip install --upgrade --ignore-installed "
+            "pip setuptools wheel uv cmake ninja"
+        ),
         (
             "python -m pip install tokenspeed-kernel/python/ "
             "--no-build-isolation -v"
@@ -162,14 +165,37 @@ def _tail_file(path: Path, max_lines: int = 160) -> str:
     return "\n".join(lines[-max_lines:])
 
 
+def _print_new_file_output(path: Path, offset: int) -> int:
+    if not path.exists():
+        return offset
+
+    size = path.stat().st_size
+    if size < offset:
+        offset = 0
+    if size == offset:
+        return offset
+
+    with path.open("rb") as file:
+        file.seek(offset)
+        chunk = file.read()
+
+    if chunk:
+        print(chunk.decode(errors="replace"), end="", flush=True)
+    return size
+
+
 def _wait_for_readiness(
     *, process: subprocess.Popen, port: int, timeout_s: int, server_log: Path
 ) -> None:
     deadline = time.time() + timeout_s
     url = f"http://127.0.0.1:{port}/readiness"
+    log_offset = 0
 
     while time.time() < deadline:
+        log_offset = _print_new_file_output(server_log, log_offset)
+
         if process.poll() is not None:
+            _print_new_file_output(server_log, log_offset)
             raise RuntimeError(
                 f"TokenSpeed server exited early with code {process.returncode}.\n"
                 f"Last server log lines:\n{_tail_file(server_log)}"
@@ -178,6 +204,7 @@ def _wait_for_readiness(
         try:
             with urlopen(url, timeout=5) as response:
                 if response.status == 200:
+                    _print_new_file_output(server_log, log_offset)
                     print(f"Server ready at {url}", flush=True)
                     return
         except (OSError, URLError):
@@ -185,6 +212,7 @@ def _wait_for_readiness(
 
         time.sleep(10)
 
+    _print_new_file_output(server_log, log_offset)
     raise TimeoutError(
         f"TokenSpeed server did not become ready in {timeout_s}s.\n"
         f"Last server log lines:\n{_tail_file(server_log)}"
