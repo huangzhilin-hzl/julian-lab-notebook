@@ -28,6 +28,8 @@ This note is intentionally sanitized for a public/personal notebook. It omits ex
 | 16384 | 10.905 | 50.4 | 8.936 | 61.5 | 1.22x |
 | 32768 | 59.000 | 74.5 | 65.309 | 67.3 | 0.90x |
 
+![GEMM + AllReduce two-node H20 result](images/gemm_ar_h20_n2_homepage.svg)
+
 The completed `gemm_ar` sweep passed correctness for all measured shapes. mKernel was faster than the CuBLAS+NCCL baseline through `M=N=16384`; at `M=N=32768`, the baseline was faster in this run.
 
 ## CUDA 13 Compile Fixes
