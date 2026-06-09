@@ -1,0 +1,12 @@
+captured_at_local=2026-06-08T15:40:58+0800
+pod=molou/molou-sglang-dev-h20-nod35-agent
+command=kubectl -n molou exec molou-sglang-dev-h20-nod35-agent -- nvidia-smi --query-gpu=index,uuid,utilization.gpu,memory.used,memory.total --format=csv
+index, uuid, utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0, GPU-20b96d3c-0e38-dd42-d253-ee0f60380452, 0 %, 4 MiB, 97871 MiB
+1, GPU-a7b9f40e-c1ed-581a-90a8-6bf7df255e07, 0 %, 4 MiB, 97871 MiB
+2, GPU-74dbb9f2-ca8d-c24a-8e67-c8a832d727ce, 0 %, 4 MiB, 97871 MiB
+3, GPU-24902465-f36d-5f85-d75d-e1ff91f52e7d, 0 %, 4 MiB, 97871 MiB
+4, GPU-5e4c3a6b-9432-e998-640c-147225b1a2c2, 0 %, 4 MiB, 97871 MiB
+5, GPU-c12bc5e1-d342-e5b5-8a67-82d7eeb76c27, 0 %, 4 MiB, 97871 MiB
+6, GPU-7b75d870-3af2-4cfa-1362-0d0c944066a5, 0 %, 4 MiB, 97871 MiB
+7, GPU-1f67e741-5064-5678-5b14-5789c7bbd08e, 0 %, 4 MiB, 97871 MiB
