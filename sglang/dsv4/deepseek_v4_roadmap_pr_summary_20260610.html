@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepSeek V4 Roadmap PR 汇总 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5e6a7d;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #a55b00;
+      --red: #a33434;
+      --gray: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    h1 {
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .done {
+      color: var(--green);
+      border-color: #bfe3d1;
+      background: #eefaf4;
+    }
+
+    .todo {
+      color: var(--orange);
+      border-color: #f2d4ad;
+      background: #fff7ed;
+    }
+
+    .open {
+      color: var(--orange);
+      border-color: #f2d4ad;
+      background: #fff7ed;
+    }
+
+    .merged {
+      color: var(--green);
+      border-color: #bfe3d1;
+      background: #eefaf4;
+    }
+
+    .closed {
+      color: var(--gray);
+      border-color: #d8dde6;
+      background: #f7f8fa;
+    }
+
+    .missing {
+      color: var(--red);
+      border-color: #efc6c6;
+      background: #fff1f1;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 1120px;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--head);
+      z-index: 1;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #374151;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      font-weight: 700;
+      min-width: 150px;
+    }
+
+    .opt {
+      min-width: 310px;
+    }
+
+    .links {
+      min-width: 260px;
+    }
+
+    .note {
+      min-width: 310px;
+      color: var(--muted);
+    }
+
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: #f2f6ff;
+      padding: 12px 14px;
+      margin-top: 14px;
+      border-radius: 6px;
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: #f0f2f5;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        padding: 16px;
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>DeepSeek V4 Roadmap PR 汇总</h1>
+      <p class="subtle">生成时间：2026-06-10。范围：SemiAnalysis 文章公开段落提到的 vLLM / SGLang roadmap，加上对应 GitHub roadmap issue 中明确列出的 PR / issue 链接。</p>
+      <div class="meta-grid">
+        <div class="meta">
+          <b>文章源</b>
+          <a href="https://newsletter.semianalysis.com/p/deepseekv4-16t-day-0-to-day-43-performance">SemiAnalysis: DeepSeekV4 1.6T Day 0 to Day 43</a>
+        </div>
+        <div class="meta">
+          <b>vLLM roadmap</b>
+          <a href="https://github.com/vllm-project/vllm/issues/40902">vllm-project/vllm#40902</a>
+        </div>
+        <div class="meta">
+          <b>SGLang 性能 tracker</b>
+          <a href="https://github.com/sgl-project/sglang/issues/23666">sgl-project/sglang#23666</a>
+        </div>
+        <div class="meta">
+          <b>SGLang 总 roadmap</b>
+          <a href="https://github.com/sgl-project/sglang/issues/23602">sgl-project/sglang#23602</a>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="badge done">roadmap 已勾选</span>
+        <span class="badge todo">roadmap 未勾选</span>
+        <span class="badge merged">PR 已合并</span>
+        <span class="badge open">PR 打开中</span>
+        <span class="badge closed">PR 关闭未合并 / issue</span>
+        <span class="badge missing">roadmap 未给出 PR</span>
+      </div>
+      <div class="callout">
+        口径说明：表里的“roadmap 状态”来自 issue checkbox；“PR 状态”来自 GitHub API 当前状态。SGLang 文章对应的是性能 checklist <code>#23666</code>，该 tracker 多数条目没有逐项 PR 链接；可落到具体 PR 的优化主要集中在 SGLang 总 roadmap <code>#23602</code> 和 vLLM roadmap <code>#40902</code>。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>文章提到的 Roadmap 主题</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>框架</th>
+              <th>文章里的主题</th>
+              <th>对应 tracker / PR</th>
+              <th>解释</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area">vLLM</td>
+              <td class="opt">FP4 Indexer、初始 MegaMoE、Hopper 支持已落地；后续继续做 MegaMoE、NVFP4、Model Runner V2、MTP、PD、Paged Prefill、Fast TopK、KV offload、SM120/AMD。</td>
+              <td class="links">
+                <a href="https://github.com/vllm-project/vllm/issues/40902">roadmap #40902</a><br>
+                <a href="https://github.com/vllm-project/vllm/pull/40860">implementation PR #40860</a>
+              </td>
+              <td class="note">文章明确说 vLLM 计划由 <code>#40902</code> 跟踪，已落地代码在 <code>#40860</code>，性能看 InferenceX dashboard。</td>
+            </tr>
+            <tr>
+              <td class="area">SGLang</td>
+              <td class="opt">CUDA graph decode、piecewise CUDA graph prefill、去掉 runtime weight processing；mHC/HCA/CSA/MoE 分块做 kernel fusion、cache in-place read、decode path graph 化。</td>
+              <td class="links">
+                <a href="https://github.com/sgl-project/sglang/issues/23666">performance tracker #23666</a><br>
+                <a href="https://github.com/sgl-project/sglang/pull/23600">initial support PR #23600</a>
+              </td>
+              <td class="note">文章对齐的是 SGLang 性能 checklist <code>#23666</code>，不是总 roadmap；该 checklist 本身多数项没有逐项 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">SGLang 补充</td>
+              <td class="opt">W4A16 Hopper、DeepGEMM warmup、PP/PD、HiCache、FP4 indexer、FlashMLA prefill、W4A4 MegaMoE、BF16 KV cache、NVFP4、SM120 等。</td>
+              <td class="links">
+                <a href="https://github.com/sgl-project/sglang/issues/23602">general roadmap #23602</a>
+              </td>
+              <td class="note">这些不是文章段落逐项展开的 <code>#23666</code> 清单，但它们是 SGLang 官方 DeepSeek V4 roadmap 中明确带 PR 链接的落地项。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>vLLM DeepSeek V4 Roadmap 到 PR</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>优化项</th>
+              <th>roadmap 状态</th>
+              <th>PR / issue</th>
+              <th>PR 当前状态</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area">Implementation</td>
+              <td class="opt">DeepSeek V4 rebased implementation；FP4 Indexer；initial MegaMoE；Hopper support</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/40860">vLLM #40860</a></td>
+              <td><span class="badge merged">merged 2026-04-27</span></td>
+              <td class="note">文章和 roadmap 都把它作为已落地基础实现。</td>
+            </tr>
+            <tr>
+              <td class="area">Core Model</td>
+              <td class="opt">DeepGEMM MegaMoE kernel 继续集成</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/40833">vLLM #40833</a></td>
+              <td><span class="badge open">open</span></td>
+              <td class="note">文章点名“continued MegaMoE work”。</td>
+            </tr>
+            <tr>
+              <td class="area">Core Model</td>
+              <td class="opt">NVFP4 support</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">vLLM roadmap 仅列为待办。</td>
+            </tr>
+            <tr>
+              <td class="area">Low Latency</td>
+              <td class="opt">Multi-stream 4 GEMM in C4A/C128A pre-attention path</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/41061">vLLM #41061</a></td>
+              <td><span class="badge merged">merged 2026-04-28</span></td>
+              <td class="note">小 batch decode 低延迟优化。</td>
+            </tr>
+            <tr>
+              <td class="area">Low Latency</td>
+              <td class="opt">Fast TopK kernel</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">文章归到 kernel integration / fast top-k。</td>
+            </tr>
+            <tr>
+              <td class="area">Low Latency</td>
+              <td class="opt">Faster per-token FP8 group quant packed kernel for Blackwell</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/41326">vLLM #41326</a></td>
+              <td><span class="badge merged">merged 2026-05-01</span></td>
+              <td class="note">减少 FP8 group quant 开销。</td>
+            </tr>
+            <tr>
+              <td class="area">Low Latency</td>
+              <td class="opt">Indexer TopK + page table transform fusion</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/41105">vLLM #41105</a></td>
+              <td><span class="badge open">open</span></td>
+              <td class="note">CSA indexer 路径融合。</td>
+            </tr>
+            <tr>
+              <td class="area">Low Latency</td>
+              <td class="opt">Specialized pre-Attention GEMM for low batch size</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">对应高 interactivity / 小 effective batch。</td>
+            </tr>
+            <tr>
+              <td class="area">Low Latency</td>
+              <td class="opt">Fuse norm and router for low latency scenario</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/41263">vLLM #41263</a></td>
+              <td><span class="badge merged">merged 2026-05-14</span></td>
+              <td class="note">MoE router 前后小 kernel 融合。</td>
+            </tr>
+            <tr>
+              <td class="area">PD / Throughput</td>
+              <td class="opt">NvLink one-sided A2A support for BF16 and MXFP8 dispatch</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/40960">vLLM #40960</a></td>
+              <td><span class="badge merged">merged 2026-04-30</span></td>
+              <td class="note">MoE dispatch/combine 通信优化。</td>
+            </tr>
+            <tr>
+              <td class="area">PD / Throughput</td>
+              <td class="opt">NvLink one-sided A2A support for FP8 quantized combine</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">roadmap 备注为等待 FlashInfer kernel。</td>
+            </tr>
+            <tr>
+              <td class="area">PD / Throughput</td>
+              <td class="opt">Better PD tuning and configuration</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">roadmap 已勾选，但 issue body 没有链接具体 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">Ultra Long Context</td>
+              <td class="opt">Chunked pipeline parallelism</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">文章归到 runtime/parallelism。</td>
+            </tr>
+            <tr>
+              <td class="area">Ultra Long Context</td>
+              <td class="opt">Prefill context parallelism</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">1M context prefill 扩展方向。</td>
+            </tr>
+            <tr>
+              <td class="area">Runtime</td>
+              <td class="opt">Model Runner V2 integration</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">文章明确列为 surrounding systems 主题。</td>
+            </tr>
+            <tr>
+              <td class="area">Runtime</td>
+              <td class="opt">MTP optimizations</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">roadmap 只有 owner，没有 PR 链接。</td>
+            </tr>
+            <tr>
+              <td class="area">Runtime</td>
+              <td class="opt">Pipeline parallelism support</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">和超长上下文/PD 相关。</td>
+            </tr>
+            <tr>
+              <td class="area">Kernel Integration</td>
+              <td class="opt">Paged prefill kernel for main attention</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">roadmap 写 FlashInfer / FA4 候选。</td>
+            </tr>
+            <tr>
+              <td class="area">Kernel Integration</td>
+              <td class="opt">Paged prefill kernel for indexer attention</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">roadmap 提到 owner，但没有 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">Kernel Integration</td>
+              <td class="opt">Look into DeepEP V2</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">vLLM roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">外部 DeepEP v2 PR 见 SGLang 表。</td>
+            </tr>
+            <tr>
+              <td class="area">Kernel Integration</td>
+              <td class="opt">TileKernels integration</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/deepseek-ai/TileKernels">deepseek-ai/TileKernels</a></td>
+              <td><span class="badge closed">repo link</span></td>
+              <td class="note">roadmap 给的是仓库，不是 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">KV Cache</td>
+              <td class="opt">PD + CPU offloading</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/pull/39654">vLLM #39654</a></td>
+              <td><span class="badge merged">merged 2026-05-13</span></td>
+              <td class="note">roadmap 把它列在 KV cache offloading 子项下。</td>
+            </tr>
+            <tr>
+              <td class="area">KV Cache</td>
+              <td class="opt">Distributed KV offloading</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">仅列 owner。</td>
+            </tr>
+            <tr>
+              <td class="area">Hardware</td>
+              <td class="opt">SM120 support</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">评论里有 SM80 fork PR #40906，但 roadmap 本体未把它列为 SM120 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">Hardware</td>
+              <td class="opt">AMD support</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">roadmap 仅列待办。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>SGLang 文章性能 Tracker #23666</h2>
+      <p class="subtle">这是文章直接引用的 SGLang tracker。它是 checklist，不是 PR 索引；只有 initial support PR、评论里的补充 PR、以及后续 FlashInfer provider tracker 有明确链接。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>优化项</th>
+              <th>tracker 状态</th>
+              <th>PR / issue</th>
+              <th>PR 当前状态</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area">High-level</td>
+              <td class="opt">CUDA graph support for decode steps</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23600">SGLang #23600</a></td>
+              <td><span class="badge closed">closed, not merged</span></td>
+              <td class="note">tracker 说明部分能力可能已由 initial support PR 覆盖，但没有逐项 PR 映射。</td>
+            </tr>
+            <tr>
+              <td class="area">High-level</td>
+              <td class="opt">Piecewise CUDA graph support for prefill steps</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">tracker 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">文章把它列为三大高层目标之一。</td>
+            </tr>
+            <tr>
+              <td class="area">High-level</td>
+              <td class="opt">No at-runtime weight processing / weight prep one-off</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">tracker 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">文章强调 weight prep 不应每步发生。</td>
+            </tr>
+            <tr>
+              <td class="area">mHC</td>
+              <td class="opt">fc_hc_fn tiny GEMM special kernel；1/RMS + Mul fusion；hc_split_sinkhorn single kernel；hc_post single kernel；MulSum + RMSNorm 融合</td>
+              <td><span class="badge done">多项已勾选</span></td>
+              <td class="links">
+                <a href="https://github.com/sgl-project/sglang/issues/23666">SGLang #23666</a><br>
+                <a href="https://github.com/flashinfer-ai/flashinfer/pull/3285">FlashInfer #3285</a>
+              </td>
+              <td><span class="badge merged">FlashInfer #3285 merged 2026-05-29</span></td>
+              <td class="note">SGLang tracker 自身没逐项 PR；FlashInfer provider tracker 说明 #3285 覆盖 mHC post mapping 和 pre big-fuse kernels，但 SGLang DSV4 当时不一定已 wired。</td>
+            </tr>
+            <tr>
+              <td class="area">mHC</td>
+              <td class="opt">RMSNorm + FP8 Quant fusion</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">tracker 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">P1 候选项。</td>
+            </tr>
+            <tr>
+              <td class="area">HCA</td>
+              <td class="opt">fc_qa + fc_kv horizontal fusion；q_norm/k_norm；RMSNorm+RoPE；non-sparse MQA；direct cache read；InvRoPE single kernel；compressor state update fusion；compression fusion；CUDA graph compatibility</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links">
+                <a href="https://github.com/sgl-project/sglang/issues/23666">SGLang #23666</a><br>
+                <a href="https://github.com/flashinfer-ai/flashinfer/issues/3346">FlashInfer #3346</a>
+              </td>
+              <td><span class="badge closed">tracker / provider issue</span></td>
+              <td class="note">文章中 HCA 段落对应这些项；FlashInfer #3346 后续跟踪 HCA/CSA kernel provider 覆盖，但不是单个实现 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">CSA</td>
+              <td class="opt">compressor state update fusion；sparse direct cache read；fc_compressor + fc_idx_compressor；fc_qb + fc_idx_qb；Hadamard + MXFP4 quant；MXFP4 BMM+ReLU；Indexer/Compressor CUDA graph compatibility</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links">
+                <a href="https://github.com/sgl-project/sglang/issues/23666">SGLang #23666</a><br>
+                <a href="https://github.com/sgl-project/sglang/pull/24009">SGLang #24009</a><br>
+                <a href="https://github.com/flashinfer-ai/flashinfer/pull/3269">FlashInfer #3269</a>
+              </td>
+              <td>
+                <span class="badge open">SGLang #24009 open</span><br>
+                <span class="badge merged">FlashInfer #3269 merged 2026-05-21</span>
+              </td>
+              <td class="note">#24009 是 tracker 评论中提到的 C4 TopK producer ordering PR；#3269 是 FlashInfer DeepSeek V4 sparse MLA TRTLLM-GEN kernels。</td>
+            </tr>
+            <tr>
+              <td class="area">MoE</td>
+              <td class="opt">router GEMM TF32/BF16；routing path fusion；block-wise FP8/MXFP8 activation quant fusion；shared/routed expert FC13 single kernel；tiny sorting kernel audit</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/issues/23666">SGLang #23666</a></td>
+              <td><span class="badge closed">tracker</span></td>
+              <td class="note">#23666 没给 MoE 子项 PR；总 roadmap 中 MegaMoE/W4A4/NVFP4 等见下一表。</td>
+            </tr>
+            <tr>
+              <td class="area">MTP</td>
+              <td class="opt">DSV4 MTP checklist</td>
+              <td><span class="badge todo">TBA</span></td>
+              <td class="links"><span class="badge missing">tracker 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">文章提到 Day 3 SGLang MTP 带来高 interactivity 吞吐提升，但 #23666 的 MTP checklist 尚为 TBA。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>SGLang 总 Roadmap #23602 中可落到 PR 的项</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>优化项</th>
+              <th>roadmap 状态</th>
+              <th>PR / issue</th>
+              <th>PR 当前状态</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area">Base</td>
+              <td class="opt">Day 0 DeepSeek V4 support</td>
+              <td><span class="badge done">链接项</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23600">SGLang #23600</a></td>
+              <td><span class="badge closed">closed, not merged</span></td>
+              <td class="note">roadmap 顶部 Day0 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">Base</td>
+              <td class="opt">DeepSeek V4 rebase</td>
+              <td><span class="badge done">链接项</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23882">SGLang #23882</a></td>
+              <td><span class="badge merged">merged 2026-05-08</span></td>
+              <td class="note">也被 HiSparse pool internals 复用命名所引用。</td>
+            </tr>
+            <tr>
+              <td class="area">Quant / Hopper</td>
+              <td class="opt">Finish W4A16 support on Hopper: Marlin implementation</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23686">SGLang #23686</a></td>
+              <td><span class="badge merged">merged 2026-04-28</span></td>
+              <td class="note">MXFP4 A16 Hopper 支持。</td>
+            </tr>
+            <tr>
+              <td class="area">Quant / Hopper</td>
+              <td class="opt">Finish W4A16 support on Hopper: FlashInfer SM90 CUTLASS MXFP4 MoE backend</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/24816">SGLang #24816</a></td>
+              <td><span class="badge merged">merged 2026-05-13</span></td>
+              <td class="note">GPT-OSS + DeepSeek-V4 共用后端。</td>
+            </tr>
+            <tr>
+              <td class="area">Docs</td>
+              <td class="opt">Add cookbook instructions / H200 FP4 deployment option</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23980">SGLang #23980</a></td>
+              <td><span class="badge merged">merged 2026-04-29</span></td>
+              <td class="note">部署 recipe 文档。</td>
+            </tr>
+            <tr>
+              <td class="area">DeepGEMM</td>
+              <td class="opt">Support DeepGEMM warmup</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23756">SGLang #23756</a></td>
+              <td><span class="badge merged">merged 2026-04-27</span></td>
+              <td class="note">port <code>SGLANG_JIT_DEEPGEMM_FAST_WARMUP</code>。</td>
+            </tr>
+            <tr>
+              <td class="area">Chat Template</td>
+              <td class="opt">Support non-standard extra chat template feature</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23915">SGLang #23915</a></td>
+              <td><span class="badge merged">merged 2026-04-28</span></td>
+              <td class="note">self-closing invoke tags + <code>reasoning_effort=max</code>。</td>
+            </tr>
+            <tr>
+              <td class="area">Parallelism</td>
+              <td class="opt">Pipeline Parallelism and PD support for DeepSeek-V4</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/24704">SGLang #24704</a></td>
+              <td><span class="badge merged">merged 2026-05-16</span></td>
+              <td class="note">对应文章提到的 runtime/PD 方向。</td>
+            </tr>
+            <tr>
+              <td class="area">KV / Cache</td>
+              <td class="opt">HiCache support for DeepSeek V4</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/24691">SGLang #24691</a></td>
+              <td><span class="badge merged">merged 2026-05-15</span></td>
+              <td class="note">UnifiedTree HiCache。</td>
+            </tr>
+            <tr>
+              <td class="area">Indexer</td>
+              <td class="opt">Integrate FP4 indexer</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/26209">SGLang #26209</a></td>
+              <td><span class="badge merged">merged 2026-06-02</span></td>
+              <td class="note">DeepSeek V4 FP4 Indexer。</td>
+            </tr>
+            <tr>
+              <td class="area">Attention Prefill</td>
+              <td class="opt">Integrate FlashMLA sparse prefill / faster prefill attention kernels</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/25418">SGLang #25418</a></td>
+              <td><span class="badge merged">merged 2026-06-03</span></td>
+              <td class="note">FlashMLA sparse forward path。</td>
+            </tr>
+            <tr>
+              <td class="area">Indexer</td>
+              <td class="opt">Integrate ragged no-prefix-hit indexer</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><span class="badge missing">roadmap 未给出 PR</span></td>
+              <td><span class="badge missing">无</span></td>
+              <td class="note">仅列 owner。</td>
+            </tr>
+            <tr>
+              <td class="area">DeepGEMM</td>
+              <td class="opt">Apply latest DeepGEMM / custom sgl-deep-gemm wheel</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/24268">SGLang #24268</a></td>
+              <td><span class="badge merged">merged 2026-05-07</span></td>
+              <td class="note">替换/外置 DeepGEMM 内核包。</td>
+            </tr>
+            <tr>
+              <td class="area">DeepEP</td>
+              <td class="opt">Check whether DeepEP v2 helps</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/deepseek-ai/DeepEP/pull/605">DeepEP #605</a></td>
+              <td><span class="badge merged">merged 2026-04-29</span></td>
+              <td class="note">外部 DeepEP v2 public release PR。</td>
+            </tr>
+            <tr>
+              <td class="area">TileKernel</td>
+              <td class="opt">Check whether TileKernels helps</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/deepseek-ai/TileKernels">deepseek-ai/TileKernels</a></td>
+              <td><span class="badge closed">repo link</span></td>
+              <td class="note">roadmap 给的是仓库，不是 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">MegaMoE</td>
+              <td class="opt">MegaMoE on SM90</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/DeepGEMM/pull/36">DeepGEMM #36</a></td>
+              <td><span class="badge open">open</span></td>
+              <td class="note">外部 DeepGEMM PR。</td>
+            </tr>
+            <tr>
+              <td class="area">MegaMoE</td>
+              <td class="opt">W4A4 MegaMoE</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/25052">SGLang #25052</a></td>
+              <td><span class="badge merged">merged 2026-05-14</span></td>
+              <td class="note">DeepSeek V4 W4A4 MegaMoE。</td>
+            </tr>
+            <tr>
+              <td class="area">CUDA Graph</td>
+              <td class="opt">Breakable CUDA graph for DeepSeek V4 DP attention</td>
+              <td><span class="badge todo">roadmap 未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/25195">SGLang #25195</a></td>
+              <td><span class="badge merged">merged 2026-06-08</span></td>
+              <td class="note">PR 已合并，但 roadmap checkbox 仍显示未勾选。</td>
+            </tr>
+            <tr>
+              <td class="area">KV Cache</td>
+              <td class="opt">BF16 KV cache decode path</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/26915">SGLang #26915</a></td>
+              <td><span class="badge open">open</span></td>
+              <td class="note">BF16 KV cache decode 支持。</td>
+            </tr>
+            <tr>
+              <td class="area">HiSparse</td>
+              <td class="opt">Unify HiSparse pool internals</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/23882">SGLang #23882</a></td>
+              <td><span class="badge merged">merged 2026-05-08</span></td>
+              <td class="note">roadmap 文本说 names aligned in #23882；不一定完整覆盖重构目标。</td>
+            </tr>
+            <tr>
+              <td class="area">EPLB</td>
+              <td class="opt">Fix EPLB mapping for TopK paths</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/25285">SGLang #25285</a></td>
+              <td><span class="badge merged">merged 2026-05-18</span></td>
+              <td class="note">Expert placement / load balance 相关。</td>
+            </tr>
+            <tr>
+              <td class="area">NVFP4</td>
+              <td class="opt">NVFP4 checkpoint / MoE support for DeepSeek-V4</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/25820">SGLang #25820</a></td>
+              <td><span class="badge open">open</span></td>
+              <td class="note">NVIDIA NVFP4 MoE path。</td>
+            </tr>
+            <tr>
+              <td class="area">Dependency</td>
+              <td class="opt">Fix sgl_kernel.flash_mla for V4 usage</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links">
+                <a href="https://github.com/sgl-project/sglang/pull/26132">SGLang #26132</a><br>
+                <a href="https://github.com/sgl-project/sglang/pull/26499">SGLang #26499</a>
+              </td>
+              <td>
+                <span class="badge merged">#26132 merged 2026-05-26</span><br>
+                <span class="badge merged">#26499 merged 2026-05-27</span>
+              </td>
+              <td class="note">导入/修复 FlashMLA kernels for DeepSeek V4。</td>
+            </tr>
+            <tr>
+              <td class="area">Code Cleanup</td>
+              <td class="opt">mem_cache pool / allocator module restructure</td>
+              <td><span class="badge todo">未勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/issues/24335">SGLang issue #24335</a></td>
+              <td><span class="badge open">issue open</span></td>
+              <td class="note">roadmap 引的是 issue，不是 PR。</td>
+            </tr>
+            <tr>
+              <td class="area">Hardware</td>
+              <td class="opt">SM120 / Blackwell Desktop support for DeepSeek-V4 inference</td>
+              <td><span class="badge done">已勾选</span></td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/pull/24692">SGLang #24692</a></td>
+              <td><span class="badge merged">merged 2026-06-01</span></td>
+              <td class="note">同时被 FlashInfer provider tracker 多处引用为 SM120 fallback 依据。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>FlashInfer Provider Tracker 补充</h2>
+      <p class="subtle">SGLang #23666 在 2026-06-10 评论中转到 FlashInfer #3346 跟踪 provider 侧 kernel。这里列出 #3346 明确给出的相关 PR。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>优化项</th>
+              <th>PR / issue</th>
+              <th>状态</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area">Kernel Provider</td>
+              <td class="opt">DeepSeek V4 kernel support status tracker</td>
+              <td class="links"><a href="https://github.com/flashinfer-ai/flashinfer/issues/3346">FlashInfer #3346</a></td>
+              <td><span class="badge open">issue open</span></td>
+              <td class="note">provider-facing companion to SGLang #23666。</td>
+            </tr>
+            <tr>
+              <td class="area">Sparse MLA</td>
+              <td class="opt">Add DeepSeek V4 sparse MLA TRTLLM-GEN kernels</td>
+              <td class="links"><a href="https://github.com/flashinfer-ai/flashinfer/pull/3269">FlashInfer #3269</a></td>
+              <td><span class="badge merged">merged 2026-05-21</span></td>
+              <td class="note">与 HCA/CSA compressed MQA / sparse MLA provider 覆盖相关。</td>
+            </tr>
+            <tr>
+              <td class="area">mHC</td>
+              <td class="opt">Add mHC post mapping and pre big-fuse kernels</td>
+              <td class="links"><a href="https://github.com/flashinfer-ai/flashinfer/pull/3285">FlashInfer #3285</a></td>
+              <td><span class="badge merged">merged 2026-05-29</span></td>
+              <td class="note">FlashInfer #3346 说明它不覆盖 full hc_pre fusion / gemm_sqrsum。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>仍没有明确 PR 的重点项</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>框架</th>
+              <th>优化项</th>
+              <th>为什么重要</th>
+              <th>当前链接</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area">vLLM</td>
+              <td class="opt">MTP optimizations</td>
+              <td class="note">文章讨论 high interactivity / small batch decode；vLLM roadmap 只有待办，没有 PR。</td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/issues/40902">vLLM #40902</a></td>
+            </tr>
+            <tr>
+              <td class="area">vLLM</td>
+              <td class="opt">Model Runner V2、pipeline parallelism、prefill context parallelism</td>
+              <td class="note">文章把它们归到 surrounding systems / ultra long context。</td>
+              <td class="links"><a href="https://github.com/vllm-project/vllm/issues/40902">vLLM #40902</a></td>
+            </tr>
+            <tr>
+              <td class="area">SGLang</td>
+              <td class="opt">HCA/CSA direct cache read、compressor update fusion、InvRoPE single kernel、MXFP4 BMM+ReLU</td>
+              <td class="note">这些是文章逐块列出的 kernel fusion/cache in-place targets，但 SGLang #23666 没逐项 PR。</td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/issues/23666">SGLang #23666</a></td>
+            </tr>
+            <tr>
+              <td class="area">SGLang</td>
+              <td class="opt">MoE routing path fusion、shared/routed expert FC13 single kernel、tiny sorting kernel audit</td>
+              <td class="note">这些决定 MoE decode 小 batch latency，仍主要停留在 checklist。</td>
+              <td class="links"><a href="https://github.com/sgl-project/sglang/issues/23666">SGLang #23666</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
