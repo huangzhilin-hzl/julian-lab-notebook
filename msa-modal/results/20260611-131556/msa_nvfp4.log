@@ -1,0 +1,48 @@
+Output file: /mnt/msa-cache/msa/results/20260611-131556/msa_nvfp4.tsv
+MiniMax sparse attention sweep  |  GPU 0  |  dtype nvfp4  |  output_mode o
+sections: sparse_prefill
+
+Sparse Prefill TP1 (first top-K, page=128, topk=16, nvfp4)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Sparse Prefill q=k=8192 topk=16
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+  [kernel] [aot_cache] Saved sparse_forward_sm100_csr_varlen_nvfp4_kv -> /root/.cache/minfer/mm_sparse_attn/sparse_forward_sm100_csr_varlen_nvfp4_kv_6f4cbc31792fe47b.o (0.2s)
+  [kernel] [aot_cache] Saved combine -> /root/.cache/minfer/mm_sparse_attn/combine_4e0a5eefd6315b3d.o (0.1s)
+    8192     8192  nvfp4     1   64     4  128      1.2768    0.0017     430.56    1735.37     9.57%    0.00%
+  · Sparse Prefill q=k=16384 topk=16
+   16384    16384  nvfp4     1   64     4  128      2.4996    0.0026     439.87    1772.40     9.77%    0.00%
+  · Sparse Prefill q=k=32768 topk=16
+   32768    32768  nvfp4     1   64     4  128      4.6490    0.0387     473.01    1905.71    10.51%    0.00%
+  · Sparse Prefill q=k=65536 topk=16
+   65536    65536  nvfp4     1   64     4  128      8.9611    0.0898     490.79    1977.20    10.91%    0.00%
+  · Sparse Prefill q=k=131072 topk=16
+  131072   131072  nvfp4     1   64     4  128     18.0629    0.1807     486.97    1961.74    10.82%    0.00%
+
+Results saved to /mnt/msa-cache/msa/results/20260611-131556/msa_nvfp4.tsv

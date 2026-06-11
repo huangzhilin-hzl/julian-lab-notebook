@@ -1,0 +1,3491 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MiniMax MSA Full Sweep Results</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #111827;
+      --muted: #667085;
+      --line: #d9dee8;
+      --green: #0f8a5f;
+      --blue: #1d4ed8;
+      --teal: #0f766e;
+      --amber: #b45309;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { background: #101820; color: white; padding: 34px 28px 28px; border-bottom: 4px solid #22c55e; }
+    .header-inner, main, footer { max-width: 1380px; margin: 0 auto; }
+    .eyebrow { color: #9ee7c5; font-weight: 750; font-size: 12px; text-transform: uppercase; }
+    h1 { margin: 8px 0 10px; font-size: 31px; line-height: 1.15; letter-spacing: 0; }
+    .subtitle { margin: 0; max-width: 900px; color: #d8dee8; font-size: 15px; }
+    main { padding: 24px 20px 40px; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 12px; color: var(--muted); box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .metric-card, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .metric-card { padding: 15px; min-height: 118px; }
+    .metric-label { color: var(--muted); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+    .metric-value { font-size: 24px; font-weight: 780; margin-top: 9px; letter-spacing: 0; }
+    .metric-note { color: var(--muted); margin-top: 4px; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 16px; margin-bottom: 18px; }
+    .panel { padding: 18px; overflow: hidden; }
+    h2 { margin: 0 0 12px; font-size: 17px; letter-spacing: 0; }
+    .kv { display: grid; grid-template-columns: 175px minmax(0, 1fr); gap: 8px 12px; }
+    .kv div:nth-child(odd) { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 11px; border-bottom: 1px solid #edf0f4; text-align: left; white-space: nowrap; vertical-align: middle; }
+    th { background: #f2f5f9; color: #394150; font-size: 12px; position: sticky; top: 0; z-index: 1; }
+    tbody tr:hover { background: #fbfcfe; }
+    .summary-table { min-width: 720px; }
+    .table-wrap { overflow-x: auto; }
+    .table-panel { padding: 0; }
+    .table-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 18px; border-bottom: 1px solid var(--line); }
+    .table-head p { margin: 0; color: var(--muted); }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: #fbfcfe; }
+    select, input { height: 36px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); padding: 0 10px; font: inherit; }
+    input { min-width: 260px; }
+    .results-table { min-width: 1440px; }
+    .row-index { color: var(--muted); width: 48px; }
+    .category { color: #243042; font-weight: 650; }
+    .workload { min-width: 315px; font-weight: 650; color: #1f2937; }
+    .bar-cell { position: relative; min-width: 112px; height: 24px; padding: 2px 7px; border-radius: 5px; background: #eef2f7; overflow: hidden; }
+    .bar-cell i { position: absolute; inset: 0 auto 0 0; display: block; background: rgba(180, 83, 9, 0.18); }
+    .bar-cell.hot i { background: rgba(29, 78, 216, 0.18); }
+    .bar-cell.cool i { background: rgba(15, 118, 110, 0.18); }
+    .bar-cell.ok i { background: rgba(15, 138, 95, 0.18); }
+    .bar-cell span { position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
+    .hidden-row { display: none; }
+    footer { padding: 0 20px 34px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 1100px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) { header { padding: 26px 18px 22px; } h1 { font-size: 24px; } main { padding: 18px 12px 30px; } .metrics { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } .table-head { display: block; } input { min-width: 100%; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="eyebrow">MiniMax-AI/MSA Modal Full Sweep</div>
+      <h1>MiniMax MSA B200 Full Sweep Results</h1>
+      <p class="subtitle">README-aligned sweep on NVIDIA B200 / SM100, covering smoke, FP8 full, BF16 full, and NVFP4 sparse prefill presets.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="status-row">
+      <span class="pill"><span class="dot"></span>Full sweep completed</span>
+      <span class="pill"><span class="dot"></span>161 parsed rows</span>
+      <span class="pill">Result dir <code>/mnt/msa-cache/msa/results/20260611-131556</code></span>
+    </div>
+
+    <div class="metrics">
+      <section class="metric-card">
+      <div class="metric-label">Status</div>
+      <div class="metric-value">PASS</div>
+      <div class="metric-note">readme sweep completed</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Total Rows</div>
+      <div class="metric-value">161</div>
+      <div class="metric-note">smoke + fp8 + bf16 + nvfp4</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Peak TFLOPs</div>
+      <div class="metric-value">1638.98</div>
+      <div class="metric-note">Prefill TP4 q=k=131072</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Peak GB/s</div>
+      <div class="metric-value">6539.88</div>
+      <div class="metric-note">Decode q=4 k=65536 b=32</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Fastest</div>
+      <div class="metric-value">0.0655 ms</div>
+      <div class="metric-note">Smoke Decode q=4 k=8192 b=32</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Avg MFU/MBU</div>
+      <div class="metric-value">45.74%</div>
+      <div class="metric-note">Peak 81.75%</div>
+    </section>
+    </div>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Run Metadata</h2>
+        <div class="kv">
+          <div>MSA repo</div><div><code>https://github.com/MiniMax-AI/MSA.git</code></div>
+          <div>MSA ref / commit</div><div><code>main</code> / <code>9175bebf2b62</code></div>
+          <div>Modal GPU request</div><div><code>B200</code></div>
+          <div>Visible GPU</div><div><code>NVIDIA B200</code></div>
+          <div>Compute capability</div><div><code>10.0</code></div>
+          <div>Torch / CUDA</div><div><code>2.12.0a0+0291f960b6.nv26.04.48445190</code> / <code>13.2</code></div>
+          <div>Benchmark script</div><div><code>benchmarks/bench_sparse_attention_ops.py</code></div>
+          <div>Modal run</div><div><a href="https://modal.com/apps/huangzhilin-hzl/main/ap-hjnnL6R659zgvWdMfGVkcH">ap-hjnnL6R659zgvWdMfGVkcH</a></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Preset Summary</h2>
+        <div class="table-wrap">
+          <table class="summary-table">
+            <thead><tr><th>Run</th><th>Dtype</th><th>Sections</th><th>Rows</th><th>Peak TFLOPs</th><th>Peak GB/s</th><th>Avg MFU/MBU</th><th>Min ms</th><th>Files</th></tr></thead>
+            <tbody><tr>
+      <td><strong>msa_smoke</strong></td>
+      <td>fp8</td>
+      <td>prefill,decode,sparse_decode</td>
+      <td>10</td>
+      <td>1587.12</td>
+      <td>5381.14</td>
+      <td>38.17%</td>
+      <td>0.0655</td>
+      <td><a href="msa_smoke.tsv">tsv</a> · <a href="msa_smoke.log">log</a></td>
+    </tr>
+<tr>
+      <td><strong>msa_fp8</strong></td>
+      <td>fp8</td>
+      <td>all</td>
+      <td>73</td>
+      <td>1638.98</td>
+      <td>5371.20</td>
+      <td>40.79%</td>
+      <td>0.0676</td>
+      <td><a href="msa_fp8.tsv">tsv</a> · <a href="msa_fp8.log">log</a></td>
+    </tr>
+<tr>
+      <td><strong>msa_bf16</strong></td>
+      <td>bf16</td>
+      <td>all</td>
+      <td>73</td>
+      <td>1211.44</td>
+      <td>6539.88</td>
+      <td>54.16%</td>
+      <td>0.1045</td>
+      <td><a href="msa_bf16.tsv">tsv</a> · <a href="msa_bf16.log">log</a></td>
+    </tr>
+<tr>
+      <td><strong>msa_nvfp4</strong></td>
+      <td>nvfp4</td>
+      <td>sparse_prefill</td>
+      <td>5</td>
+      <td>490.79</td>
+      <td>1977.20</td>
+      <td>10.32%</td>
+      <td>1.2768</td>
+      <td><a href="msa_nvfp4.tsv">tsv</a> · <a href="msa_nvfp4.log">log</a></td>
+    </tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-bottom:18px;">
+      <h2>Section Summary</h2>
+      <div class="table-wrap">
+        <table class="summary-table">
+          <thead><tr><th>Dtype</th><th>Section</th><th>Rows</th><th>Peak TFLOPs</th><th>Peak GB/s</th><th>Avg ms</th><th>Avg MFU/MBU</th></tr></thead>
+          <tbody><tr>
+      <td>bf16</td>
+      <td><strong>Decode</strong></td>
+      <td>12</td>
+      <td>418.13</td>
+      <td>6539.88</td>
+      <td>0.7791</td>
+      <td>74.51%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Paged Decode</strong></td>
+      <td>12</td>
+      <td>412.41</td>
+      <td>6450.39</td>
+      <td>0.7750</td>
+      <td>74.92%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Paged Prefill</strong></td>
+      <td>5</td>
+      <td>1186.02</td>
+      <td>294.50</td>
+      <td>63.3287</td>
+      <td>51.99%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Prefill TP1</strong></td>
+      <td>5</td>
+      <td>1179.89</td>
+      <td>297.04</td>
+      <td>63.6488</td>
+      <td>51.91%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Prefill TP2</strong></td>
+      <td>5</td>
+      <td>1198.35</td>
+      <td>296.94</td>
+      <td>31.3244</td>
+      <td>52.37%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Prefill TP4</strong></td>
+      <td>5</td>
+      <td>1211.44</td>
+      <td>297.61</td>
+      <td>15.4988</td>
+      <td>52.79%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Sparse Decode Dense</strong></td>
+      <td>12</td>
+      <td>802.34</td>
+      <td>6280.88</td>
+      <td>0.8206</td>
+      <td>71.61%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Sparse Decode Sparse</strong></td>
+      <td>12</td>
+      <td>138.12</td>
+      <td>1146.50</td>
+      <td>0.2963</td>
+      <td>13.93%</td>
+    </tr>
+<tr>
+      <td>bf16</td>
+      <td><strong>Sparse Prefill</strong></td>
+      <td>5</td>
+      <td>421.36</td>
+      <td>206.14</td>
+      <td>8.2645</td>
+      <td>17.76%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Decode</strong></td>
+      <td>12</td>
+      <td>683.13</td>
+      <td>5344.93</td>
+      <td>0.4651</td>
+      <td>60.95%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Paged Decode</strong></td>
+      <td>12</td>
+      <td>686.49</td>
+      <td>5371.20</td>
+      <td>0.4642</td>
+      <td>61.11%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Paged Prefill</strong></td>
+      <td>5</td>
+      <td>1619.58</td>
+      <td>286.51</td>
+      <td>46.4699</td>
+      <td>34.89%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Prefill TP1</strong></td>
+      <td>5</td>
+      <td>1612.04</td>
+      <td>287.51</td>
+      <td>46.6532</td>
+      <td>34.85%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Prefill TP2</strong></td>
+      <td>5</td>
+      <td>1623.68</td>
+      <td>275.29</td>
+      <td>23.1786</td>
+      <td>34.63%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Prefill TP4</strong></td>
+      <td>5</td>
+      <td>1638.98</td>
+      <td>257.45</td>
+      <td>11.5017</td>
+      <td>34.45%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Sparse Decode Dense</strong></td>
+      <td>12</td>
+      <td>1234.65</td>
+      <td>4837.25</td>
+      <td>0.5162</td>
+      <td>55.60%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Sparse Decode Sparse</strong></td>
+      <td>12</td>
+      <td>172.07</td>
+      <td>735.18</td>
+      <td>0.2423</td>
+      <td>8.60%</td>
+    </tr>
+<tr>
+      <td>fp8</td>
+      <td><strong>Sparse Prefill</strong></td>
+      <td>5</td>
+      <td>471.87</td>
+      <td>173.03</td>
+      <td>7.4293</td>
+      <td>9.70%</td>
+    </tr>
+<tr>
+      <td>nvfp4</td>
+      <td><strong>Sparse Prefill</strong></td>
+      <td>5</td>
+      <td>490.79</td>
+      <td>1977.20</td>
+      <td>7.0899</td>
+      <td>10.32%</td>
+    </tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-head">
+        <div>
+          <h2>Full Results</h2>
+          <p id="row-count">Showing 161 of 161 rows</p>
+        </div>
+        <div><a href="summary.md">summary.md</a> · <a href="results.json">results.json</a> · <a href="summary.json">summary.json</a></div>
+      </div>
+      <div class="controls">
+        <select id="run-filter" aria-label="Run filter"><option value="">All runs</option><option value="msa_smoke">msa_smoke (10)</option><option value="msa_fp8">msa_fp8 (73)</option><option value="msa_bf16">msa_bf16 (73)</option><option value="msa_nvfp4">msa_nvfp4 (5)</option></select>
+        <select id="dtype-filter" aria-label="Dtype filter"><option value="">All dtypes</option><option value="bf16">bf16</option><option value="fp8">fp8</option><option value="nvfp4">nvfp4</option></select>
+        <select id="category-filter" aria-label="Section filter"><option value="">All sections</option><option value="Decode">Decode</option><option value="Paged Decode">Paged Decode</option><option value="Paged Prefill">Paged Prefill</option><option value="Prefill TP1">Prefill TP1</option><option value="Prefill TP2">Prefill TP2</option><option value="Prefill TP4">Prefill TP4</option><option value="Smoke Decode">Smoke Decode</option><option value="Smoke Prefill TP1">Smoke Prefill TP1</option><option value="Smoke Prefill TP4">Smoke Prefill TP4</option><option value="Smoke Sparse Decode Dense">Smoke Sparse Decode Dense</option><option value="Smoke Sparse Decode Sparse">Smoke Sparse Decode Sparse</option><option value="Sparse Decode Dense">Sparse Decode Dense</option><option value="Sparse Decode Sparse">Sparse Decode Sparse</option><option value="Sparse Prefill">Sparse Prefill</option></select>
+        <input id="search-filter" type="search" placeholder="Search workload, run, dtype">
+      </div>
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Run</th><th>Dtype</th><th>Section</th><th>Workload</th><th>Q</th><th>KV</th><th>Batch</th><th>Heads</th><th>Dim</th><th>Latency ms</th><th>Std ms</th><th>TFLOPs</th><th>GB/s</th><th>MFU/MBU</th><th>Split</th>
+            </tr>
+          </thead>
+          <tbody id="result-body">
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Prefill TP1">
+        <td class="row-index">1</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Prefill TP1</td>
+        <td class="workload">Smoke Prefill TP1 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7239</span><i style="width:4.0%"></i></div></td>
+        <td>0.0015</td>
+        <td><div class="bar-cell hot"><span>1519.15</span><i style="width:92.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>289.72</span><i style="width:4.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>33.76%</span><i style="width:41.3%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Prefill TP1">
+        <td class="row-index">2</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Prefill TP1</td>
+        <td class="workload">Smoke Prefill TP1 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.7713</span><i style="width:4.0%"></i></div></td>
+        <td>0.0247</td>
+        <td><div class="bar-cell hot"><span>1587.12</span><i style="width:96.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>151.35</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.27%</span><i style="width:43.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Prefill TP4">
+        <td class="row-index">3</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Prefill TP4</td>
+        <td class="workload">Smoke Prefill TP4 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2048</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>1342.55</span><i style="width:81.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>256.04</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>29.83%</span><i style="width:36.5%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Prefill TP4">
+        <td class="row-index">4</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Prefill TP4</td>
+        <td class="workload">Smoke Prefill TP4 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6983</span><i style="width:4.0%"></i></div></td>
+        <td>0.0043</td>
+        <td><div class="bar-cell hot"><span>1574.57</span><i style="width:96.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>150.15</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>34.99%</span><i style="width:42.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Decode">
+        <td class="row-index">5</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Decode</td>
+        <td class="workload">Smoke Decode q=4 k=8192 b=32</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.0655</span><i style="width:4.0%"></i></div></td>
+        <td>0.0007</td>
+        <td><div class="bar-cell hot"><span>524.19</span><i style="width:32.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4144.00</span><i style="width:63.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>51.80%</span><i style="width:63.4%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Decode">
+        <td class="row-index">6</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Decode</td>
+        <td class="workload">Smoke Decode q=4 k=131072 b=32</td>
+        <td>4</td>
+        <td>131072</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7987</span><i style="width:4.0%"></i></div></td>
+        <td>0.0142</td>
+        <td><div class="bar-cell hot"><span>688.27</span><i style="width:42.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5381.14</span><i style="width:82.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>67.26%</span><i style="width:82.3%"></i></div></td>
+        <td>12.48%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Sparse Decode Dense">
+        <td class="row-index">7</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Sparse Decode Dense</td>
+        <td class="workload">Smoke Sparse Decode dense q=8 k=8192 b=32</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.0677</span><i style="width:4.0%"></i></div></td>
+        <td>0.0011</td>
+        <td><div class="bar-cell hot"><span>1013.97</span><i style="width:61.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4055.37</span><i style="width:62.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.69%</span><i style="width:62.0%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Sparse Decode Sparse">
+        <td class="row-index">8</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Sparse Decode Sparse</td>
+        <td class="workload">Smoke Sparse Decode sparse q=8 k=8192 b=32</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1147</span><i style="width:4.0%"></i></div></td>
+        <td>0.0009</td>
+        <td><div class="bar-cell hot"><span>149.75</span><i style="width:9.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>639.82</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.00%</span><i style="width:9.8%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Sparse Decode Dense">
+        <td class="row-index">9</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Sparse Decode Dense</td>
+        <td class="workload">Smoke Sparse Decode dense q=8 k=131072 b=32</td>
+        <td>8</td>
+        <td>131072</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.8653</span><i style="width:4.0%"></i></div></td>
+        <td>0.0227</td>
+        <td><div class="bar-cell hot"><span>1270.62</span><i style="width:77.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4970.76</span><i style="width:76.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>62.13%</span><i style="width:76.0%"></i></div></td>
+        <td>12.48%</td>
+      </tr>
+
+      <tr data-run="msa_smoke" data-dtype="fp8" data-category="Smoke Sparse Decode Sparse">
+        <td class="row-index">10</td>
+        <td>msa_smoke</td>
+        <td>fp8</td>
+        <td class="category">Smoke Sparse Decode Sparse</td>
+        <td class="workload">Smoke Sparse Decode sparse q=8 k=131072 b=32</td>
+        <td>8</td>
+        <td>131072</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1148</span><i style="width:4.0%"></i></div></td>
+        <td>0.0105</td>
+        <td><div class="bar-cell hot"><span>149.67</span><i style="width:9.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>639.46</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>7.99%</span><i style="width:9.8%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP1">
+        <td class="row-index">11</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7294</span><i style="width:4.0%"></i></div></td>
+        <td>0.0076</td>
+        <td><div class="bar-cell hot"><span>1507.59</span><i style="width:92.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>287.51</span><i style="width:4.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>33.50%</span><i style="width:41.0%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP1">
+        <td class="row-index">12</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.8519</span><i style="width:4.0%"></i></div></td>
+        <td>0.0180</td>
+        <td><div class="bar-cell hot"><span>1542.26</span><i style="width:94.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>147.07</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>34.27%</span><i style="width:41.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP1">
+        <td class="row-index">13</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>11.1519</span><i style="width:4.7%"></i></div></td>
+        <td>0.0593</td>
+        <td><div class="bar-cell hot"><span>1577.56</span><i style="width:96.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>75.22</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.06%</span><i style="width:42.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP1">
+        <td class="row-index">14</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>43.9236</span><i style="width:18.4%"></i></div></td>
+        <td>0.1566</td>
+        <td><div class="bar-cell hot"><span>1602.10</span><i style="width:97.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.20</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.60%</span><i style="width:43.6%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP1">
+        <td class="row-index">15</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>174.6094</span><i style="width:73.2%"></i></div></td>
+        <td>0.3054</td>
+        <td><div class="bar-cell hot"><span>1612.04</span><i style="width:98.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.22</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.82%</span><i style="width:43.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP2">
+        <td class="row-index">16</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3809</span><i style="width:4.0%"></i></div></td>
+        <td>0.0011</td>
+        <td><div class="bar-cell hot"><span>1443.50</span><i style="width:88.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>275.29</span><i style="width:4.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>32.08%</span><i style="width:39.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP2">
+        <td class="row-index">17</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.4297</span><i style="width:4.0%"></i></div></td>
+        <td>0.0106</td>
+        <td><div class="bar-cell hot"><span>1538.16</span><i style="width:93.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>146.68</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>34.18%</span><i style="width:41.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP2">
+        <td class="row-index">18</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>5.5958</span><i style="width:4.0%"></i></div></td>
+        <td>0.0391</td>
+        <td><div class="bar-cell hot"><span>1571.95</span><i style="width:95.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>74.95</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>34.93%</span><i style="width:42.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP2">
+        <td class="row-index">19</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>21.8082</span><i style="width:9.1%"></i></div></td>
+        <td>0.0966</td>
+        <td><div class="bar-cell hot"><span>1613.38</span><i style="width:98.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.47</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.85%</span><i style="width:43.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP2">
+        <td class="row-index">20</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>86.6785</span><i style="width:36.3%"></i></div></td>
+        <td>0.2166</td>
+        <td><div class="bar-cell hot"><span>1623.68</span><i style="width:99.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.36</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>36.08%</span><i style="width:44.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP4">
+        <td class="row-index">21</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2036</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>1349.93</span><i style="width:82.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>257.45</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>30.00%</span><i style="width:36.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP4">
+        <td class="row-index">22</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7066</span><i style="width:4.0%"></i></div></td>
+        <td>0.0110</td>
+        <td><div class="bar-cell hot"><span>1556.17</span><i style="width:94.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>148.40</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>34.58%</span><i style="width:42.3%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP4">
+        <td class="row-index">23</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.7618</span><i style="width:4.0%"></i></div></td>
+        <td>0.0140</td>
+        <td><div class="bar-cell hot"><span>1592.53</span><i style="width:97.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>75.94</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.39%</span><i style="width:43.3%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP4">
+        <td class="row-index">24</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>10.9015</span><i style="width:4.6%"></i></div></td>
+        <td>0.0508</td>
+        <td><div class="bar-cell hot"><span>1613.76</span><i style="width:98.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.47</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.86%</span><i style="width:43.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Prefill TP4">
+        <td class="row-index">25</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>42.9349</span><i style="width:18.0%"></i></div></td>
+        <td>0.1254</td>
+        <td><div class="bar-cell hot"><span>1638.98</span><i style="width:100.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.54</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>36.42%</span><i style="width:44.6%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Prefill">
+        <td class="row-index">26</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7320</span><i style="width:4.0%"></i></div></td>
+        <td>0.0087</td>
+        <td><div class="bar-cell hot"><span>1502.35</span><i style="width:91.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>286.51</span><i style="width:4.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>33.39%</span><i style="width:40.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Prefill">
+        <td class="row-index">27</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.8509</span><i style="width:4.0%"></i></div></td>
+        <td>0.0189</td>
+        <td><div class="bar-cell hot"><span>1542.76</span><i style="width:94.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>147.12</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>34.28%</span><i style="width:41.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Prefill">
+        <td class="row-index">28</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>11.1277</span><i style="width:4.7%"></i></div></td>
+        <td>0.0571</td>
+        <td><div class="bar-cell hot"><span>1580.99</span><i style="width:96.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>75.39</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.13%</span><i style="width:43.0%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Prefill">
+        <td class="row-index">29</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>43.8426</span><i style="width:18.4%"></i></div></td>
+        <td>0.1509</td>
+        <td><div class="bar-cell hot"><span>1605.06</span><i style="width:97.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.27</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.67%</span><i style="width:43.6%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Prefill">
+        <td class="row-index">30</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>173.7965</span><i style="width:72.9%"></i></div></td>
+        <td>0.3171</td>
+        <td><div class="bar-cell hot"><span>1619.58</span><i style="width:98.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.31</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>35.99%</span><i style="width:44.0%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Prefill">
+        <td class="row-index">31</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=8192 topk=16</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.4306</span><i style="width:4.0%"></i></div></td>
+        <td>0.0041</td>
+        <td><div class="bar-cell hot"><span>384.29</span><i style="width:23.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>142.20</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.54%</span><i style="width:10.4%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Prefill">
+        <td class="row-index">32</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=16384 topk=16</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.6828</span><i style="width:4.0%"></i></div></td>
+        <td>0.0043</td>
+        <td><div class="bar-cell hot"><span>409.83</span><i style="width:25.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>150.87</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.11%</span><i style="width:11.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Prefill">
+        <td class="row-index">33</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=32768 topk=16</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>4.8814</span><i style="width:4.0%"></i></div></td>
+        <td>0.0497</td>
+        <td><div class="bar-cell hot"><span>450.49</span><i style="width:27.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>165.40</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>10.01%</span><i style="width:12.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Prefill">
+        <td class="row-index">34</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=65536 topk=16</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>9.3204</span><i style="width:4.0%"></i></div></td>
+        <td>0.0688</td>
+        <td><div class="bar-cell hot"><span>471.87</span><i style="width:28.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>173.03</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>10.49%</span><i style="width:12.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Prefill">
+        <td class="row-index">35</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=131072 topk=16</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>18.8314</span><i style="width:7.9%"></i></div></td>
+        <td>0.1787</td>
+        <td><div class="bar-cell hot"><span>467.10</span><i style="width:28.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>171.17</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>10.38%</span><i style="width:12.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">36</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=8192 b=32</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.0676</span><i style="width:4.0%"></i></div></td>
+        <td>0.0009</td>
+        <td><div class="bar-cell hot"><span>508.31</span><i style="width:31.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4018.42</span><i style="width:61.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.23%</span><i style="width:61.4%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">37</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=16384 b=32</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1219</span><i style="width:4.0%"></i></div></td>
+        <td>0.0012</td>
+        <td><div class="bar-cell hot"><span>563.89</span><i style="width:34.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4431.60</span><i style="width:67.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>55.40%</span><i style="width:67.8%"></i></div></td>
+        <td>2.19%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">38</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=32768 b=32</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2058</span><i style="width:4.0%"></i></div></td>
+        <td>0.0019</td>
+        <td><div class="bar-cell hot"><span>667.72</span><i style="width:40.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5232.08</span><i style="width:80.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>65.40%</span><i style="width:80.0%"></i></div></td>
+        <td>7.62%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">39</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=65536 b=32</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4024</span><i style="width:4.0%"></i></div></td>
+        <td>0.0049</td>
+        <td><div class="bar-cell hot"><span>683.13</span><i style="width:41.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5344.93</span><i style="width:81.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>66.81%</span><i style="width:81.7%"></i></div></td>
+        <td>10.77%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">40</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=8192 b=64</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1298</span><i style="width:4.0%"></i></div></td>
+        <td>0.0013</td>
+        <td><div class="bar-cell hot"><span>529.49</span><i style="width:32.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4185.90</span><i style="width:64.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.32%</span><i style="width:64.0%"></i></div></td>
+        <td>3.57%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">41</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=16384 b=64</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2161</span><i style="width:4.0%"></i></div></td>
+        <td>0.0018</td>
+        <td><div class="bar-cell hot"><span>636.04</span><i style="width:38.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4998.67</span><i style="width:76.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>62.48%</span><i style="width:76.4%"></i></div></td>
+        <td>8.31%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">42</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=32768 b=64</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4138</span><i style="width:4.0%"></i></div></td>
+        <td>0.0048</td>
+        <td><div class="bar-cell hot"><span>664.31</span><i style="width:40.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5205.37</span><i style="width:79.6%"></i></div></td>
+        <td><div class="bar-cell ok"><span>65.07%</span><i style="width:79.6%"></i></div></td>
+        <td>11.12%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">43</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=65536 b=64</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.8284</span><i style="width:4.0%"></i></div></td>
+        <td>0.0108</td>
+        <td><div class="bar-cell hot"><span>663.58</span><i style="width:40.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5191.95</span><i style="width:79.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>64.90%</span><i style="width:79.4%"></i></div></td>
+        <td>12.65%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">44</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=8192 b=128</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2306</span><i style="width:4.0%"></i></div></td>
+        <td>0.0022</td>
+        <td><div class="bar-cell hot"><span>596.00</span><i style="width:36.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4711.68</span><i style="width:72.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>58.90%</span><i style="width:72.0%"></i></div></td>
+        <td>9.66%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">45</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=16384 b=128</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4313</span><i style="width:4.0%"></i></div></td>
+        <td>0.0054</td>
+        <td><div class="bar-cell hot"><span>637.27</span><i style="width:38.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5008.32</span><i style="width:76.6%"></i></div></td>
+        <td><div class="bar-cell ok"><span>62.60%</span><i style="width:76.6%"></i></div></td>
+        <td>11.80%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">46</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=32768 b=128</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.8479</span><i style="width:4.0%"></i></div></td>
+        <td>0.0102</td>
+        <td><div class="bar-cell hot"><span>648.37</span><i style="width:39.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5080.43</span><i style="width:77.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>63.51%</span><i style="width:77.7%"></i></div></td>
+        <td>13.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Decode">
+        <td class="row-index">47</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=65536 b=128</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.6856</span><i style="width:4.0%"></i></div></td>
+        <td>0.0299</td>
+        <td><div class="bar-cell hot"><span>652.29</span><i style="width:39.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5103.63</span><i style="width:78.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>63.80%</span><i style="width:78.0%"></i></div></td>
+        <td>14.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">48</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=8192 b=32</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.0676</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>508.31</span><i style="width:31.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4018.42</span><i style="width:61.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.23%</span><i style="width:61.4%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">49</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=16384 b=32</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1219</span><i style="width:4.0%"></i></div></td>
+        <td>0.0011</td>
+        <td><div class="bar-cell hot"><span>563.74</span><i style="width:34.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4430.43</span><i style="width:67.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>55.38%</span><i style="width:67.7%"></i></div></td>
+        <td>2.19%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">50</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=32768 b=32</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2056</span><i style="width:4.0%"></i></div></td>
+        <td>0.0020</td>
+        <td><div class="bar-cell hot"><span>668.45</span><i style="width:40.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5237.78</span><i style="width:80.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>65.47%</span><i style="width:80.1%"></i></div></td>
+        <td>7.62%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">51</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=65536 b=32</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4004</span><i style="width:4.0%"></i></div></td>
+        <td>0.0048</td>
+        <td><div class="bar-cell hot"><span>686.49</span><i style="width:41.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5371.20</span><i style="width:82.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>67.14%</span><i style="width:82.1%"></i></div></td>
+        <td>10.77%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">52</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=8192 b=64</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1297</span><i style="width:4.0%"></i></div></td>
+        <td>0.0012</td>
+        <td><div class="bar-cell hot"><span>529.88</span><i style="width:32.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4189.00</span><i style="width:64.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.36%</span><i style="width:64.1%"></i></div></td>
+        <td>3.57%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">53</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=16384 b=64</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2161</span><i style="width:4.0%"></i></div></td>
+        <td>0.0020</td>
+        <td><div class="bar-cell hot"><span>636.04</span><i style="width:38.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4998.67</span><i style="width:76.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>62.48%</span><i style="width:76.4%"></i></div></td>
+        <td>8.31%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">54</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=32768 b=64</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4106</span><i style="width:4.0%"></i></div></td>
+        <td>0.0054</td>
+        <td><div class="bar-cell hot"><span>669.38</span><i style="width:40.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5245.13</span><i style="width:80.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>65.56%</span><i style="width:80.2%"></i></div></td>
+        <td>11.12%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">55</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=65536 b=64</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.8225</span><i style="width:4.0%"></i></div></td>
+        <td>0.0070</td>
+        <td><div class="bar-cell hot"><span>668.38</span><i style="width:40.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5229.52</span><i style="width:80.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>65.37%</span><i style="width:80.0%"></i></div></td>
+        <td>12.65%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">56</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=8192 b=128</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2305</span><i style="width:4.0%"></i></div></td>
+        <td>0.0019</td>
+        <td><div class="bar-cell hot"><span>596.08</span><i style="width:36.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4712.33</span><i style="width:72.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>58.90%</span><i style="width:72.1%"></i></div></td>
+        <td>9.66%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">57</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=16384 b=128</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4275</span><i style="width:4.0%"></i></div></td>
+        <td>0.0054</td>
+        <td><div class="bar-cell hot"><span>642.90</span><i style="width:39.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5052.55</span><i style="width:77.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>63.16%</span><i style="width:77.3%"></i></div></td>
+        <td>11.80%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">58</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=32768 b=128</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.8447</span><i style="width:4.0%"></i></div></td>
+        <td>0.0095</td>
+        <td><div class="bar-cell hot"><span>650.77</span><i style="width:39.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5099.29</span><i style="width:78.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>63.74%</span><i style="width:78.0%"></i></div></td>
+        <td>13.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Paged Decode">
+        <td class="row-index">59</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=65536 b=128</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.6937</span><i style="width:4.0%"></i></div></td>
+        <td>0.0306</td>
+        <td><div class="bar-cell hot"><span>649.18</span><i style="width:39.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5079.24</span><i style="width:77.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>63.49%</span><i style="width:77.7%"></i></div></td>
+        <td>14.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">60</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=8192 b=32 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.0686</span><i style="width:4.0%"></i></div></td>
+        <td>0.0011</td>
+        <td><div class="bar-cell hot"><span>1000.73</span><i style="width:61.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4002.43</span><i style="width:61.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.03%</span><i style="width:61.2%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">61</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=8192 b=32 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1146</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>149.96</span><i style="width:9.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>640.72</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.01%</span><i style="width:9.8%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">62</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=16384 b=32 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1300</span><i style="width:4.0%"></i></div></td>
+        <td>0.0014</td>
+        <td><div class="bar-cell hot"><span>1056.61</span><i style="width:64.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4176.63</span><i style="width:63.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.21%</span><i style="width:63.9%"></i></div></td>
+        <td>2.19%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">63</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=16384 b=32 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1147</span><i style="width:4.0%"></i></div></td>
+        <td>0.0009</td>
+        <td><div class="bar-cell hot"><span>149.84</span><i style="width:9.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>640.18</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.00%</span><i style="width:9.8%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">64</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=32768 b=32 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2264</span><i style="width:4.0%"></i></div></td>
+        <td>0.0022</td>
+        <td><div class="bar-cell hot"><span>1213.82</span><i style="width:74.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4769.79</span><i style="width:72.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>59.62%</span><i style="width:72.9%"></i></div></td>
+        <td>7.62%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">65</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=32768 b=32 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1147</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>149.84</span><i style="width:9.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>640.18</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.00%</span><i style="width:9.8%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">66</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=65536 b=32 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4452</span><i style="width:4.0%"></i></div></td>
+        <td>0.0050</td>
+        <td><div class="bar-cell hot"><span>1234.65</span><i style="width:75.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4837.25</span><i style="width:74.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>60.47%</span><i style="width:74.0%"></i></div></td>
+        <td>10.77%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">67</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=65536 b=32 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1145</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>150.01</span><i style="width:9.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>640.89</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.01%</span><i style="width:9.8%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">68</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=8192 b=64 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1424</span><i style="width:4.0%"></i></div></td>
+        <td>0.0014</td>
+        <td><div class="bar-cell hot"><span>964.97</span><i style="width:58.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>3859.39</span><i style="width:59.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>48.24%</span><i style="width:59.0%"></i></div></td>
+        <td>3.57%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">69</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=8192 b=64 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2130</span><i style="width:4.0%"></i></div></td>
+        <td>0.0014</td>
+        <td><div class="bar-cell hot"><span>161.32</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>689.23</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.62%</span><i style="width:10.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">70</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=16384 b=64 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2396</span><i style="width:4.0%"></i></div></td>
+        <td>0.0041</td>
+        <td><div class="bar-cell hot"><span>1147.07</span><i style="width:70.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4534.21</span><i style="width:69.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>56.68%</span><i style="width:69.3%"></i></div></td>
+        <td>8.31%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">71</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=16384 b=64 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2130</span><i style="width:4.0%"></i></div></td>
+        <td>0.0014</td>
+        <td><div class="bar-cell hot"><span>161.32</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>689.23</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.62%</span><i style="width:10.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">72</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=32768 b=64 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4596</span><i style="width:4.0%"></i></div></td>
+        <td>0.0054</td>
+        <td><div class="bar-cell hot"><span>1196.16</span><i style="width:73.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4700.37</span><i style="width:71.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>58.75%</span><i style="width:71.9%"></i></div></td>
+        <td>11.12%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">73</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=32768 b=64 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2130</span><i style="width:4.0%"></i></div></td>
+        <td>0.0015</td>
+        <td><div class="bar-cell hot"><span>161.34</span><i style="width:9.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>689.33</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.62%</span><i style="width:10.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">74</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=65536 b=64 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.9081</span><i style="width:4.0%"></i></div></td>
+        <td>0.0109</td>
+        <td><div class="bar-cell hot"><span>1210.68</span><i style="width:73.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4743.33</span><i style="width:72.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>59.29%</span><i style="width:72.5%"></i></div></td>
+        <td>12.65%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">75</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=65536 b=64 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2128</span><i style="width:4.0%"></i></div></td>
+        <td>0.0015</td>
+        <td><div class="bar-cell hot"><span>161.46</span><i style="width:9.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>689.85</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>8.62%</span><i style="width:10.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">76</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=8192 b=128 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2673</span><i style="width:4.0%"></i></div></td>
+        <td>0.0249</td>
+        <td><div class="bar-cell hot"><span>1028.05</span><i style="width:62.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4111.69</span><i style="width:62.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>51.40%</span><i style="width:62.9%"></i></div></td>
+        <td>9.66%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">77</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=8192 b=128 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3994</span><i style="width:4.0%"></i></div></td>
+        <td>0.0029</td>
+        <td><div class="bar-cell hot"><span>172.05</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>735.06</span><i style="width:11.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.19%</span><i style="width:11.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">78</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=16384 b=128 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4847</span><i style="width:4.0%"></i></div></td>
+        <td>0.0055</td>
+        <td><div class="bar-cell hot"><span>1134.00</span><i style="width:69.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4482.57</span><i style="width:68.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>56.03%</span><i style="width:68.5%"></i></div></td>
+        <td>11.80%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">79</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=16384 b=128 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3994</span><i style="width:4.0%"></i></div></td>
+        <td>0.0029</td>
+        <td><div class="bar-cell hot"><span>172.06</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>735.12</span><i style="width:11.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.19%</span><i style="width:11.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">80</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=32768 b=128 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.9460</span><i style="width:4.0%"></i></div></td>
+        <td>0.0101</td>
+        <td><div class="bar-cell hot"><span>1162.11</span><i style="width:70.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4566.58</span><i style="width:69.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>57.08%</span><i style="width:69.8%"></i></div></td>
+        <td>13.00%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">81</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=32768 b=128 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3994</span><i style="width:4.0%"></i></div></td>
+        <td>0.0029</td>
+        <td><div class="bar-cell hot"><span>172.06</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>735.12</span><i style="width:11.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.19%</span><i style="width:11.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Dense">
+        <td class="row-index">82</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=65536 b=128 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.8771</span><i style="width:4.0%"></i></div></td>
+        <td>0.0461</td>
+        <td><div class="bar-cell hot"><span>1171.45</span><i style="width:71.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>4589.61</span><i style="width:70.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>57.37%</span><i style="width:70.2%"></i></div></td>
+        <td>14.25%</td>
+      </tr>
+
+      <tr data-run="msa_fp8" data-dtype="fp8" data-category="Sparse Decode Sparse">
+        <td class="row-index">83</td>
+        <td>msa_fp8</td>
+        <td>fp8</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=65536 b=128 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3994</span><i style="width:4.0%"></i></div></td>
+        <td>0.0027</td>
+        <td><div class="bar-cell hot"><span>172.07</span><i style="width:10.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>735.18</span><i style="width:11.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.19%</span><i style="width:11.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP1">
+        <td class="row-index">84</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.9602</span><i style="width:4.0%"></i></div></td>
+        <td>0.0185</td>
+        <td><div class="bar-cell hot"><span>1145.24</span><i style="width:69.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>297.04</span><i style="width:4.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.90%</span><i style="width:62.3%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP1">
+        <td class="row-index">85</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>3.7458</span><i style="width:4.0%"></i></div></td>
+        <td>0.0366</td>
+        <td><div class="bar-cell hot"><span>1174.21</span><i style="width:71.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>152.28</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.19%</span><i style="width:63.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP1">
+        <td class="row-index">86</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>15.1049</span><i style="width:6.3%"></i></div></td>
+        <td>0.1158</td>
+        <td><div class="bar-cell hot"><span>1164.70</span><i style="width:71.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>75.53</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>51.76%</span><i style="width:63.3%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP1">
+        <td class="row-index">87</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>59.8702</span><i style="width:25.1%"></i></div></td>
+        <td>0.1511</td>
+        <td><div class="bar-cell hot"><span>1175.37</span><i style="width:71.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.11</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.24%</span><i style="width:63.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP1">
+        <td class="row-index">88</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP1</td>
+        <td class="workload">Prefill TP1 q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>238.5627</span><i style="width:100.0%"></i></div></td>
+        <td>0.1696</td>
+        <td><div class="bar-cell hot"><span>1179.89</span><i style="width:72.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.13</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.44%</span><i style="width:64.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP2">
+        <td class="row-index">89</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.4803</span><i style="width:4.0%"></i></div></td>
+        <td>0.0049</td>
+        <td><div class="bar-cell hot"><span>1144.85</span><i style="width:69.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>296.94</span><i style="width:4.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.88%</span><i style="width:62.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP2">
+        <td class="row-index">90</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.8955</span><i style="width:4.0%"></i></div></td>
+        <td>0.0321</td>
+        <td><div class="bar-cell hot"><span>1160.23</span><i style="width:70.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>150.47</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>51.57%</span><i style="width:63.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP2">
+        <td class="row-index">91</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>7.3871</span><i style="width:4.0%"></i></div></td>
+        <td>0.0593</td>
+        <td><div class="bar-cell hot"><span>1190.77</span><i style="width:72.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>77.22</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.92%</span><i style="width:64.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP2">
+        <td class="row-index">92</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>29.3612</span><i style="width:12.3%"></i></div></td>
+        <td>0.2023</td>
+        <td><div class="bar-cell hot"><span>1198.35</span><i style="width:73.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.86</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>53.26%</span><i style="width:65.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP2">
+        <td class="row-index">93</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP2</td>
+        <td class="workload">Prefill TP2 q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>32/2</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>117.4979</span><i style="width:49.3%"></i></div></td>
+        <td>0.2517</td>
+        <td><div class="bar-cell hot"><span>1197.80</span><i style="width:73.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.42</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>53.24%</span><i style="width:65.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP4">
+        <td class="row-index">94</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2396</span><i style="width:4.0%"></i></div></td>
+        <td>0.0031</td>
+        <td><div class="bar-cell hot"><span>1147.45</span><i style="width:70.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>297.61</span><i style="width:4.6%"></i></div></td>
+        <td><div class="bar-cell ok"><span>51.00%</span><i style="width:62.4%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP4">
+        <td class="row-index">95</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.9318</span><i style="width:4.0%"></i></div></td>
+        <td>0.0100</td>
+        <td><div class="bar-cell hot"><span>1180.01</span><i style="width:72.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>153.04</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.44%</span><i style="width:64.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP4">
+        <td class="row-index">96</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>3.6976</span><i style="width:4.0%"></i></div></td>
+        <td>0.0342</td>
+        <td><div class="bar-cell hot"><span>1189.45</span><i style="width:72.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>77.13</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.86%</span><i style="width:64.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP4">
+        <td class="row-index">97</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>14.5377</span><i style="width:6.1%"></i></div></td>
+        <td>0.0884</td>
+        <td><div class="bar-cell hot"><span>1210.12</span><i style="width:73.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>39.24</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>53.78%</span><i style="width:65.8%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Prefill TP4">
+        <td class="row-index">98</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Prefill TP4</td>
+        <td class="workload">Prefill TP4 q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>58.0875</span><i style="width:24.3%"></i></div></td>
+        <td>0.3316</td>
+        <td><div class="bar-cell hot"><span>1211.44</span><i style="width:73.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.64</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>53.84%</span><i style="width:65.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Prefill">
+        <td class="row-index">99</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.9685</span><i style="width:4.0%"></i></div></td>
+        <td>0.0120</td>
+        <td><div class="bar-cell hot"><span>1135.45</span><i style="width:69.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>294.50</span><i style="width:4.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>50.46%</span><i style="width:61.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Prefill">
+        <td class="row-index">100</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>3.7571</span><i style="width:4.0%"></i></div></td>
+        <td>0.0251</td>
+        <td><div class="bar-cell hot"><span>1170.68</span><i style="width:71.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>151.83</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.03%</span><i style="width:63.6%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Prefill">
+        <td class="row-index">101</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=32768</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>14.9492</span><i style="width:6.3%"></i></div></td>
+        <td>0.1057</td>
+        <td><div class="bar-cell hot"><span>1176.83</span><i style="width:71.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>76.32</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.30%</span><i style="width:64.0%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Prefill">
+        <td class="row-index">102</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=65536</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>59.6398</span><i style="width:25.0%"></i></div></td>
+        <td>0.0728</td>
+        <td><div class="bar-cell hot"><span>1179.91</span><i style="width:72.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>38.26</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.44%</span><i style="width:64.1%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Prefill">
+        <td class="row-index">103</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Prefill</td>
+        <td class="workload">Paged Prefill q=k=131072</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>237.3290</span><i style="width:99.5%"></i></div></td>
+        <td>0.0970</td>
+        <td><div class="bar-cell hot"><span>1186.02</span><i style="width:72.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>19.23</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>52.71%</span><i style="width:64.5%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Prefill">
+        <td class="row-index">104</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=8192 topk=16</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.5033</span><i style="width:4.0%"></i></div></td>
+        <td>0.0387</td>
+        <td><div class="bar-cell hot"><span>365.69</span><i style="width:22.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>181.35</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>16.25%</span><i style="width:19.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Prefill">
+        <td class="row-index">105</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=16384 topk=16</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.8477</span><i style="width:4.0%"></i></div></td>
+        <td>0.0533</td>
+        <td><div class="bar-cell hot"><span>386.10</span><i style="width:23.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>190.00</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>17.16%</span><i style="width:21.0%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Prefill">
+        <td class="row-index">106</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=32768 topk=16</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>5.3842</span><i style="width:4.0%"></i></div></td>
+        <td>0.0381</td>
+        <td><div class="bar-cell hot"><span>408.42</span><i style="width:24.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>200.20</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>18.15%</span><i style="width:22.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Prefill">
+        <td class="row-index">107</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=65536 topk=16</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>10.4378</span><i style="width:4.4%"></i></div></td>
+        <td>0.1752</td>
+        <td><div class="bar-cell hot"><span>421.36</span><i style="width:25.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>206.14</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>18.73%</span><i style="width:22.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Prefill">
+        <td class="row-index">108</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">Sparse Prefill q=k=131072 topk=16</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>21.1497</span><i style="width:8.9%"></i></div></td>
+        <td>0.5738</td>
+        <td><div class="bar-cell hot"><span>415.90</span><i style="width:25.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>203.27</span><i style="width:4.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>18.48%</span><i style="width:22.6%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">109</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=8192 b=32</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1065</span><i style="width:4.0%"></i></div></td>
+        <td>0.0011</td>
+        <td><div class="bar-cell hot"><span>322.68</span><i style="width:19.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5082.14</span><i style="width:77.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>63.53%</span><i style="width:77.7%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">110</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=16384 b=32</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1935</span><i style="width:4.0%"></i></div></td>
+        <td>0.0013</td>
+        <td><div class="bar-cell hot"><span>355.04</span><i style="width:21.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5569.69</span><i style="width:85.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>69.62%</span><i style="width:85.2%"></i></div></td>
+        <td>2.19%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">111</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=32768 b=32</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3451</span><i style="width:4.0%"></i></div></td>
+        <td>0.0019</td>
+        <td><div class="bar-cell hot"><span>398.25</span><i style="width:24.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6235.16</span><i style="width:95.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>77.94%</span><i style="width:95.3%"></i></div></td>
+        <td>7.62%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">112</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=65536 b=32</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6574</span><i style="width:4.0%"></i></div></td>
+        <td>0.1741</td>
+        <td><div class="bar-cell hot"><span>418.13</span><i style="width:25.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6539.88</span><i style="width:100.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>81.75%</span><i style="width:100.0%"></i></div></td>
+        <td>10.77%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">113</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=8192 b=64</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2016</span><i style="width:4.0%"></i></div></td>
+        <td>0.0014</td>
+        <td><div class="bar-cell hot"><span>340.81</span><i style="width:20.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5367.71</span><i style="width:82.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>67.10%</span><i style="width:82.1%"></i></div></td>
+        <td>3.57%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">114</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=16384 b=64</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3532</span><i style="width:4.0%"></i></div></td>
+        <td>0.0018</td>
+        <td><div class="bar-cell hot"><span>389.04</span><i style="width:23.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6103.00</span><i style="width:93.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>76.29%</span><i style="width:93.3%"></i></div></td>
+        <td>8.31%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">115</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=32768 b=64</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6625</span><i style="width:4.0%"></i></div></td>
+        <td>0.3189</td>
+        <td><div class="bar-cell hot"><span>414.87</span><i style="width:25.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6495.36</span><i style="width:99.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>81.19%</span><i style="width:99.3%"></i></div></td>
+        <td>11.12%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">116</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=65536 b=64</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.4070</span><i style="width:4.0%"></i></div></td>
+        <td>0.1256</td>
+        <td><div class="bar-cell hot"><span>390.71</span><i style="width:23.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6110.93</span><i style="width:93.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>76.39%</span><i style="width:93.4%"></i></div></td>
+        <td>12.65%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">117</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=8192 b=128</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3697</span><i style="width:4.0%"></i></div></td>
+        <td>0.0017</td>
+        <td><div class="bar-cell hot"><span>371.73</span><i style="width:22.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5854.67</span><i style="width:89.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>73.18%</span><i style="width:89.5%"></i></div></td>
+        <td>9.66%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">118</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=16384 b=128</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6911</span><i style="width:4.0%"></i></div></td>
+        <td>0.0111</td>
+        <td><div class="bar-cell hot"><span>397.68</span><i style="width:24.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6238.63</span><i style="width:95.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>77.98%</span><i style="width:95.4%"></i></div></td>
+        <td>11.80%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">119</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=32768 b=128</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.4090</span><i style="width:4.0%"></i></div></td>
+        <td>0.1665</td>
+        <td><div class="bar-cell hot"><span>390.16</span><i style="width:23.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6108.49</span><i style="width:93.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>76.36%</span><i style="width:93.4%"></i></div></td>
+        <td>13.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Decode">
+        <td class="row-index">120</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Decode</td>
+        <td class="workload">Decode q=4 k=65536 b=128</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.9531</span><i style="width:4.0%"></i></div></td>
+        <td>0.1730</td>
+        <td><div class="bar-cell hot"><span>372.31</span><i style="width:22.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5823.21</span><i style="width:89.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>72.79%</span><i style="width:89.0%"></i></div></td>
+        <td>14.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">121</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=8192 b=32</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1045</span><i style="width:4.0%"></i></div></td>
+        <td>0.0011</td>
+        <td><div class="bar-cell hot"><span>328.60</span><i style="width:20.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5175.48</span><i style="width:79.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>64.69%</span><i style="width:79.1%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">122</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=16384 b=32</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1915</span><i style="width:4.0%"></i></div></td>
+        <td>0.0013</td>
+        <td><div class="bar-cell hot"><span>358.84</span><i style="width:21.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5629.26</span><i style="width:86.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>70.37%</span><i style="width:86.1%"></i></div></td>
+        <td>2.19%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">123</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=32768 b=32</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3429</span><i style="width:4.0%"></i></div></td>
+        <td>0.0016</td>
+        <td><div class="bar-cell hot"><span>400.78</span><i style="width:24.5%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6274.72</span><i style="width:95.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>78.43%</span><i style="width:95.9%"></i></div></td>
+        <td>7.62%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">124</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=65536 b=32</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6665</span><i style="width:4.0%"></i></div></td>
+        <td>0.0675</td>
+        <td><div class="bar-cell hot"><span>412.41</span><i style="width:25.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6450.39</span><i style="width:98.6%"></i></div></td>
+        <td><div class="bar-cell ok"><span>80.63%</span><i style="width:98.6%"></i></div></td>
+        <td>10.77%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">125</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=8192 b=64</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1978</span><i style="width:4.0%"></i></div></td>
+        <td>0.0014</td>
+        <td><div class="bar-cell hot"><span>347.31</span><i style="width:21.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5470.17</span><i style="width:83.6%"></i></div></td>
+        <td><div class="bar-cell ok"><span>68.38%</span><i style="width:83.6%"></i></div></td>
+        <td>3.57%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">126</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=16384 b=64</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3492</span><i style="width:4.0%"></i></div></td>
+        <td>0.0017</td>
+        <td><div class="bar-cell hot"><span>393.49</span><i style="width:24.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6172.90</span><i style="width:94.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>77.16%</span><i style="width:94.4%"></i></div></td>
+        <td>8.31%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">127</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=32768 b=64</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6707</span><i style="width:4.0%"></i></div></td>
+        <td>0.0652</td>
+        <td><div class="bar-cell hot"><span>409.81</span><i style="width:25.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6416.02</span><i style="width:98.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>80.20%</span><i style="width:98.1%"></i></div></td>
+        <td>11.12%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">128</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=65536 b=64</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.3953</span><i style="width:4.0%"></i></div></td>
+        <td>0.1229</td>
+        <td><div class="bar-cell hot"><span>394.00</span><i style="width:24.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6162.36</span><i style="width:94.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>77.03%</span><i style="width:94.2%"></i></div></td>
+        <td>12.65%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">129</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=8192 b=128</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3658</span><i style="width:4.0%"></i></div></td>
+        <td>0.0017</td>
+        <td><div class="bar-cell hot"><span>375.69</span><i style="width:22.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5917.16</span><i style="width:90.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>73.96%</span><i style="width:90.5%"></i></div></td>
+        <td>9.66%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">130</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=16384 b=128</td>
+        <td>4</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6871</span><i style="width:4.0%"></i></div></td>
+        <td>0.0118</td>
+        <td><div class="bar-cell hot"><span>400.00</span><i style="width:24.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6274.95</span><i style="width:95.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>78.44%</span><i style="width:95.9%"></i></div></td>
+        <td>11.80%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">131</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=32768 b=128</td>
+        <td>4</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.4192</span><i style="width:4.0%"></i></div></td>
+        <td>0.1228</td>
+        <td><div class="bar-cell hot"><span>387.36</span><i style="width:23.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6064.62</span><i style="width:92.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>75.81%</span><i style="width:92.7%"></i></div></td>
+        <td>13.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Paged Decode">
+        <td class="row-index">132</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Paged Decode</td>
+        <td class="workload">Paged Decode q=4 k=65536 b=128</td>
+        <td>4</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.9090</span><i style="width:4.0%"></i></div></td>
+        <td>0.1358</td>
+        <td><div class="bar-cell hot"><span>377.96</span><i style="width:23.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5911.48</span><i style="width:90.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>73.89%</span><i style="width:90.4%"></i></div></td>
+        <td>14.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">133</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=8192 b=32 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1045</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>657.45</span><i style="width:40.1%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5218.79</span><i style="width:79.8%"></i></div></td>
+        <td><div class="bar-cell ok"><span>65.23%</span><i style="width:79.8%"></i></div></td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">134</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=8192 b=32 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1330</span><i style="width:4.0%"></i></div></td>
+        <td>0.0023</td>
+        <td><div class="bar-cell hot"><span>129.18</span><i style="width:7.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1072.29</span><i style="width:16.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>13.40%</span><i style="width:16.4%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">135</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=16384 b=32 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1997</span><i style="width:4.0%"></i></div></td>
+        <td>0.0012</td>
+        <td><div class="bar-cell hot"><span>688.15</span><i style="width:42.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5419.32</span><i style="width:82.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>67.74%</span><i style="width:82.9%"></i></div></td>
+        <td>2.19%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">136</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=16384 b=32 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1331</span><i style="width:4.0%"></i></div></td>
+        <td>0.0023</td>
+        <td><div class="bar-cell hot"><span>129.09</span><i style="width:7.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1071.52</span><i style="width:16.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>13.39%</span><i style="width:16.4%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">137</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=32768 b=32 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3512</span><i style="width:4.0%"></i></div></td>
+        <td>0.0018</td>
+        <td><div class="bar-cell hot"><span>782.53</span><i style="width:47.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6138.03</span><i style="width:93.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>76.73%</span><i style="width:93.9%"></i></div></td>
+        <td>7.62%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">138</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=32768 b=32 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1330</span><i style="width:4.0%"></i></div></td>
+        <td>0.0021</td>
+        <td><div class="bar-cell hot"><span>129.18</span><i style="width:7.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1072.29</span><i style="width:16.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>13.40%</span><i style="width:16.4%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">139</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=65536 b=32 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.6852</span><i style="width:4.0%"></i></div></td>
+        <td>0.0557</td>
+        <td><div class="bar-cell hot"><span>802.34</span><i style="width:49.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6280.88</span><i style="width:96.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>78.51%</span><i style="width:96.0%"></i></div></td>
+        <td>10.77%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">140</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=65536 b=32 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.1318</span><i style="width:4.0%"></i></div></td>
+        <td>0.0010</td>
+        <td><div class="bar-cell hot"><span>130.31</span><i style="width:8.0%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1081.66</span><i style="width:16.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>13.52%</span><i style="width:16.5%"></i></div></td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">141</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=8192 b=64 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2101</span><i style="width:4.0%"></i></div></td>
+        <td>0.0012</td>
+        <td><div class="bar-cell hot"><span>653.84</span><i style="width:39.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5190.18</span><i style="width:79.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>64.88%</span><i style="width:79.4%"></i></div></td>
+        <td>3.57%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">142</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=8192 b=64 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2488</span><i style="width:4.0%"></i></div></td>
+        <td>0.0047</td>
+        <td><div class="bar-cell hot"><span>138.12</span><i style="width:8.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1146.50</span><i style="width:17.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.33%</span><i style="width:17.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">143</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=16384 b=64 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3656</span><i style="width:4.0%"></i></div></td>
+        <td>0.0016</td>
+        <td><div class="bar-cell hot"><span>751.76</span><i style="width:45.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5920.27</span><i style="width:90.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>74.00%</span><i style="width:90.5%"></i></div></td>
+        <td>8.31%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">144</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=16384 b=64 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2500</span><i style="width:4.0%"></i></div></td>
+        <td>0.0055</td>
+        <td><div class="bar-cell hot"><span>137.43</span><i style="width:8.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1140.78</span><i style="width:17.4%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.26%</span><i style="width:17.4%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">145</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=32768 b=64 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7075</span><i style="width:4.0%"></i></div></td>
+        <td>0.0196</td>
+        <td><div class="bar-cell hot"><span>776.94</span><i style="width:47.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>6094.17</span><i style="width:93.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>76.18%</span><i style="width:93.2%"></i></div></td>
+        <td>11.12%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">146</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=32768 b=64 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2499</span><i style="width:4.0%"></i></div></td>
+        <td>0.0057</td>
+        <td><div class="bar-cell hot"><span>137.48</span><i style="width:8.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1141.22</span><i style="width:17.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.27%</span><i style="width:17.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">147</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=65536 b=64 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.4693</span><i style="width:4.0%"></i></div></td>
+        <td>0.1287</td>
+        <td><div class="bar-cell hot"><span>748.27</span><i style="width:45.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5857.58</span><i style="width:89.6%"></i></div></td>
+        <td><div class="bar-cell ok"><span>73.22%</span><i style="width:89.6%"></i></div></td>
+        <td>12.65%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">148</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=65536 b=64 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>64</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.2499</span><i style="width:4.0%"></i></div></td>
+        <td>0.0064</td>
+        <td><div class="bar-cell hot"><span>137.52</span><i style="width:8.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1141.51</span><i style="width:17.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.27%</span><i style="width:17.5%"></i></div></td>
+        <td>-2.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">149</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=8192 b=128 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.3958</span><i style="width:4.0%"></i></div></td>
+        <td>0.0015</td>
+        <td><div class="bar-cell hot"><span>694.12</span><i style="width:42.4%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5509.90</span><i style="width:84.3%"></i></div></td>
+        <td><div class="bar-cell ok"><span>68.87%</span><i style="width:84.3%"></i></div></td>
+        <td>9.66%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">150</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=8192 b=128 topk=16</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.5060</span><i style="width:4.0%"></i></div></td>
+        <td>0.0067</td>
+        <td><div class="bar-cell hot"><span>135.80</span><i style="width:8.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1127.29</span><i style="width:17.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.09%</span><i style="width:17.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">151</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=16384 b=128 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.7362</span><i style="width:4.0%"></i></div></td>
+        <td>0.0130</td>
+        <td><div class="bar-cell hot"><span>746.60</span><i style="width:45.6%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5879.61</span><i style="width:89.9%"></i></div></td>
+        <td><div class="bar-cell ok"><span>73.50%</span><i style="width:89.9%"></i></div></td>
+        <td>11.80%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">152</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=16384 b=128 topk=16</td>
+        <td>8</td>
+        <td>16384</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.5075</span><i style="width:4.0%"></i></div></td>
+        <td>0.0066</td>
+        <td><div class="bar-cell hot"><span>135.42</span><i style="width:8.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1124.09</span><i style="width:17.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.05%</span><i style="width:17.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">153</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=32768 b=128 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.5145</span><i style="width:4.0%"></i></div></td>
+        <td>0.1377</td>
+        <td><div class="bar-cell hot"><span>725.89</span><i style="width:44.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5693.79</span><i style="width:87.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>71.17%</span><i style="width:87.1%"></i></div></td>
+        <td>13.00%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">154</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=32768 b=128 topk=16</td>
+        <td>8</td>
+        <td>32768</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.5060</span><i style="width:4.0%"></i></div></td>
+        <td>0.0071</td>
+        <td><div class="bar-cell hot"><span>135.80</span><i style="width:8.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1127.29</span><i style="width:17.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.09%</span><i style="width:17.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Dense">
+        <td class="row-index">155</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Dense</td>
+        <td class="workload">Sparse Decode dense q=8 k=65536 b=128 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>3.1077</span><i style="width:4.0%"></i></div></td>
+        <td>0.1892</td>
+        <td><div class="bar-cell hot"><span>707.57</span><i style="width:43.2%"></i></div></td>
+        <td><div class="bar-cell cool"><span>5538.99</span><i style="width:84.7%"></i></div></td>
+        <td><div class="bar-cell ok"><span>69.24%</span><i style="width:84.7%"></i></div></td>
+        <td>14.25%</td>
+      </tr>
+
+      <tr data-run="msa_bf16" data-dtype="bf16" data-category="Sparse Decode Sparse">
+        <td class="row-index">156</td>
+        <td>msa_bf16</td>
+        <td>bf16</td>
+        <td class="category">Sparse Decode Sparse</td>
+        <td class="workload">Sparse Decode sparse q=8 k=65536 b=128 topk=16</td>
+        <td>8</td>
+        <td>65536</td>
+        <td>128</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>0.5070</span><i style="width:4.0%"></i></div></td>
+        <td>0.0066</td>
+        <td><div class="bar-cell hot"><span>135.54</span><i style="width:8.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1125.08</span><i style="width:17.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>14.06%</span><i style="width:17.2%"></i></div></td>
+        <td>-1.15%</td>
+      </tr>
+
+      <tr data-run="msa_nvfp4" data-dtype="nvfp4" data-category="Sparse Prefill">
+        <td class="row-index">157</td>
+        <td>msa_nvfp4</td>
+        <td>nvfp4</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">NVFP4 Sparse Prefill q=k=8192 topk=16</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>1.2768</span><i style="width:4.0%"></i></div></td>
+        <td>0.0017</td>
+        <td><div class="bar-cell hot"><span>430.56</span><i style="width:26.3%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1735.37</span><i style="width:26.5%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.57%</span><i style="width:11.7%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_nvfp4" data-dtype="nvfp4" data-category="Sparse Prefill">
+        <td class="row-index">158</td>
+        <td>msa_nvfp4</td>
+        <td>nvfp4</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">NVFP4 Sparse Prefill q=k=16384 topk=16</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>2.4996</span><i style="width:4.0%"></i></div></td>
+        <td>0.0026</td>
+        <td><div class="bar-cell hot"><span>439.87</span><i style="width:26.8%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1772.40</span><i style="width:27.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>9.77%</span><i style="width:12.0%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_nvfp4" data-dtype="nvfp4" data-category="Sparse Prefill">
+        <td class="row-index">159</td>
+        <td>msa_nvfp4</td>
+        <td>nvfp4</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">NVFP4 Sparse Prefill q=k=32768 topk=16</td>
+        <td>32768</td>
+        <td>32768</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>4.6490</span><i style="width:4.0%"></i></div></td>
+        <td>0.0387</td>
+        <td><div class="bar-cell hot"><span>473.01</span><i style="width:28.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1905.71</span><i style="width:29.1%"></i></div></td>
+        <td><div class="bar-cell ok"><span>10.51%</span><i style="width:12.9%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_nvfp4" data-dtype="nvfp4" data-category="Sparse Prefill">
+        <td class="row-index">160</td>
+        <td>msa_nvfp4</td>
+        <td>nvfp4</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">NVFP4 Sparse Prefill q=k=65536 topk=16</td>
+        <td>65536</td>
+        <td>65536</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>8.9611</span><i style="width:4.0%"></i></div></td>
+        <td>0.0898</td>
+        <td><div class="bar-cell hot"><span>490.79</span><i style="width:29.9%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1977.20</span><i style="width:30.2%"></i></div></td>
+        <td><div class="bar-cell ok"><span>10.91%</span><i style="width:13.3%"></i></div></td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr data-run="msa_nvfp4" data-dtype="nvfp4" data-category="Sparse Prefill">
+        <td class="row-index">161</td>
+        <td>msa_nvfp4</td>
+        <td>nvfp4</td>
+        <td class="category">Sparse Prefill</td>
+        <td class="workload">NVFP4 Sparse Prefill q=k=131072 topk=16</td>
+        <td>131072</td>
+        <td>131072</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>128</td>
+        <td><div class="bar-cell latency"><span>18.0629</span><i style="width:7.6%"></i></div></td>
+        <td>0.1807</td>
+        <td><div class="bar-cell hot"><span>486.97</span><i style="width:29.7%"></i></div></td>
+        <td><div class="bar-cell cool"><span>1961.74</span><i style="width:30.0%"></i></div></td>
+        <td><div class="bar-cell ok"><span>10.82%</span><i style="width:13.2%"></i></div></td>
+        <td>0.00%</td>
+      </tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Generated from Modal volume <code>msa-cache</code>. Local artifacts include TSV, JSON, Markdown, and full logs for each preset.
+  </footer>
+
+  <script>
+    const totalRows = 161;
+    const filters = {
+      run: document.getElementById('run-filter'),
+      dtype: document.getElementById('dtype-filter'),
+      category: document.getElementById('category-filter'),
+      search: document.getElementById('search-filter'),
+      count: document.getElementById('row-count'),
+      rows: Array.from(document.querySelectorAll('#result-body tr')),
+    };
+    function applyFilters() {
+      const run = filters.run.value;
+      const dtype = filters.dtype.value;
+      const category = filters.category.value;
+      const query = filters.search.value.trim().toLowerCase();
+      let shown = 0;
+      for (const row of filters.rows) {
+        const text = row.textContent.toLowerCase();
+        const visible = (!run || row.dataset.run === run) && (!dtype || row.dataset.dtype === dtype) && (!category || row.dataset.category === category) && (!query || text.includes(query));
+        row.classList.toggle('hidden-row', !visible);
+        if (visible) shown += 1;
+      }
+      filters.count.textContent = `Showing ${shown} of ${totalRows} rows`;
+    }
+    filters.run.addEventListener('change', applyFilters);
+    filters.dtype.addEventListener('change', applyFilters);
+    filters.category.addEventListener('change', applyFilters);
+    filters.search.addEventListener('input', applyFilters);
+  </script>
+</body>
+</html>

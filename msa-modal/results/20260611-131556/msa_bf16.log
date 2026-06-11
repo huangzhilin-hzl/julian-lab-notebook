@@ -1,0 +1,209 @@
+Output file: /mnt/msa-cache/msa/results/20260611-131556/msa_bf16.tsv
+MiniMax sparse attention sweep  |  GPU 0  |  dtype bf16  |  output_mode o
+sections: prefill, paged_prefill, sparse_prefill, decode, paged_decode, sparse_decode
+
+Prefill TP1 (ragged dense, causal, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Prefill TP1 q=k=8192
+    8192     8192   bf16     1   64     4  128      0.9602    0.0185    1145.24     297.04    50.90%    0.00%
+  · Prefill TP1 q=k=16384
+   16384    16384   bf16     1   64     4  128      3.7458    0.0366    1174.21     152.28    52.19%    0.00%
+  · Prefill TP1 q=k=32768
+   32768    32768   bf16     1   64     4  128     15.1049    0.1158    1164.70      75.53    51.76%    0.00%
+  · Prefill TP1 q=k=65536
+   65536    65536   bf16     1   64     4  128     59.8702    0.1511    1175.37      38.11    52.24%    0.00%
+  · Prefill TP1 q=k=131072
+  [kernel] Too huge setting to output maxscore!
+  131072   131072   bf16     1   64     4  128    238.5627    0.1696    1179.89      19.13    52.44%    0.00%
+
+Prefill TP2 (ragged dense, causal, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Prefill TP2 q=k=8192
+    8192     8192   bf16     1   32     2  128      0.4803    0.0049    1144.85     296.94    50.88%    0.00%
+  · Prefill TP2 q=k=16384
+   16384    16384   bf16     1   32     2  128      1.8955    0.0321    1160.23     150.47    51.57%    0.00%
+  · Prefill TP2 q=k=32768
+   32768    32768   bf16     1   32     2  128      7.3871    0.0593    1190.77      77.22    52.92%    0.00%
+  · Prefill TP2 q=k=65536
+   65536    65536   bf16     1   32     2  128     29.3612    0.2023    1198.35      38.86    53.26%    0.00%
+  · Prefill TP2 q=k=131072
+  [kernel] Too huge setting to output maxscore!
+  131072   131072   bf16     1   32     2  128    117.4979    0.2517    1197.80      19.42    53.24%    0.00%
+
+Prefill TP4 (ragged dense, causal, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Prefill TP4 q=k=8192
+    8192     8192   bf16     1   16     1  128      0.2396    0.0031    1147.45     297.61    51.00%    0.00%
+  · Prefill TP4 q=k=16384
+   16384    16384   bf16     1   16     1  128      0.9318    0.0100    1180.01     153.04    52.44%    0.00%
+  · Prefill TP4 q=k=32768
+   32768    32768   bf16     1   16     1  128      3.6976    0.0342    1189.45      77.13    52.86%    0.00%
+  · Prefill TP4 q=k=65536
+   65536    65536   bf16     1   16     1  128     14.5377    0.0884    1210.12      39.24    53.78%    0.00%
+  · Prefill TP4 q=k=131072
+  131072   131072   bf16     1   16     1  128     58.0875    0.3316    1211.44      19.64    53.84%    0.00%
+
+Paged Prefill TP1 (paged dense, causal, page=128, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Paged Prefill q=k=8192
+    8192     8192   bf16     1   64     4  128      0.9685    0.0120    1135.45     294.50    50.46%    0.00%
+  · Paged Prefill q=k=16384
+   16384    16384   bf16     1   64     4  128      3.7571    0.0251    1170.68     151.83    52.03%    0.00%
+  · Paged Prefill q=k=32768
+   32768    32768   bf16     1   64     4  128     14.9492    0.1057    1176.83      76.32    52.30%    0.00%
+  · Paged Prefill q=k=65536
+   65536    65536   bf16     1   64     4  128     59.6398    0.0728    1179.91      38.26    52.44%    0.00%
+  · Paged Prefill q=k=131072
+  [kernel] Too huge setting to output maxscore!
+  131072   131072   bf16     1   64     4  128    237.3290    0.0970    1186.02      19.23    52.71%    0.00%
+
+Sparse Prefill TP1 (first top-K, page=128, topk=16, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Sparse Prefill q=k=8192 topk=16
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+/usr/local/lib/python3.12/dist-packages/nvidia_cutlass_dsl/python_packages/cutlass/cute/core.py:5442: DeprecationWarning: Use explicit `struct.scalar.ptr` for pointer instead.
+  warnings.warn(
+  [kernel] [aot_cache] Saved sparse_forward_sm100_csr_varlen -> /root/.cache/minfer/mm_sparse_attn/sparse_forward_sm100_csr_varlen_5c6d481f4e824889.o (0.2s)
+    8192     8192   bf16     1   64     4  128      1.5033    0.0387     365.69     181.35    16.25%    0.00%
+  · Sparse Prefill q=k=16384 topk=16
+   16384    16384   bf16     1   64     4  128      2.8477    0.0533     386.10     190.00    17.16%    0.00%
+  · Sparse Prefill q=k=32768 topk=16
+   32768    32768   bf16     1   64     4  128      5.3842    0.0381     408.42     200.20    18.15%    0.00%
+  · Sparse Prefill q=k=65536 topk=16
+   65536    65536   bf16     1   64     4  128     10.4378    0.1752     421.36     206.14    18.73%    0.00%
+  · Sparse Prefill q=k=131072 topk=16
+  131072   131072   bf16     1   64     4  128     21.1497    0.5738     415.90     203.27    18.48%    0.00%
+
+Decode (ragged dense, MBU, h=64/4, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Decode q=4 k=8192 b=32
+       4     8192   bf16    32   64     4  128      0.1065    0.0011     322.68    5082.14    63.53%   -8.33%
+  · Decode q=4 k=16384 b=32
+       4    16384   bf16    32   64     4  128      0.1935    0.0013     355.04    5569.69    69.62%    2.19%
+  · Decode q=4 k=32768 b=32
+       4    32768   bf16    32   64     4  128      0.3451    0.0019     398.25    6235.16    77.94%    7.62%
+  · Decode q=4 k=65536 b=32
+       4    65536   bf16    32   64     4  128      0.6574    0.1741     418.13    6539.88    81.75%   10.77%
+  · Decode q=4 k=8192 b=64
+       4     8192   bf16    64   64     4  128      0.2016    0.0014     340.81    5367.71    67.10%    3.57%
+  · Decode q=4 k=16384 b=64
+       4    16384   bf16    64   64     4  128      0.3532    0.0018     389.04    6103.00    76.29%    8.31%
+  · Decode q=4 k=32768 b=64
+       4    32768   bf16    64   64     4  128      0.6625    0.3189     414.87    6495.36    81.19%   11.12%
+  · Decode q=4 k=65536 b=64
+       4    65536   bf16    64   64     4  128      1.4070    0.1256     390.71    6110.93    76.39%   12.65%
+  · Decode q=4 k=8192 b=128
+       4     8192   bf16   128   64     4  128      0.3697    0.0017     371.73    5854.67    73.18%    9.66%
+  · Decode q=4 k=16384 b=128
+       4    16384   bf16   128   64     4  128      0.6911    0.0111     397.68    6238.63    77.98%   11.80%
+  · Decode q=4 k=32768 b=128
+       4    32768   bf16   128   64     4  128      1.4090    0.1665     390.16    6108.49    76.36%   13.00%
+  · Decode q=4 k=65536 b=128
+       4    65536   bf16   128   64     4  128      2.9531    0.1730     372.31    5823.21    72.79%   14.25%
+
+Paged Decode (paged dense, MBU, page=128, h=64/4, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Paged Decode q=4 k=8192 b=32
+       4     8192   bf16    32   64     4  128      0.1045    0.0011     328.60    5175.48    64.69%   -8.33%
+  · Paged Decode q=4 k=16384 b=32
+       4    16384   bf16    32   64     4  128      0.1915    0.0013     358.84    5629.26    70.37%    2.19%
+  · Paged Decode q=4 k=32768 b=32
+       4    32768   bf16    32   64     4  128      0.3429    0.0016     400.78    6274.72    78.43%    7.62%
+  · Paged Decode q=4 k=65536 b=32
+       4    65536   bf16    32   64     4  128      0.6665    0.0675     412.41    6450.39    80.63%   10.77%
+  · Paged Decode q=4 k=8192 b=64
+       4     8192   bf16    64   64     4  128      0.1978    0.0014     347.31    5470.17    68.38%    3.57%
+  · Paged Decode q=4 k=16384 b=64
+       4    16384   bf16    64   64     4  128      0.3492    0.0017     393.49    6172.90    77.16%    8.31%
+  · Paged Decode q=4 k=32768 b=64
+       4    32768   bf16    64   64     4  128      0.6707    0.0652     409.81    6416.02    80.20%   11.12%
+  · Paged Decode q=4 k=65536 b=64
+       4    65536   bf16    64   64     4  128      1.3953    0.1229     394.00    6162.36    77.03%   12.65%
+  · Paged Decode q=4 k=8192 b=128
+       4     8192   bf16   128   64     4  128      0.3658    0.0017     375.69    5917.16    73.96%    9.66%
+  · Paged Decode q=4 k=16384 b=128
+       4    16384   bf16   128   64     4  128      0.6871    0.0118     400.00    6274.95    78.44%   11.80%
+  · Paged Decode q=4 k=32768 b=128
+       4    32768   bf16   128   64     4  128      1.4192    0.1228     387.36    6064.62    75.81%   13.00%
+  · Paged Decode q=4 k=65536 b=128
+       4    65536   bf16   128   64     4  128      2.9090    0.1358     377.96    5911.48    73.89%   14.25%
+
+Sparse Decode (dense+sparse pairs, MBU, topk=16, bf16)
+-------------------------------------------------------------------------------------------------------------
+   q_len   kv_len  dtype   bsz  h_q  h_kv  dim     lat(ms)   std(ms)     TFLOPs       GB/s   MFU/MBU   split%
+-------------------------------------------------------------------------------------------------------------
+  · Sparse Decode q=8 k=8192 b=32 topk=16
+       8     8192   bf16    32   64     4  128      0.1045    0.0010     657.45    5218.79    65.23%   -8.33%
+       8     8192   bf16    32   64     4  128      0.1330    0.0023     129.18    1072.29    13.40%   -4.29%
+  · Sparse Decode q=8 k=16384 b=32 topk=16
+       8    16384   bf16    32   64     4  128      0.1997    0.0012     688.15    5419.32    67.74%    2.19%
+       8    16384   bf16    32   64     4  128      0.1331    0.0023     129.09    1071.52    13.39%   -4.29%
+  · Sparse Decode q=8 k=32768 b=32 topk=16
+       8    32768   bf16    32   64     4  128      0.3512    0.0018     782.53    6138.03    76.73%    7.62%
+       8    32768   bf16    32   64     4  128      0.1330    0.0021     129.18    1072.29    13.40%   -4.29%
+  · Sparse Decode q=8 k=65536 b=32 topk=16
+       8    65536   bf16    32   64     4  128      0.6852    0.0557     802.34    6280.88    78.51%   10.77%
+       8    65536   bf16    32   64     4  128      0.1318    0.0010     130.31    1081.66    13.52%   -4.29%
+  · Sparse Decode q=8 k=8192 b=64 topk=16
+       8     8192   bf16    64   64     4  128      0.2101    0.0012     653.84    5190.18    64.88%    3.57%
+       8     8192   bf16    64   64     4  128      0.2488    0.0047     138.12    1146.50    14.33%   -2.25%
+  · Sparse Decode q=8 k=16384 b=64 topk=16
+       8    16384   bf16    64   64     4  128      0.3656    0.0016     751.76    5920.27    74.00%    8.31%
+       8    16384   bf16    64   64     4  128      0.2500    0.0055     137.43    1140.78    14.26%   -2.25%
+  · Sparse Decode q=8 k=32768 b=64 topk=16
+       8    32768   bf16    64   64     4  128      0.7075    0.0196     776.94    6094.17    76.18%   11.12%
+       8    32768   bf16    64   64     4  128      0.2499    0.0057     137.48    1141.22    14.27%   -2.25%
+  · Sparse Decode q=8 k=65536 b=64 topk=16
+       8    65536   bf16    64   64     4  128      1.4693    0.1287     748.27    5857.58    73.22%   12.65%
+       8    65536   bf16    64   64     4  128      0.2499    0.0064     137.52    1141.51    14.27%   -2.25%
+  · Sparse Decode q=8 k=8192 b=128 topk=16
+       8     8192   bf16   128   64     4  128      0.3958    0.0015     694.12    5509.90    68.87%    9.66%
+       8     8192   bf16   128   64     4  128      0.5060    0.0067     135.80    1127.29    14.09%   -1.15%
+  · Sparse Decode q=8 k=16384 b=128 topk=16
+       8    16384   bf16   128   64     4  128      0.7362    0.0130     746.60    5879.61    73.50%   11.80%
+       8    16384   bf16   128   64     4  128      0.5075    0.0066     135.42    1124.09    14.05%   -1.15%
+  · Sparse Decode q=8 k=32768 b=128 topk=16
+       8    32768   bf16   128   64     4  128      1.5145    0.1377     725.89    5693.79    71.17%   13.00%
+       8    32768   bf16   128   64     4  128      0.5060    0.0071     135.80    1127.29    14.09%   -1.15%
+  · Sparse Decode q=8 k=65536 b=128 topk=16
+       8    65536   bf16   128   64     4  128      3.1077    0.1892     707.57    5538.99    69.24%   14.25%
+       8    65536   bf16   128   64     4  128      0.5070    0.0066     135.54    1125.08    14.06%   -1.15%
+
+Results saved to /mnt/msa-cache/msa/results/20260611-131556/msa_bf16.tsv
