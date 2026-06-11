@@ -57,7 +57,7 @@ Full sweeps can be slow because the first run JIT-compiles SM100 kernels. The
 default output path is:
 
 ```text
-/cache/msa/results/<run_id>/
+/mnt/msa-cache/msa/results/<run_id>/
 ```
 
 Each run writes:

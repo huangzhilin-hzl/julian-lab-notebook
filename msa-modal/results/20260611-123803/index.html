@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MiniMax MSA Modal Benchmark Results</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #151a22;
+      --muted: #667085;
+      --line: #d9dee7;
+      --green: #0f8a5f;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --amber: #b45309;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      background: #101820;
+      color: white;
+      padding: 34px 28px 28px;
+      border-bottom: 4px solid #22c55e;
+    }
+    .header-inner, main { max-width: 1240px; margin: 0 auto; }
+    .eyebrow { color: #9ee7c5; font-weight: 700; letter-spacing: 0; text-transform: uppercase; font-size: 12px; }
+    h1 { margin: 8px 0 10px; font-size: 30px; line-height: 1.15; letter-spacing: 0; }
+    .subtitle { margin: 0; max-width: 780px; color: #d8dee8; font-size: 15px; }
+    main { padding: 24px 20px 40px; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: var(--muted);
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .metric-card, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .metric-card { padding: 15px; min-height: 112px; }
+    .metric-label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .metric-value { font-size: 24px; font-weight: 750; margin-top: 9px; letter-spacing: 0; }
+    .metric-note { color: var(--muted); margin-top: 4px; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr); gap: 16px; margin-bottom: 18px; }
+    .panel { padding: 18px; overflow: hidden; }
+    h2 { margin: 0 0 12px; font-size: 17px; letter-spacing: 0; }
+    .kv { display: grid; grid-template-columns: 165px minmax(0, 1fr); gap: 8px 12px; }
+    .kv div:nth-child(odd) { color: var(--muted); }
+    code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .smoke-list { margin: 0; padding-left: 18px; color: #243042; }
+    .smoke-list li { margin: 4px 0; }
+    .table-panel { padding: 0; }
+    .table-head { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 18px; border-bottom: 1px solid var(--line); }
+    .table-head p { margin: 0; color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1120px; }
+    th, td { padding: 10px 11px; border-bottom: 1px solid #edf0f4; text-align: left; vertical-align: middle; white-space: nowrap; }
+    th { position: sticky; top: 0; background: #f2f5f9; z-index: 1; color: #394150; font-size: 12px; }
+    tbody tr:hover { background: #fbfcfe; }
+    .row-index { color: var(--muted); width: 42px; }
+    .workload { min-width: 265px; font-weight: 650; color: #1f2937; }
+    .bar-cell { position: relative; min-width: 110px; height: 24px; padding: 2px 7px; border-radius: 5px; background: #eef2f7; overflow: hidden; }
+    .bar-cell i { position: absolute; inset: 0 auto 0 0; display: block; background: rgba(180, 83, 9, 0.18); }
+    .bar-cell.hot i { background: rgba(37, 99, 235, 0.18); }
+    .bar-cell.cool i { background: rgba(15, 118, 110, 0.18); }
+    .bar-cell.ok i { background: rgba(15, 138, 95, 0.18); }
+    .bar-cell span { position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
+    footer { max-width: 1240px; margin: 0 auto; padding: 0 20px 34px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      header { padding: 26px 18px 22px; }
+      h1 { font-size: 24px; }
+      main { padding: 18px 12px 30px; }
+      .metrics { grid-template-columns: 1fr; }
+      .kv { grid-template-columns: 1fr; }
+      .table-head { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="eyebrow">MiniMax-AI/MSA Modal Test Report</div>
+      <h1>MiniMax MSA B200 Smoke Benchmark</h1>
+      <p class="subtitle">Upstream forced-block smoke test passed, and the README-aligned quick benchmark produced 10 FP8 rows on NVIDIA B200 / SM100.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="status-row">
+      <span class="pill"><span class="dot"></span>Smoke test passed</span>
+      <span class="pill"><span class="dot"></span>Benchmark completed</span>
+      <span class="pill">Result dir <code>/mnt/msa-cache/msa/results/20260611-123803</code></span>
+    </div>
+
+    <div class="metrics">
+      <section class="metric-card">
+      <div class="metric-label">Status</div>
+      <div class="metric-value">PASS</div>
+      <div class="metric-note">Smoke test and quick benchmark completed</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Rows</div>
+      <div class="metric-value">10</div>
+      <div class="metric-note">fp8 / prefill,decode,sparse_decode</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Peak TFLOPs</div>
+      <div class="metric-value">1598.49</div>
+      <div class="metric-note">Prefill TP1 q=k=16384</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Peak GB/s</div>
+      <div class="metric-value">5602.80</div>
+      <div class="metric-note">Decode q=4 k=131072 b=32</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Min Latency</div>
+      <div class="metric-value">0.0655 ms</div>
+      <div class="metric-note">Fastest measured row</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Avg MFU/MBU</div>
+      <div class="metric-value">38.35%</div>
+      <div class="metric-note">Peak 70.04%</div>
+    </section>
+    </div>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Run Metadata</h2>
+        <div class="kv">
+          <div>MSA repo</div><div><code>https://github.com/MiniMax-AI/MSA.git</code></div>
+          <div>MSA ref / commit</div><div><code>main</code> / <code>9175bebf2b62</code></div>
+          <div>Modal GPU request</div><div><code>B200</code></div>
+          <div>Visible GPU</div><div><code>NVIDIA B200</code></div>
+          <div>Compute capability</div><div><code>10.0</code></div>
+          <div>Torch / CUDA</div><div><code>2.12.0a0+0291f960b6.nv26.04.48445190</code> / <code>13.2</code></div>
+          <div>Benchmark script</div><div><code>benchmarks/bench_sparse_attention_ops.py</code></div>
+          <div>Modal runs</div><div><a href="https://modal.com/apps/huangzhilin-hzl/main/ap-9vABIIN8wjdsUHpoM9BRAm">smoke</a> · <a href="https://modal.com/apps/huangzhilin-hzl/main/ap-5R5AWq15AHVeYSIBdy2OTw">benchmark</a></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Smoke Test</h2>
+        <ul class="smoke-list">
+          <li>Forced block selection equals no-force for the zero-range case.</li>
+          <li>force_begin / force_end coverage passed across normal and large-K cases.</li>
+          <li>XorF4 fast path passed for forced blocks.</li>
+          <li>All forced-block tests reported PASS.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-head">
+        <div>
+          <h2>Benchmark Rows</h2>
+          <p>msa_smoke: fp8, sections prefill,decode,sparse_decode</p>
+        </div>
+        <div><a href="msa_smoke.tsv">TSV</a> · <a href="results.json">results.json</a> · <a href="summary.json">summary.json</a></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Workload</th>
+              <th>Q</th>
+              <th>KV</th>
+              <th>Batch</th>
+              <th>Heads</th>
+              <th>Dtype</th>
+              <th>Latency ms</th>
+              <th>Std ms</th>
+              <th>TFLOPs</th>
+              <th>GB/s</th>
+              <th>MFU/MBU</th>
+              <th>Split</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+      <tr>
+        <td class="row-index">1</td>
+        <td class="workload">Prefill TP1 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.7249</span><i style="width:26.3%"></i></div>
+        </td>
+        <td>0.0014</td>
+        <td>
+          <div class="bar-cell hot"><span>1516.90</span><i style="width:94.9%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>289.29</span><i style="width:5.2%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>33.71%</span><i style="width:48.1%"></i></div>
+        </td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">2</td>
+        <td class="workload">Prefill TP1 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>2.7516</span><i style="width:100.0%"></i></div>
+        </td>
+        <td>0.0143</td>
+        <td>
+          <div class="bar-cell hot"><span>1598.49</span><i style="width:100.0%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>152.43</span><i style="width:4.0%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>35.52%</span><i style="width:50.7%"></i></div>
+        </td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">3</td>
+        <td class="workload">Prefill TP4 q=k=8192</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.2050</span><i style="width:7.5%"></i></div>
+        </td>
+        <td>0.0010</td>
+        <td>
+          <div class="bar-cell hot"><span>1341.29</span><i style="width:83.9%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>255.80</span><i style="width:4.6%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>29.81%</span><i style="width:42.6%"></i></div>
+        </td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">4</td>
+        <td class="workload">Prefill TP4 q=k=16384</td>
+        <td>16384</td>
+        <td>16384</td>
+        <td>1</td>
+        <td>16/1</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.7025</span><i style="width:25.5%"></i></div>
+        </td>
+        <td>0.0074</td>
+        <td>
+          <div class="bar-cell hot"><span>1565.25</span><i style="width:97.9%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>149.26</span><i style="width:4.0%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>34.78%</span><i style="width:49.7%"></i></div>
+        </td>
+        <td>0.00%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">5</td>
+        <td class="workload">Decode q=4 k=8192 b=32</td>
+        <td>4</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.0655</span><i style="width:4.0%"></i></div>
+        </td>
+        <td>0.0006</td>
+        <td>
+          <div class="bar-cell hot"><span>524.19</span><i style="width:32.8%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>4144.00</span><i style="width:74.0%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>51.80%</span><i style="width:74.0%"></i></div>
+        </td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">6</td>
+        <td class="workload">Decode q=4 k=131072 b=32</td>
+        <td>4</td>
+        <td>131072</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.7671</span><i style="width:27.9%"></i></div>
+        </td>
+        <td>0.0243</td>
+        <td>
+          <div class="bar-cell hot"><span>716.63</span><i style="width:44.8%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>5602.80</span><i style="width:100.0%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>70.04%</span><i style="width:100.0%"></i></div>
+        </td>
+        <td>12.48%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">7</td>
+        <td class="workload">Sparse Decode dense pair q=8 k=8192</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.0676</span><i style="width:4.0%"></i></div>
+        </td>
+        <td>0.0009</td>
+        <td>
+          <div class="bar-cell hot"><span>1015.89</span><i style="width:63.6%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>4063.05</span><i style="width:72.5%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>50.79%</span><i style="width:72.5%"></i></div>
+        </td>
+        <td>-8.33%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">8</td>
+        <td class="workload">Sparse Decode sparse pair q=8 k=8192</td>
+        <td>8</td>
+        <td>8192</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.1147</span><i style="width:4.2%"></i></div>
+        </td>
+        <td>0.0007</td>
+        <td>
+          <div class="bar-cell hot"><span>149.75</span><i style="width:9.4%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>639.82</span><i style="width:11.4%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>8.00%</span><i style="width:11.4%"></i></div>
+        </td>
+        <td>-4.29%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">9</td>
+        <td class="workload">Sparse Decode dense pair q=8 k=131072</td>
+        <td>8</td>
+        <td>131072</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.8806</span><i style="width:32.0%"></i></div>
+        </td>
+        <td>0.0293</td>
+        <td>
+          <div class="bar-cell hot"><span>1248.50</span><i style="width:78.1%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>4884.24</span><i style="width:87.2%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>61.05%</span><i style="width:87.2%"></i></div>
+        </td>
+        <td>12.48%</td>
+      </tr>
+
+      <tr>
+        <td class="row-index">10</td>
+        <td class="workload">Sparse Decode sparse pair q=8 k=131072</td>
+        <td>8</td>
+        <td>131072</td>
+        <td>32</td>
+        <td>64/4</td>
+        <td>fp8</td>
+        <td>
+          <div class="bar-cell"><span>0.1148</span><i style="width:4.2%"></i></div>
+        </td>
+        <td>0.0048</td>
+        <td>
+          <div class="bar-cell hot"><span>149.63</span><i style="width:9.4%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell cool"><span>639.29</span><i style="width:11.4%"></i></div>
+        </td>
+        <td>
+          <div class="bar-cell ok"><span>7.99%</span><i style="width:11.4%"></i></div>
+        </td>
+        <td>-4.29%</td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Generated from Modal volume <code>msa-cache</code>. Local source files live beside this report for reproducibility.
+  </footer>
+</body>
+</html>

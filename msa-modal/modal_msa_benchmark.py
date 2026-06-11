@@ -17,7 +17,7 @@ README-aligned full presets:
 
 The wrapper clones MiniMax-AI/MSA during Modal image build, installs it in
 editable mode, and runs benchmarks/bench_sparse_attention_ops.py remotely.
-Results are written to a Modal Volume under /cache/msa/results/<run_id>/.
+Results are written to a Modal Volume under /mnt/msa-cache/msa/results/<run_id>/.
 """
 
 from __future__ import annotations
@@ -90,15 +90,14 @@ modal_gpu_type = (
 )
 base_image = os.environ.get("MSA_BASE_IMAGE", "nvcr.io/nvidia/pytorch:26.04-py3")
 cache_volume_name = os.environ.get("MODAL_CACHE_VOLUME_NAME", "msa-cache")
+CACHE_ROOT = os.environ.get("MSA_CACHE_ROOT", "/mnt/msa-cache")
+MSA_CACHE_DIR = f"{CACHE_ROOT}/msa"
 
 cache_volume = modal.Volume.from_name(cache_volume_name, create_if_missing=True)
 app = modal.App(APP_NAME)
 
 image_env = {
     "CUDA_HOME": os.environ.get("CUDA_HOME", "/usr/local/cuda"),
-    "MINFER_FMHA_CACHE_DIR": "/cache/msa/fmha_sm100",
-    "XDG_CACHE_HOME": "/cache/msa/xdg",
-    "TORCHINDUCTOR_CACHE_DIR": "/cache/msa/torchinductor",
     "MAX_JOBS": os.environ.get("MAX_JOBS", "16"),
     "PIP_BREAK_SYSTEM_PACKAGES": "1",
     "PYTHONUNBUFFERED": "1",
@@ -107,16 +106,22 @@ image_env = {
     "MODAL_GPU_REQUEST": modal_gpu_type,
 }
 
+runtime_cache_env = {
+    "MINFER_FMHA_CACHE_DIR": f"{MSA_CACHE_DIR}/fmha_sm100",
+    "XDG_CACHE_HOME": f"{MSA_CACHE_DIR}/xdg",
+    "TORCHINDUCTOR_CACHE_DIR": f"{MSA_CACHE_DIR}/torchinductor",
+}
+
 image = (
     modal.Image.from_registry(base_image, add_python=None)
     .apt_install("git", "build-essential", "cmake", "ninja-build", "python3-dev")
     .run_commands(_clone_msa_command(msa_repo_url, msa_git_ref))
-    .env(image_env)
     .workdir(WORKDIR)
     .run_commands(
         "python -m pip install --upgrade pip setuptools wheel packaging ninja pytest",
         "python -m pip install -e . --no-build-isolation",
     )
+    .env(image_env)
 )
 
 
@@ -253,9 +258,11 @@ def _collect_run_metadata(require_sm100: bool) -> dict[str, Any]:
 
 def _prepare_runtime(require_sm100: bool) -> dict[str, Any]:
     os.chdir(WORKDIR)
-    Path("/cache/msa/fmha_sm100").mkdir(parents=True, exist_ok=True)
-    Path("/cache/msa/xdg").mkdir(parents=True, exist_ok=True)
-    Path("/cache/msa/torchinductor").mkdir(parents=True, exist_ok=True)
+    for key, value in runtime_cache_env.items():
+        os.environ.setdefault(key, value)
+    Path(os.environ["MINFER_FMHA_CACHE_DIR"]).mkdir(parents=True, exist_ok=True)
+    Path(os.environ["XDG_CACHE_HOME"]).mkdir(parents=True, exist_ok=True)
+    Path(os.environ["TORCHINDUCTOR_CACHE_DIR"]).mkdir(parents=True, exist_ok=True)
 
     _run(["nvidia-smi"])
     metadata = _collect_run_metadata(require_sm100=require_sm100)
@@ -623,7 +630,7 @@ def _format_markdown(summary: dict[str, Any], result_dir: Path) -> str:
     image=image,
     gpu=modal_gpu_type,
     timeout=8 * 60 * 60,
-    volumes={"/cache": cache_volume},
+    volumes={CACHE_ROOT: cache_volume},
 )
 def run_benchmark(
     preset: str = "smoke",
@@ -665,7 +672,7 @@ def run_benchmark(
     )
 
     run_id = time.strftime("%Y%m%d-%H%M%S")
-    result_dir = Path("/cache/msa/results") / run_id
+    result_dir = Path(MSA_CACHE_DIR) / "results" / run_id
     result_dir.mkdir(parents=True, exist_ok=True)
 
     run_records: list[dict[str, Any]] = []
@@ -723,7 +730,7 @@ def run_benchmark(
     image=image,
     gpu=modal_gpu_type,
     timeout=60 * 60,
-    volumes={"/cache": cache_volume},
+    volumes={CACHE_ROOT: cache_volume},
 )
 def run_smoke(require_sm100: bool = True) -> str:
     metadata = _prepare_runtime(require_sm100=require_sm100)
