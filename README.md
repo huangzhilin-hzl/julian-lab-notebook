@@ -8,6 +8,7 @@ This repository stores project notes and generated visual assets.
 | --- | --- |
 | Humming | [huming/README.md](huming/README.md) |
 | Marlin | [marlin/README.md](marlin/README.md) |
+| MiniMax MSA Modal | [msa-modal/README.md](msa-modal/README.md) |
 | Profile | [profile/README.md](profile/README.md) |
 | SGLang | [sglang/README.md](sglang/README.md) |
 | TokenSpeed Modal | [tokenspeed-modal/README.md](tokenspeed-modal/README.md) |
