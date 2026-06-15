@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vLLM v0.23.0 Engine Core 优化总结 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5f6d80;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #9f3535;
+      --violet: #6f42c1;
+      --gray: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--blue);
+      background: #f3f6ff;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.deepseek {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.runner {
+      color: var(--orange);
+      border-color: #e7cf9f;
+      background: #fff8eb;
+    }
+
+    .chip.parser {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.kv {
+      color: var(--red);
+      border-color: #e6c0c0;
+      background: #fff4f4;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      width: 150px;
+      font-weight: 700;
+    }
+
+    .effect {
+      min-width: 260px;
+    }
+
+    .pr-list {
+      white-space: nowrap;
+    }
+
+    .status {
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .card p {
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .source {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    @media (max-width: 1000px) {
+      .meta-grid,
+      .cards,
+      .source-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 18px;
+      }
+
+      .meta-grid,
+      .cards,
+      .source-list {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .area,
+      .effect,
+      .pr-list,
+      .status {
+        width: auto;
+        min-width: 0;
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p><a href="../index.html">Release Optimization Summaries</a> / vLLM</p>
+      <h1>vLLM v0.23.0 Engine Core 优化总结</h1>
+      <p class="subtle">整理自 vLLM 2026-06-15 发布帖和 v0.23.0 release notes，重点覆盖 DeepSeek-V4、Model Runner V2、统一 Parser 和 multi-tier KV cache offloading。</p>
+      <div class="meta-grid">
+        <div class="meta">
+          <b>Release</b>
+          v0.23.0
+        </div>
+        <div class="meta">
+          <b>Source date</b>
+          2026-06-15
+        </div>
+        <div class="meta">
+          <b>Scale</b>
+          408 commits / 200 contributors
+        </div>
+        <div class="meta">
+          <b>Primary source</b>
+          <a href="https://github.com/vllm-project/vllm/releases/tag/v0.23.0">GitHub release notes</a>
+        </div>
+      </div>
+      <div class="chips" aria-label="focus areas">
+        <span class="chip deepseek">DeepSeek-V4</span>
+        <span class="chip runner">Model Runner V2</span>
+        <span class="chip parser">Unified Parser</span>
+        <span class="chip kv">KV Offloading</span>
+      </div>
+      <div class="callout">
+        一句话概括：这版不是单个 kernel 的点状优化，而是围绕 DSv4 长上下文/MoE、MRv2 执行器默认化、OpenAI API parser 统一、KV 分层 offload 四条线，把 vLLM 的高性能路径和服务扩展路径继续产品化。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>优化点与 PR 映射</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>方向</th>
+            <th>优化点</th>
+            <th>作用</th>
+            <th>PR</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="area" data-label="方向">DeepSeek-V4</td>
+            <td data-label="优化点">Sparse MLA metadata 从 DeepSeek-V3.2 解耦</td>
+            <td class="effect" data-label="作用">把 DSv4 和 DSv3.2 的 sparse MLA 元数据路径拆开，降低后续架构差异继续演进时的耦合风险。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/44699">#44699</a></td>
+            <td class="status" data-label="状态">merged 2026-06-07</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">DeepSeek-V4</td>
+            <td data-label="优化点">新增 TRTLLM-gen attention kernel</td>
+            <td class="effect" data-label="作用">给 DSv4 attention 增加 NVIDIA TRTLLM-gen 后端路径，目标是提升 sparse MLA attention 的执行效率。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43827">#43827</a></td>
+            <td class="status" data-label="状态">merged 2026-06-04</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">DeepSeek-V4</td>
+            <td data-label="优化点">Mega-MoE 支持 EPLB</td>
+            <td class="effect" data-label="作用">为 DSv4 Mega-MoE 接入 expert parallel load balancing，让大规模 expert 分布更容易保持负载均衡。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43339">#43339</a></td>
+            <td class="status" data-label="状态">merged 2026-06-02</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">DeepSeek-V4</td>
+            <td data-label="优化点">Selective prefix-cache retention for sliding-window KV cache</td>
+            <td class="effect" data-label="作用">针对 sliding-window KV cache 只保留可复用的 prefix-cache 内容，避免 stale KV 或过度保留影响命中和正确性。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43447">#43447</a></td>
+            <td class="status" data-label="状态">merged 2026-06-04</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">DeepSeek-V4</td>
+            <td data-label="优化点">从 <code>torch.compile</code> 路径中剥离</td>
+            <td class="effect" data-label="作用">减少 DSv4 模型执行对 torch compile 注册和特殊 op 的依赖，提高启动、调试和后端切换的稳定性。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43746">#43746</a>, <a href="https://github.com/vllm-project/vllm/pull/43891">#43891</a></td>
+            <td class="status" data-label="状态">merged 2026-05-28</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Model Runner V2</td>
+            <td data-label="优化点">Llama / Mistral dense models 默认启用 MRv2</td>
+            <td class="effect" data-label="作用">把 MRv2 从 Qwen3 继续推广到主流 dense 模型，说明 V2 runner 已进入更广泛默认路径。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43458">#43458</a></td>
+            <td class="status" data-label="状态">merged 2026-06-02</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Model Runner V2</td>
+            <td data-label="优化点">FlashInfer sampler</td>
+            <td class="effect" data-label="作用">采样阶段切到 FlashInfer 实现，减少 sampler 在 decode loop 中的开销。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/42472">#42472</a></td>
+            <td class="status" data-label="状态">merged 2026-06-03</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Model Runner V2</td>
+            <td data-label="优化点">Breakable CUDA graph</td>
+            <td class="effect" data-label="作用">让 CUDA graph 捕获和执行能在需要时被打断或拆段，缓解动态执行路径与图捕获之间的冲突。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/44050">#44050</a></td>
+            <td class="status" data-label="状态">merged 2026-05-30</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Model Runner V2</td>
+            <td data-label="优化点">Pipeline-parallel bubble elimination</td>
+            <td class="effect" data-label="作用">减少 pipeline parallel 中 stage 空转时间，提高多 stage 推理的利用率。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/42187">#42187</a></td>
+            <td class="status" data-label="状态">merged 2026-06-02</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Model Runner V2</td>
+            <td data-label="优化点">Gemma 4 MTP support</td>
+            <td class="effect" data-label="作用">为 Gemma 4 接入 multi-token prediction / speculative decode 路径，提升可并行生成能力。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43241">#43241</a></td>
+            <td class="status" data-label="状态">merged 2026-06-04</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Unified Parser</td>
+            <td data-label="优化点">Reasoning + tool-call parser 统一到 <code>Parser.parse()</code></td>
+            <td class="effect" data-label="作用">把 reasoning 内容和 tool-call 解析统一到一个 parser 抽象，减少不同 API/模型解析路径的重复逻辑。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/44267">#44267</a></td>
+            <td class="status" data-label="状态">merged 2026-06-02</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">Unified Parser</td>
+            <td data-label="优化点">Responses parser 迁移到统一 Parser 接口</td>
+            <td class="effect" data-label="作用">让 Responses API 复用同一套 parser 生命周期和输出结构，降低 OpenAI 兼容层后续维护成本。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/42977">#42977</a></td>
+            <td class="status" data-label="状态">merged 2026-06-02</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">KV Offloading</td>
+            <td data-label="优化点">Object-store secondary tier</td>
+            <td class="effect" data-label="作用">multi-tier KV offloading 新增对象存储二级层，把 GPU/CPU 外的 KV 生命周期纳入 offloading 框架。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/41968">#41968</a></td>
+            <td class="status" data-label="状态">merged 2026-06-05</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">KV Offloading</td>
+            <td data-label="优化点">支持 HMA 的 connector 默认启用 HMA</td>
+            <td class="effect" data-label="作用">把 host-memory backed / heterogeneous-memory aware 的能力默认接入可用 connector，降低用户显式配置成本。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/41847">#41847</a></td>
+            <td class="status" data-label="状态">merged 2026-05-26</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">KV Offloading</td>
+            <td data-label="优化点">HMA models 支持 tiering offloading</td>
+            <td class="effect" data-label="作用">把 HMA 模型纳入分层 offload 策略，使 HMA 与二级缓存策略可以组合使用。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/44287">#44287</a></td>
+            <td class="status" data-label="状态">merged 2026-06-03</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="方向">KV Offloading</td>
+            <td data-label="优化点">Per-request offloading policy</td>
+            <td class="effect" data-label="作用">通过 <code>on_new_request</code> 生命周期 hook 让每个请求可以选择不同 offload 策略，服务端可以按请求特征做更细粒度调度。</td>
+            <td class="pr-list" data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/43205">#43205</a></td>
+            <td class="status" data-label="状态">merged 2026-05-28</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>按主线理解</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>DeepSeek-V4</h3>
+          <p>重点是 sparse MLA、Mega-MoE、sliding-window KV cache 和 compile 依赖剥离。它让 DSv4 从 day-0 支持进入更稳定、更高性能的专用路径。</p>
+        </article>
+        <article class="card">
+          <h3>Model Runner V2</h3>
+          <p>MRv2 继续扩大默认覆盖面，并补齐 sampler、CUDA graph、pipeline parallel 和 Gemma 4 MTP。这是执行器默认化的信号。</p>
+        </article>
+        <article class="card">
+          <h3>Unified Parser</h3>
+          <p>统一 reasoning 与 tool-call parsing 后，OpenAI Chat / Responses 等入口可以共享 parser 逻辑，减少模型特化 parser 的分叉。</p>
+        </article>
+        <article class="card">
+          <h3>KV Offloading</h3>
+          <p>从单层 offload 走向多层 KV cache 管理：object store、HMA、tiering 和 per-request policy 组合起来，面向长上下文和 disaggregated serving。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>后续跟踪建议</h2>
+      <ul>
+        <li>对 DSv4：跟踪 TRTLLM-gen attention kernel 与 FlashInfer/FlashMLA 路径在长上下文 decode/prefill 上的实际收益差异。</li>
+        <li>对 MRv2：关注 Llama/Mistral 默认启用后的回归问题，尤其是 speculative decoding、CUDA graph 和 pipeline parallel 组合场景。</li>
+        <li>对 KV offloading：重点看 object-store secondary tier 与 HMA tiering 的真实延迟尾部，以及 per-request policy 是否会进入生产服务配置。</li>
+        <li>对 Parser：关注新模型 tool parser 是否逐步迁移到统一接口，避免 Responses API 和 Chat API 表现不一致。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Sources</h2>
+      <div class="source-list">
+        <div class="source">
+          <b>vLLM v0.23.0 Release Notes</b>
+          <p><a href="https://github.com/vllm-project/vllm/releases/tag/v0.23.0">https://github.com/vllm-project/vllm/releases/tag/v0.23.0</a></p>
+        </div>
+        <div class="source">
+          <b>vLLM X thread</b>
+          <p><a href="https://x.com/vllm_project/status/2066401113084244350">https://x.com/vllm_project/status/2066401113084244350</a></p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
