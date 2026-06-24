@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepSeek-V4 on GB300 with SGLang 优化总结 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5f6d80;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #9f3535;
+      --violet: #6f42c1;
+      --gray: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--blue);
+      background: #f3f6ff;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.kernel {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.memory {
+      color: var(--orange);
+      border-color: #e7cf9f;
+      background: #fff8eb;
+    }
+
+    .chip.graph {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.reliability {
+      color: var(--red);
+      border-color: #e6c0c0;
+      background: #fff4f4;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      width: 145px;
+      font-weight: 700;
+    }
+
+    .effect {
+      min-width: 260px;
+    }
+
+    .pr-list {
+      white-space: nowrap;
+    }
+
+    .status {
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .card p {
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .source {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    @media (max-width: 1000px) {
+      .meta-grid,
+      .cards,
+      .source-list {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 18px;
+      }
+
+      .meta-grid,
+      .cards,
+      .source-list {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .pr-list,
+      .status {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>DeepSeek-V4 on GB300 with SGLang 优化总结</h1>
+      <p class="subtle">来源：PyTorch Blog《Serving DeepSeek-V4 on GB300 with SGLang: 5x Higher Throughput at the Same Interactivity Since Day-0》，发布于 2026-06-23。整理日期：2026-06-24。</p>
+      <div class="meta-grid">
+        <div class="meta">
+          <b>主线结论</b>
+          <span>同等交互性下，GB300 disaggregated 8K/1K 场景从 Day-0 no-MTP 约 2.2k tok/s/GPU 提升到 June 2026 MTP 约 11.2k tok/s/GPU。</span>
+        </div>
+        <div class="meta">
+          <b>核心方向</b>
+          <span>mHC/KV/MoE kernel、CUDA graph、PD+PP、DeepEP Waterfill、MTP 稳定性和 Dynamo DP 负载均衡。</span>
+        </div>
+        <div class="meta">
+          <b>主要上游</b>
+          <span>SGLang、Dynamo、DeepGEMM、NVIDIA GB300/Blackwell serving path。</span>
+        </div>
+        <div class="meta">
+          <b>证据边界</b>
+          <span>本文整理原文和 GitHub PR 元数据；没有重新跑 GB300 benchmark。</span>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip kernel">Kernel Fusion</span>
+        <span class="chip memory">KV / SWA Memory</span>
+        <span class="chip graph">CUDA Graph</span>
+        <span class="chip reliability">MTP Reliability</span>
+      </div>
+      <div class="callout">
+        这篇文章的优化并不是单一 PR 带来的 5x，而是一组服务路径优化叠加：先让 DeepSeek-V4 在 SGLang 的 MTP/speculative 路径稳定运行，再压 mHC、KV compression、MoE 和 disaggregated decode 的关键开销，最后通过 CUDA graph 和 runtime recipe 把在线 serving 的 host gap 与 batch/concurrency 限制降下来。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>优化点到 PR 的映射</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>类别</th>
+            <th>优化技术点</th>
+            <th>对应 PR / Commit</th>
+            <th>合入时间</th>
+            <th>作用</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="area" data-label="类别">mHC kernel</td>
+            <td data-label="优化技术点">MHC pipeline 优化：<code>mhc_pre</code> 走 DeepGEMM，融合 norm，并加入 fused <code>hc_head</code>。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/24775">sglang#24775</a></td>
+            <td class="status" data-label="合入时间">2026-05-10</td>
+            <td class="effect" data-label="作用">减少 mHC prefill/decode 中 kernel launch 和中间张量读写，是 DeepSeek-V4 路径的底层 kernel 提速。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">mHC fusion</td>
+            <td data-label="优化技术点">新增 <code>mhc_fused_post_pre</code>，把 <code>mhc_post</code>、pre-norm GEMM 和 <code>mhc_pre</code> finalization 的边界融合。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25976">sglang#25976</a></td>
+            <td class="status" data-label="合入时间">2026-05-30</td>
+            <td class="effect" data-label="作用">面向 decode 小 batch 降低 launch 开销；PR 自报总吞吐约 +3.35%。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">KV compression</td>
+            <td data-label="优化技术点">移植 KV Compression V2：包含 <code>c4</code>、<code>c128</code>、online <code>c128</code>，以及 fused norm/rope V2。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/24890">sglang#24890</a></td>
+            <td class="status" data-label="合入时间">2026-05-13</td>
+            <td class="effect" data-label="作用">避免 DeepSeek-V4 高并发下压缩/indexer 路径成为瓶颈，支撑长上下文和高 batch 的 KV 压缩开销控制。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">FP4 MoE</td>
+            <td data-label="优化技术点">DeepSeek-V4 W4A4 MegaMoE：把 activation 也从 MXFP8 切到 MXFP4。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25052">sglang#25052</a></td>
+            <td class="status" data-label="合入时间">2026-05-14</td>
+            <td class="effect" data-label="作用">降低 MoE activation footprint 和带宽压力，配合 DeepGEMM FP4 activation 支持提高高吞吐区间效率。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">SWA memory</td>
+            <td data-label="优化技术点">disaggregated decode 中 full KV 和 SWA tail 分开预分配，不再按完整 prompt 过度预留 SWA KV。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/24036">sglang#24036</a>, <a href="https://github.com/sgl-project/sglang/pull/24857">sglang#24857</a></td>
+            <td class="status" data-label="合入时间">2026-05-02 / 2026-05-13</td>
+            <td class="effect" data-label="作用">让 decode worker 在同样显存下支撑更大 batch/concurrency，尤其适合 DeepSeek-V4 的 full attention + sliding window 混合 KV 形态。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">CUDA graph</td>
+            <td data-label="优化技术点">DeepSeek-V4 DP attention 支持 breakable / piecewise CUDA graph。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25195">sglang#25195</a></td>
+            <td class="status" data-label="合入时间">2026-06-08</td>
+            <td class="effect" data-label="作用">把 mixed/prefill path 从 eager kernel launches 拉回 graph replay，减少 CPU host-side gap。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">Speculative graph</td>
+            <td data-label="优化技术点">Eagle/speculative path 启用 breakable CUDA graph。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/commit/c4a7d1209231e662c4447fe3d3326d8c3d1087b7">sglang@c4a7d12</a></td>
+            <td class="status" data-label="合入时间">2026-05-21</td>
+            <td class="effect" data-label="作用">让 MTP/speculative draft worker 也初始化 piecewise CUDA graphs，补齐 speculative decode 路径的 graph 化。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">PD + PP</td>
+            <td data-label="优化技术点">DeepSeek-V4 支持 pipeline parallelism，并接入 prefill/decode disaggregation。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/24704">sglang#24704</a></td>
+            <td class="status" data-label="合入时间">2026-05-16</td>
+            <td class="effect" data-label="作用">让 mHC hidden state、SWA memory pool、PD KV pointer slicing 在 PP stage 下正确工作，是 GB300 多节点服务拓扑的基础能力。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">DeepEP</td>
+            <td data-label="优化技术点">DeepSeek-V4 支持 DeepEP Waterfill，共享专家可作为额外 Waterfill expert，并支持 HashTopK/TopK balancing。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25391">sglang#25391</a></td>
+            <td class="status" data-label="合入时间">2026-05-26</td>
+            <td class="effect" data-label="作用">改善专家负载均衡和共享专家路径；PR sanity test 报告约 +2.6% 到 +4.31% 的吞吐收益。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">PD-MTP metadata</td>
+            <td data-label="优化技术点">PD MetadataBuffer 使用 <code>spec_hidden_size</code>。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/23919">sglang#23919</a></td>
+            <td class="status" data-label="合入时间">2026-04-28</td>
+            <td class="effect" data-label="作用">修复 prefill/decode 间 speculative hidden state 尺寸不匹配，稳定 MTP disaggregated serving。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">SWA reliability</td>
+            <td data-label="优化技术点">disaggregated decode + MTP 下清理 stale SWA mappings，修复 SWA double-free。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25805">sglang#25805</a></td>
+            <td class="status" data-label="合入时间">2026-05-22</td>
+            <td class="effect" data-label="作用">避免 recycled full KV pages 携带旧 SWA 映射导致 double-free；PR 验证从约 2000 requests crash 改为 10240 requests 0 errors。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">Warmup</td>
+            <td data-label="优化技术点">按代表性 token-count bucket 预热 MHC kernels。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25810">sglang#25810</a></td>
+            <td class="status" data-label="合入时间">2026-05-21</td>
+            <td class="effect" data-label="作用">把稀有 bucket 首次触发的 20-40s 冷启动 stall 移到 startup warmup，降低 benchmark 和 live traffic 尾部抖动。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">Blackwell fix</td>
+            <td data-label="优化技术点"><code>fp8_einsum</code> input scale 转 <code>ue8m0</code>，修复 Blackwell 上 V4-Pro NaN。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/sgl-project/sglang/pull/25733">sglang#25733</a></td>
+            <td class="status" data-label="合入时间">2026-05-19</td>
+            <td class="effect" data-label="作用">修复 B300/B200 上 autoregressive decode 的 NaN/garbage text；原文还指出这恢复了 MTP acceptance length。</td>
+          </tr>
+          <tr>
+            <td class="area" data-label="类别">Dynamo routing</td>
+            <td data-label="优化技术点"><code>bootstrap_room</code> 基于 prefill DP rank 生成。</td>
+            <td class="pr-list" data-label="对应 PR / Commit"><a href="https://github.com/ai-dynamo/dynamo/pull/9080">dynamo#9080</a></td>
+            <td class="status" data-label="合入时间">2026-05-07</td>
+            <td class="effect" data-label="作用">修复 Dynamo 不传 <code>prefill_dp_rank</code> 导致同一 prefill engine 内 DP rank 负载不均的问题。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>没有逐项绑定 PR 的 runtime recipe</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>PD ratio</h3>
+          <p>原文强调 prefill/decode ratio 调参。它影响每个 serving topology 的 batch、TTFT、TPOT 和 GPU 利用率，但文章没有给每个 ratio 绑定独立 PR。</p>
+        </div>
+        <div class="card">
+          <h3>Wide-EP</h3>
+          <p>专家并行拓扑属于部署 recipe，与 DeepEP Waterfill、MoE kernel 和 GB300 网络/显存预算一起决定吞吐上限。</p>
+        </div>
+        <div class="card">
+          <h3>KV budget</h3>
+          <p>full KV、SWA tail、token/request limits 的配比决定 decode worker 可承载的并发度；这类调参和 SWA prealloc 修复互相配合。</p>
+        </div>
+        <div class="card">
+          <h3>Tokenizer / flags</h3>
+          <p>原文指向 SemiAnalysis InferenceX 配置和脚本作为复现入口，适合作为部署 recipe，而不是单个代码 PR 的归因。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>后续路线</h2>
+      <p>文章把后续工作集中在 DeepEP v2、ragged indexer、小 kernel fusion、SM120/SM121、NVFP4、cache/routing-sensitive path 和 agentic benchmark。SGLang 侧可继续跟踪 <a href="https://github.com/sgl-project/sglang/issues/23602">sglang#23602</a>。</p>
+      <div class="callout">
+        阅读这组 PR 时建议按依赖关系看：先看 PD/MTP 稳定性修复，再看 SWA/KV 内存容量优化，最后看 mHC/MoE/CUDA graph 的吞吐优化。否则容易把 5x 误解成某个单独 kernel PR 的结果。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>来源</h2>
+      <div class="source-list">
+        <div class="source">
+          <b>Blog</b>
+          <p><a href="https://pytorch.org/blog/serving-deepseek-v4-on-gb300-with-sglang-5x-higher-throughput-at-the-same-interactivity-since-day-0/">PyTorch Blog: Serving DeepSeek-V4 on GB300 with SGLang</a></p>
+        </div>
+        <div class="source">
+          <b>PR / issue set</b>
+          <p>SGLang PRs: 23919, 24036, 24704, 24775, 24857, 24890, 25052, 25195, 25391, 25733, 25805, 25810, 25976；Dynamo PR: 9080；SGLang roadmap issue: 23602。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
