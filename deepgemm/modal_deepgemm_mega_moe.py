@@ -138,13 +138,21 @@ image_env = {
     "DEEPGEMM_REPO_URL": deepgemm_repo_url,
     "DEEPGEMM_REF": deepgemm_git_ref,
     "MODAL_GPU_REQUEST": gpu_type,
+    "EP_SUPPRESS_NCCL_CHECK": os.environ.get("EP_SUPPRESS_NCCL_CHECK", "1"),
+    "EP_DISABLE_GIN": os.environ.get("EP_DISABLE_GIN", "0"),
+    "LD_LIBRARY_PATH": (
+        "/usr/local/lib/python3.12/dist-packages/nvidia/nccl/lib:"
+        + os.environ.get("LD_LIBRARY_PATH", "")
+    ),
 }
 
 baseline_commands = []
 if install_baseline:
     baseline_commands = [
+        "python -m pip install --upgrade nvidia-nvshmem-cu12",
+        "python -m pip install --upgrade nvidia-nccl-cu12",
         "python -m pip install --upgrade tilelang",
-        "python -m pip install --no-build-isolation git+https://github.com/deepseek-ai/DeepEP.git",
+        "TORCH_CUDA_ARCH_LIST=10.0 python -m pip install --no-build-isolation git+https://github.com/deepseek-ai/DeepEP.git",
     ]
 
 image = (

@@ -1,0 +1,80 @@
+Config:Config:Config:
+
+Config:
+Config:Config:Config:
+
+
+
+Config:
+ > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4
+
+ > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4
+
+ > MMA: fp8xfp4
+
+
+
+ > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768
+ > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768 > Tokens: 32768/32768
+
+
+
+
+
+
+ > Hidden: 7168
+ > Hidden: 7168 > Hidden: 7168
+ > Hidden: 7168 > Hidden: 7168 > Hidden: 7168
+ > Hidden: 7168
+ > Hidden: 7168
+
+
+
+ > Intermediate: 3072 > Intermediate: 3072 > Intermediate: 3072
+
+
+ > Intermediate: 3072
+ > Intermediate: 3072
+ > Intermediate: 3072
+ > Intermediate: 3072 > Intermediate: 3072
+
+ > Experts: 6/384 > Experts: 6/384 > Experts: 6/384 > Experts: 6/384 > Experts: 6/384 > Experts: 6/384 > Experts: 6/384 > Experts: 6/384
+
+
+
+
+
+
+
+ > Buffer: 14.525 GiB > Buffer: 14.525 GiB > Buffer: 14.525 GiB > Buffer: 14.525 GiB > Buffer: 14.525 GiB > Buffer: 14.525 GiB > Buffer: 14.525 GiB
+
+
+
+
+
+
+ > Buffer: 14.525 GiB
+
+
+
+
+
+
+
+
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:Performance:
+
+ > EP:  0/8 | 2411 TFLOPS | overlap: 2531 TFLOPS, HBM  685 GB/s, NVL 412 GB/s | 10724 us, reduction: 505.9 us | 1.56x legacy > EP:  4/8 | 2413 TFLOPS | overlap: 2532 TFLOPS, HBM  685 GB/s, NVL 412 GB/s | 10719 us, reduction: 505.9 us | 1.56x legacy > EP:  6/8 | 2435 TFLOPS | overlap: 2556 TFLOPS, HBM  690 GB/s, NVL 416 GB/s | 10719 us, reduction: 505.9 us | 1.56x legacy > EP:  5/8 | 2430 TFLOPS | overlap: 2550 TFLOPS, HBM  689 GB/s, NVL 415 GB/s | 10722 us, reduction: 505.9 us | 1.56x legacy
+ > EP:  2/8 | 2425 TFLOPS | overlap: 2546 TFLOPS, HBM  688 GB/s, NVL 414 GB/s | 10715 us, reduction: 505.9 us | 1.56x legacy
+
+ > EP:  3/8 | 2425 TFLOPS | overlap: 2545 TFLOPS, HBM  688 GB/s, NVL 414 GB/s | 10724 us, reduction: 505.9 us | 1.56x legacy
+
+ > EP:  7/8 | 2418 TFLOPS | overlap: 2538 TFLOPS, HBM  686 GB/s, NVL 413 GB/s | 10723 us, reduction: 505.9 us | 1.55x legacy
+ > EP:  1/8 | 2426 TFLOPS | overlap: 2546 TFLOPS, HBM  688 GB/s, NVL 414 GB/s | 10722 us, reduction: 505.9 us | 1.56x legacy
+

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepGEMM Mega MoE PR316 Table Results</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #111827;
+      --muted: #667085;
+      --line: #d9dee8;
+      --green: #0f8a5f;
+      --blue: #1d4ed8;
+      --teal: #0f766e;
+      --amber: #b45309;
+      --violet: #6d28d9;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { background: #101820; color: white; padding: 34px 28px 28px; border-bottom: 4px solid #22c55e; }
+    .header-inner, main, footer { max-width: 1280px; margin: 0 auto; }
+    .eyebrow { color: #9ee7c5; font-weight: 750; font-size: 12px; text-transform: uppercase; }
+    h1 { margin: 8px 0 10px; font-size: 31px; line-height: 1.15; letter-spacing: 0; }
+    .subtitle { margin: 0; max-width: 900px; color: #d8dee8; font-size: 15px; }
+    main { padding: 24px 20px 40px; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 12px; color: var(--muted); box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .metric-card, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .metric-card { padding: 15px; min-height: 118px; }
+    .metric-label { color: var(--muted); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+    .metric-value { font-size: 24px; font-weight: 780; margin-top: 9px; letter-spacing: 0; }
+    .metric-note { color: var(--muted); margin-top: 4px; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 16px; margin-bottom: 18px; }
+    .panel { padding: 18px; overflow: hidden; margin-bottom: 18px; }
+    h2 { margin: 0; font-size: 17px; letter-spacing: 0; }
+    .panel-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .panel-title span { color: var(--muted); }
+    .kv { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 8px 12px; }
+    .kv div:nth-child(odd) { color: var(--muted); }
+    .note { color: var(--muted); margin: 0 0 12px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 840px; }
+    th, td { padding: 10px 11px; border-bottom: 1px solid #edf0f4; text-align: left; white-space: nowrap; vertical-align: middle; }
+    th { background: #f2f5f9; color: #394150; font-size: 12px; }
+    tbody tr:hover { background: #fbfcfe; }
+    .bar-cell { position: relative; min-width: 112px; height: 24px; padding: 2px 7px; border-radius: 5px; background: #eef2f7; overflow: hidden; }
+    .bar-cell i { position: absolute; inset: 0 auto 0 0; display: block; background: rgba(180, 83, 9, 0.18); }
+    .bar-cell.compute i { background: rgba(29, 78, 216, 0.18); }
+    .bar-cell.hbm i { background: rgba(15, 118, 110, 0.18); }
+    .bar-cell.nvl i { background: rgba(109, 40, 217, 0.16); }
+    .bar-cell.speed i { background: rgba(15, 138, 95, 0.18); }
+    .bar-cell span { position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
+    pre { margin: 0; padding: 12px; overflow: auto; background: #111827; color: #e5e7eb; border-radius: 8px; font-size: 12px; }
+    footer { padding: 0 20px 34px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 1100px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) { header { padding: 26px 18px 22px; } h1 { font-size: 24px; } main { padding: 18px 12px 30px; } .metrics { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="eyebrow">DeepGEMM Mega MoE Modal Benchmark</div>
+      <h1>DeepGEMM PR316-Style Table Results</h1>
+      <p class="subtitle">DeepSeek-V4 Flash and Pro Mega MoE cases on 8x NVIDIA B200, with DeepEP legacy baseline enabled through the non-GIN fallback path.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="status-row">
+      <span class="pill"><span class="dot"></span>Table run completed</span>
+      <span class="pill"><span class="dot"></span>Legacy baseline enabled</span>
+      <span class="pill">Result dir <code>/cache/deepgemm/results/20260625-092239</code></span>
+    </div>
+
+    <div class="metrics">
+      <section class="metric-card">
+      <div class="metric-label">Status</div>
+      <div class="metric-value">PASS</div>
+      <div class="metric-note">PR316-style table completed</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Rows</div>
+      <div class="metric-value">8</div>
+      <div class="metric-note">Flash/Pro x 4 batch sizes</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Peak Compute</div>
+      <div class="metric-value">2423 TFLOPS</div>
+      <div class="metric-note">Pro bsz 32768</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Peak HBM</div>
+      <div class="metric-value">4483 GB/s</div>
+      <div class="metric-note">Pro bsz 512</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Best Speedup</div>
+      <div class="metric-value">1.96x</div>
+      <div class="metric-note">Flash bsz 1</div>
+    </section>
+<section class="metric-card">
+      <div class="metric-label">Fastest</div>
+      <div class="metric-value">55.9 us</div>
+      <div class="metric-note">Flash bsz 1</div>
+    </section>
+    </div>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="panel-title"><h2>Run Metadata</h2></div>
+        <div class="kv">
+          <div>DeepGEMM commit</div><div><code>54e226124093</code></div>
+          <div>DeepEP commit</div><div><code>af9a04031883</code></div>
+          <div>GPU</div><div><code>NVIDIA B200</code> x 8</div>
+          <div>Modal request</div><div><code>B200:8</code></div>
+          <div>Modal run</div><div><a href="https://modal.com/apps/huangzhilin-hzl/main/ap-iUOW6CPGDWirRV3nKz1Fp8">ap-iUOW6CPGDWirRV3nKz1Fp8</a></div>
+          <div>Baseline check</div><div><a href="https://modal.com/apps/huangzhilin-hzl/main/ap-xMLG9hlRuar1GGall1hfCC">ap-xMLG9hlRuar1GGall1hfCC</a></div>
+          <div>Artifacts</div><div><a href="summary.json">summary.json</a> · <a href="summary.csv">summary.csv</a></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Legacy Baseline Notes</h2></div>
+        <p class="note">Baseline dependencies installed successfully: NVSHMEM, NCCL, tilelang, and DeepEP. Modal B200 did not expose NCCL GIN, so DeepEP was run with <code>EP_DISABLE_GIN=1</code>, which uses the documented non-GIN fallback path.</p>
+        <pre>DEEPGEMM_INSTALL_BASELINE=1 EP_DISABLE_GIN=1 python3 -m modal run deepgemm/modal_deepgemm_mega_moe.py --task table --model both --gpu B200:8 --deepgemm-ref 54e22612409371d6364144b69086735beb54e98b --batch-sizes 1,512,8192,32768 --require-baseline</pre>
+      </div>
+    </section>
+
+    
+      <section class="panel model-panel">
+        <div class="panel-title">
+          <h2>DeepSeek-V4-Flash</h2>
+          <span>4 cases</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Batch</th><th>Time us</th><th>TFLOPS</th><th>HBM GB/s</th><th>NVL GB/s</th><th>Speedup</th><th>Ranks</th><th>Log</th></tr>
+            </thead>
+            <tbody>
+          <tr>
+            <td>1</td>
+            <td><div class="bar-cell time"><span>55.9</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell compute"><span>5</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>1328</span><i style="width:29.6%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>1</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.96x</span><i style="width:100.0%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="flash_bsz1.log">log</a></td>
+          </tr>
+          <tr>
+            <td>512</td>
+            <td><div class="bar-cell time"><span>145.5</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell compute"><span>1062</span><i style="width:43.8%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>3211</span><i style="width:71.6%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>268</span><i style="width:50.7%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.79x</span><i style="width:91.5%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="flash_bsz512.log">log</a></td>
+          </tr>
+          <tr>
+            <td>8192</td>
+            <td><div class="bar-cell time"><span>1279.1</span><i style="width:11.9%"></i></div></td>
+            <td><div class="bar-cell compute"><span>1934</span><i style="width:79.8%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>1001</span><i style="width:22.3%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>501</span><i style="width:94.8%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.55x</span><i style="width:79.0%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="flash_bsz8192.log">log</a></td>
+          </tr>
+          <tr>
+            <td>32768</td>
+            <td><div class="bar-cell time"><span>4864.2</span><i style="width:45.4%"></i></div></td>
+            <td><div class="bar-cell compute"><span>2034</span><i style="width:84.0%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>792</span><i style="width:17.7%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>528</span><i style="width:100.0%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.64x</span><i style="width:83.6%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="flash_bsz32768.log">log</a></td>
+          </tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel model-panel">
+        <div class="panel-title">
+          <h2>DeepSeek-V4-Pro</h2>
+          <span>4 cases</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Batch</th><th>Time us</th><th>TFLOPS</th><th>HBM GB/s</th><th>NVL GB/s</th><th>Speedup</th><th>Ranks</th><th>Log</th></tr>
+            </thead>
+            <tbody>
+          <tr>
+            <td>1</td>
+            <td><div class="bar-cell time"><span>110.4</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell compute"><span>7</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>1720</span><i style="width:38.4%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>1</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.67x</span><i style="width:85.1%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="pro_bsz1.log">log</a></td>
+          </tr>
+          <tr>
+            <td>512</td>
+            <td><div class="bar-cell time"><span>380.5</span><i style="width:4.0%"></i></div></td>
+            <td><div class="bar-cell compute"><span>1067</span><i style="width:44.0%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>4483</span><i style="width:100.0%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>177</span><i style="width:33.6%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.67x</span><i style="width:85.1%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="pro_bsz512.log">log</a></td>
+          </tr>
+          <tr>
+            <td>8192</td>
+            <td><div class="bar-cell time"><span>2853.1</span><i style="width:26.6%"></i></div></td>
+            <td><div class="bar-cell compute"><span>2276</span><i style="width:93.9%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>1080</span><i style="width:24.1%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>388</span><i style="width:73.4%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.49x</span><i style="width:76.0%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="pro_bsz8192.log">log</a></td>
+          </tr>
+          <tr>
+            <td>32768</td>
+            <td><div class="bar-cell time"><span>10721.0</span><i style="width:100.0%"></i></div></td>
+            <td><div class="bar-cell compute"><span>2423</span><i style="width:100.0%"></i></div></td>
+            <td><div class="bar-cell hbm"><span>687</span><i style="width:15.3%"></i></div></td>
+            <td><div class="bar-cell nvl"><span>414</span><i style="width:78.3%"></i></div></td>
+            <td><div class="bar-cell speed"><span>1.56x</span><i style="width:79.5%"></i></div></td>
+            <td>8/8</td>
+            <td><a href="pro_bsz32768.log">log</a></td>
+          </tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    <section class="panel">
+      <div class="panel-title"><h2>All Rows</h2><span>8 rows</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th>Batch</th><th>Time us</th><th>TFLOPS</th><th>HBM GB/s</th><th>NVL GB/s</th><th>Speedup</th><th>DeepGEMM</th><th>DeepEP</th><th>GPU</th><th>Cards</th></tr></thead>
+          <tbody>
+      <tr>
+        <td>Flash</td>
+        <td>1</td>
+        <td>55.9</td>
+        <td>5.2</td>
+        <td>1327.9</td>
+        <td>1.4</td>
+        <td>1.96x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Flash</td>
+        <td>512</td>
+        <td>145.5</td>
+        <td>1062.1</td>
+        <td>3211.2</td>
+        <td>267.8</td>
+        <td>1.79x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Flash</td>
+        <td>8192</td>
+        <td>1279.1</td>
+        <td>1933.9</td>
+        <td>1000.9</td>
+        <td>500.6</td>
+        <td>1.55x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Flash</td>
+        <td>32768</td>
+        <td>4864.2</td>
+        <td>2034.2</td>
+        <td>792.0</td>
+        <td>528.1</td>
+        <td>1.64x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Pro</td>
+        <td>1</td>
+        <td>110.4</td>
+        <td>7.2</td>
+        <td>1719.8</td>
+        <td>1.2</td>
+        <td>1.67x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Pro</td>
+        <td>512</td>
+        <td>380.5</td>
+        <td>1066.9</td>
+        <td>4483.2</td>
+        <td>177.2</td>
+        <td>1.67x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Pro</td>
+        <td>8192</td>
+        <td>2853.1</td>
+        <td>2276.1</td>
+        <td>1080.0</td>
+        <td>387.6</td>
+        <td>1.49x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Pro</td>
+        <td>32768</td>
+        <td>10721.0</td>
+        <td>2422.9</td>
+        <td>687.4</td>
+        <td>413.8</td>
+        <td>1.56x</td>
+        <td>54e226124093</td>
+        <td>af9a04031883</td>
+        <td>NVIDIA B200</td>
+        <td>8</td>
+      </tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Generated from <code>summary.json</code> and per-case logs in the same directory. Speedup values are relative to the DeepEP legacy baseline in <code>tests/test_mega_moe.py</code>.
+  </footer>
+</body>
+</html>

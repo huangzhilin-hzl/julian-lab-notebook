@@ -1,0 +1,9 @@
+model,batch_size,rank_rows,expected_ranks,time_us,compute_tflops,global_memory_gbs,interconnect_gbs,speedup_vs_legacy,deepgemm_commit,deepep_commit,gpu_model,gpu_count,modal_gpu_request,log_path
+DeepSeek-V4-Flash,1,8,8,55.875,5.25,1327.875,1.375,1.96125,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/flash_bsz1.log
+DeepSeek-V4-Flash,512,8,8,145.5,1062.125,3211.25,267.75,1.795,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/flash_bsz512.log
+DeepSeek-V4-Flash,8192,8,8,1279.125,1933.875,1000.875,500.625,1.55,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/flash_bsz8192.log
+DeepSeek-V4-Flash,32768,8,8,4864.25,2034.25,792.0,528.125,1.64,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/flash_bsz32768.log
+DeepSeek-V4-Pro,1,8,8,110.375,7.25,1719.75,1.25,1.66875,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/pro_bsz1.log
+DeepSeek-V4-Pro,512,8,8,380.5,1066.875,4483.25,177.25,1.67,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/pro_bsz512.log
+DeepSeek-V4-Pro,8192,8,8,2853.125,2276.125,1080.0,387.625,1.49,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/pro_bsz8192.log
+DeepSeek-V4-Pro,32768,8,8,10721.0,2422.875,687.375,413.75,1.55875,54e226124093,af9a04031883,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-092239/pro_bsz32768.log

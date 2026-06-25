@@ -1,0 +1,96 @@
+Config:Config:Config:Config:
+
+
+Config:
+Config:
+Config:
+Config:
+
+ > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4
+
+
+ > MMA: fp8xfp4 > MMA: fp8xfp4
+
+
+
+
+ > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1 > Tokens: 1/1
+ > Tokens: 1/1
+
+
+ > Tokens: 1/1
+
+
+
+ > Hidden: 4096 > Hidden: 4096 > Hidden: 4096 > Hidden: 4096
+ > Hidden: 4096 > Hidden: 4096
+ > Hidden: 4096
+
+
+ > Hidden: 4096
+
+
+ > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048 > Intermediate: 2048
+
+
+ > Intermediate: 2048
+
+ > Intermediate: 2048
+
+
+ > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256 > Experts: 6/256
+
+
+
+
+
+
+ > Experts: 6/256
+ > Buffer: 0.286 GiB > Buffer: 0.286 GiB
+ > Buffer: 0.286 GiB > Buffer: 0.286 GiB > Buffer: 0.286 GiB
+ > Buffer: 0.286 GiB > Buffer: 0.286 GiB
+
+
+
+
+ > Buffer: 0.286 GiB
+
+
+
+
+
+
+
+
+2026-06-25 09:23:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 09:23:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 09:23:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+Performance:
+ > EP:  0/8 |    7 TFLOPS | overlap:    7 TFLOPS, HBM 1813 GB/s, NVL   2 GB/s |   56 us, reduction:  0.0 us | 1.97x legacy > EP:  2/8 |    6 TFLOPS | overlap:    6 TFLOPS, HBM 1577 GB/s, NVL   2 GB/s |   56 us, reduction:  0.0 us | 1.94x legacy > EP:  6/8 |    7 TFLOPS | overlap:    7 TFLOPS, HBM 1808 GB/s, NVL   2 GB/s |   56 us, reduction:  0.0 us | 1.95x legacy > EP:  1/8 |    2 TFLOPS | overlap:    2 TFLOPS, HBM  452 GB/s, NVL   0 GB/s |   56 us, reduction:  0.0 us | 1.96x legacy
+ > EP:  5/8 |    5 TFLOPS | overlap:    5 TFLOPS, HBM 1360 GB/s, NVL   1 GB/s |   56 us, reduction:  0.0 us | 1.95x legacy > EP:  3/8 |    3 TFLOPS | overlap:    3 TFLOPS, HBM  452 GB/s, NVL   1 GB/s |   56 us, reduction:  0.0 us | 1.95x legacy > EP:  4/8 |    7 TFLOPS | overlap:    7 TFLOPS, HBM 1794 GB/s, NVL   2 GB/s |   56 us, reduction:  0.0 us | 1.97x legacy
+ > EP:  7/8 |    5 TFLOPS | overlap:    5 TFLOPS, HBM 1367 GB/s, NVL   1 GB/s |   55 us, reduction:  0.0 us | 2.00x legacy
+
+
+
+
+

@@ -71,6 +71,7 @@ To require the baseline, build the Modal image with:
 
 ```bash
 DEEPGEMM_INSTALL_BASELINE=1 \
+EP_DISABLE_GIN=1 \
 modal run deepgemm/modal_deepgemm_mega_moe.py \
   --task case \
   --model flash \
@@ -81,6 +82,8 @@ modal run deepgemm/modal_deepgemm_mega_moe.py \
 This attempts to install `tilelang` and DeepEP during the Modal image build.
 If either package fails to build in the selected base image, keep
 `DEEPGEMM_INSTALL_BASELINE=0` and use the fused-kernel timing columns only.
+`EP_DISABLE_GIN=1` disables DeepEP's NCCL GIN backend and uses the non-GIN
+fallback path, which is needed on Modal B200 runs where NCCL GIN is unavailable.
 
 ## Outputs
 
@@ -112,6 +115,7 @@ DEEPGEMM_REF=main
 DEEPGEMM_BASE_IMAGE=nvcr.io/nvidia/pytorch:26.04-py3
 MODAL_CACHE_VOLUME_NAME=deepgemm-cache
 MAX_JOBS=16
+EP_DISABLE_GIN=1
 ```
 
 `DEEPGEMM_BASE_IMAGE` should provide CUDA 12.9+ and a PyTorch build with
