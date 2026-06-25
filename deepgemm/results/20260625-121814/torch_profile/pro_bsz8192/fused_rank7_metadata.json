@@ -1,0 +1,18 @@
+{
+  "profile_name": "fused",
+  "rank": 7,
+  "num_ranks": 8,
+  "trace_path": "/cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank7.json",
+  "key_averages_path": "/cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank7_key_averages.txt",
+  "stack_exports": {
+    "self_cuda_time_total": "/cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank7_stacks_self_cuda_time_total.txt",
+    "self_cpu_time_total": "/cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank7_stacks_self_cpu_time_total.txt"
+  },
+  "record_shapes": true,
+  "with_stack": true,
+  "profile_memory": true,
+  "prewarm_steps": 5,
+  "warmup_steps": 1,
+  "active_steps": 1,
+  "repeats": 1
+}

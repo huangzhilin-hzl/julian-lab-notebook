@@ -1,0 +1,337 @@
+trace: fused_rank7.json
+with_stack: 1
+record_shapes: 1
+python_function_events: 331
+
+timestamp_us	duration_us	function
+7311464293333.108	4151.551	<string>(1): <module>
+7311464293334.385	4150.274	multiprocessing/spawn.py(122): spawn_main
+7311464293336.167	4148.492	multiprocessing/spawn.py(135): _main
+7311464293337.48	4147.179	multiprocessing/process.py(314): _bootstrap
+7311464293339.529	4145.13	multiprocessing/process.py(108): run
+7311464293340.171	4144.488	torch/multiprocessing/spawn.py(87): _wrap
+7311464293344.903	4139.756	profile_mega_moe_torch.py(336): test
+7311464293349.045	4135.614	profile_mega_moe_torch.py(285): _profile_one
+7311464293351.41	758.319	torch/profiler/profiler.py(898): step
+7311464293352.043	620.67	torch/profiler/profiler.py(932): _transit_action
+7311464293352.536	617.495	torch/profiler/profiler.py(241): start_trace
+7311464293353.008	316.981	torch/autograd/profiler.py(398): _start_trace
+7311464293655.022	7.413	<built-in function perf_counter_ns>
+7311464293679.24	17.387	torch/profiler/profiler.py(390): add_metadata_json
+7311464293691.505	4.802	<built-in method _add_metadata_json of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaad20770>
+7311464293701.925	1.549	torch/profiler/profiler.py(390): add_metadata_json
+7311464293702.319	1.08	<built-in method _add_metadata_json of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaad20770>
+7311464293704.494	0.977	torch/profiler/profiler.py(390): add_metadata_json
+7311464293704.696	0.697	<built-in method _add_metadata_json of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaad20770>
+7311464293711.318	1.724	<built-in method kineto_available of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaad207b0>
+7311464293715.527	181.027	torch/profiler/profiler.py(405): _get_distributed_info
+7311464293723.736	5.346	torch/distributed/__init__.py(17): is_available
+7311464293727.702	1.218	<built-in function hasattr>
+7311464293732.346	5.458	torch/distributed/distributed_c10d.py(1340): is_initialized
+7311464293735.077	2.492	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293736.75	0.701	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293740.271	40.213	torch/distributed/distributed_c10d.py(1417): get_backend
+7311464293746.53	3.061	torch/distributed/distributed_c10d.py(1366): _get_default_group
+7311464293746.988	1.319	torch/distributed/distributed_c10d.py(1340): is_initialized
+7311464293747.438	0.749	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293747.956	0.113	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293749.109	0.37	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293749.35	0.046	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293751.612	2.619	torch/distributed/distributed_c10d.py(1043): _rank_not_in_group
+7311464293755.756	0.555	torch/distributed/distributed_c10d.py(650): pg_map
+7311464293762.191	1.822	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464293766.187	0.12	torch/utils/_typing_utils.py(13): not_none
+7311464293771.272	8.821	torch/distributed/distributed_c10d.py(320): __new__
+7311464293772.519	0.258	<built-in function isinstance>
+7311464293775.667	0.48	<built-in method upper of str object at 0x2b29e0354840>
+7311464293777.962	1.743	<built-in function getattr>
+7311464293781.952	15.835	torch/distributed/distributed_c10d.py(2476): get_rank
+7311464293782.556	0.127	torch/distributed/distributed_c10d.py(1043): _rank_not_in_group
+7311464293783.25	2.208	torch/distributed/distributed_c10d.py(1366): _get_default_group
+7311464293783.607	1.036	torch/distributed/distributed_c10d.py(1340): is_initialized
+7311464293784.009	0.491	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293784.293	0.103	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293785.025	0.324	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293785.214	0.055	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293794.992	2.635	<built-in method rank of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaa602df0>
+7311464293799.479	10.79	torch/distributed/distributed_c10d.py(2503): get_world_size
+7311464293801.791	0.102	torch/distributed/distributed_c10d.py(1043): _rank_not_in_group
+7311464293803.96	6.168	torch/distributed/distributed_c10d.py(1139): _get_group_size
+7311464293804.587	0.405	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293804.83	0.056	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293805.683	1.65	torch/distributed/distributed_c10d.py(1366): _get_default_group
+7311464293805.945	0.655	torch/distributed/distributed_c10d.py(1340): is_initialized
+7311464293806.166	0.302	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293806.32	0.069	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293806.916	0.299	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293807.084	0.047	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293809.447	0.606	<built-in method size of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaa602e10>
+7311464293811.667	3.04	torch/distributed/distributed_c10d.py(1501): get_pg_count
+7311464293813.207	0.509	torch/distributed/distributed_c10d.py(693): group_count
+7311464293816.47	49.676	torch/distributed/distributed_c10d.py(1492): _get_all_pg_configs
+7311464293816.987	0.114	torch/distributed/distributed_c10d.py(650): pg_map
+7311464293826.45	28.44	torch/distributed/distributed_c10d.py(1477): _get_pg_config
+7311464293828.273	3.537	torch/distributed/distributed_c10d.py(5863): _get_process_group_name
+7311464293829.333	0.202	torch/distributed/distributed_c10d.py(663): pg_names
+7311464293831.234	0.468	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464293834.631	5.447	torch/distributed/distributed_c10d.py(1397): get_backend_config
+7311464293835.037	0.211	torch/distributed/distributed_c10d.py(1043): _rank_not_in_group
+7311464293836.506	0.265	torch/distributed/distributed_c10d.py(683): pg_backend_config
+7311464293837.269	1.484	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464293839.467	0.125	torch/utils/_typing_utils.py(13): not_none
+7311464293840.694	3.986	torch/distributed/distributed_c10d.py(1139): _get_group_size
+7311464293841.097	0.405	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293841.316	0.085	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293841.969	1.746	torch/distributed/distributed_c10d.py(1366): _get_default_group
+7311464293842.214	0.774	torch/distributed/distributed_c10d.py(1340): is_initialized
+7311464293842.392	0.461	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293842.707	0.065	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293843.306	0.29	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293843.453	0.062	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293844.211	0.41	<built-in method size of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaa602e10>
+7311464293846.032	6.619	torch/distributed/distributed_c10d.py(1125): get_process_group_ranks
+7311464293846.957	0.188	torch/distributed/distributed_c10d.py(673): pg_group_ranks
+7311464293850.19	0.397	<built-in method keys of dict object at 0x2b2ab3c50280>
+7311464293855.794	10.022	torch/distributed/distributed_c10d.py(1477): _get_pg_config
+7311464293856.121	1.199	torch/distributed/distributed_c10d.py(5863): _get_process_group_name
+7311464293856.393	0.082	torch/distributed/distributed_c10d.py(663): pg_names
+7311464293856.754	0.476	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464293858.291	2.34	torch/distributed/distributed_c10d.py(1397): get_backend_config
+7311464293858.631	0.212	torch/distributed/distributed_c10d.py(1043): _rank_not_in_group
+7311464293859.161	0.093	torch/distributed/distributed_c10d.py(683): pg_backend_config
+7311464293859.555	0.265	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464293860.263	0.108	torch/utils/_typing_utils.py(13): not_none
+7311464293860.942	1.916	torch/distributed/distributed_c10d.py(1139): _get_group_size
+7311464293861.345	0.365	torch/distributed/distributed_c10d.py(765): WORLD
+7311464293861.542	0.092	torch/distributed/distributed_c10d.py(636): default_pg
+7311464293862.445	0.318	<built-in method size of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaa602e10>
+7311464293863.212	2.038	torch/distributed/distributed_c10d.py(1125): get_process_group_ranks
+7311464293863.561	0.095	torch/distributed/distributed_c10d.py(673): pg_group_ranks
+7311464293864.112	0.181	<built-in method keys of dict object at 0x2b2ab3c50280>
+7311464293872.24	12.076	torch/cuda/nccl.py(35): version
+7311464293874.774	0.942	<built-in function _nccl_version>
+7311464293879.046	1.555	<built-in function _nccl_version_suffix>
+7311464293883.356	0.455	<built-in method decode of bytes object at 0xb380a8>
+7311464293888.411	7.155	<built-in method join of str object at 0xb44e38>
+7311464293890.487	1.9	torch/profiler/profiler.py(422): <genexpr>
+7311464293892.956	0.4	torch/profiler/profiler.py(422): <genexpr>
+7311464293893.624	0.332	torch/profiler/profiler.py(422): <genexpr>
+7311464293894.226	0.138	torch/profiler/profiler.py(422): <genexpr>
+7311464293904.017	44.853	json/__init__.py(183): dumps
+7311464293910.246	2.369	json/encoder.py(105): __init__
+7311464293915.355	33.013	json/encoder.py(183): encode
+7311464293915.778	0.971	<built-in function isinstance>
+7311464293920.756	23.552	json/encoder.py(205): iterencode
+7311464293945.739	0.426	<built-in function isinstance>
+7311464293947.996	0.26	<built-in method join of str object at 0xb44e38>
+7311464293950.598	3.836	torch/profiler/profiler.py(390): add_metadata_json
+7311464293951.43	2.882	<built-in method _add_metadata_json of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaad20770>
+7311464293956.01	0.864	<built-in function hasattr>
+7311464293961.986	0.744	<built-in function getattr>
+7311464293968.712	0.545	<built-in method items of dict object at 0x2b2da7bcdc00>
+7311464293977.258	15.569	<frozen _collections_abc>(804): get
+7311464293979.713	11.095	<frozen os>(680): __getitem__
+7311464293981.59	5.23	<frozen os>(762): encode
+7311464293982.072	0.154	<built-in function isinstance>
+7311464293986.094	0.613	<built-in method encode of str object at 0x2b2aab5012f0>
+7311464293995.933	0.086	torch/_environment.py(4): is_fbcode
+7311464294001.209	11.166	torch/autograd/profiler.py(841): __init__
+7311464294006.125	3.411	typing.py(392): inner
+7311464294012.07	0.117	torch/jit/__init__.py(129): annotate
+7311464294025.235	84.38	torch/autograd/profiler.py(854): __enter__
+7311464294030.782	78.36	torch/_ops.py(1263): __call__
+7311464294034.155	74.903	<built-in method _record_function_enter_new of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3cd0>
+7311464294052.423	55.879	torch/utils/_device.py(110): __torch_function__
+7311464294056.43	2.914	torch/_ops.py(1192): __hash__
+7311464294057.821	1.397	<built-in function hash>
+7311464294060.467	47.448	torch/_ops.py(1263): __call__
+7311464294060.947	46.917	<built-in method _record_function_enter_new of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3cd0>
+7311464294124.35	57.682	profile_mega_moe_torch.py(238): _profile_barrier
+7311464294125.918	55.936	deep_ep/buffers/elastic.py(368): barrier
+7311464294128.655	53.077	<built-in method barrier of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2d4fc4ca70>
+7311464294185.585	2.6	torch/autograd/profiler.py(841): __init__
+7311464294186.819	0.616	typing.py(392): inner
+7311464294187.99	0.087	torch/jit/__init__.py(129): annotate
+7311464294189.948	18.437	torch/autograd/profiler.py(854): __enter__
+7311464294191.318	16.817	torch/_ops.py(1263): __call__
+7311464294191.704	16.383	<built-in method _record_function_enter_new of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3cd0>
+7311464294197.254	10.245	torch/utils/_device.py(110): __torch_function__
+7311464294198.048	0.422	torch/_ops.py(1192): __hash__
+7311464294198.254	0.138	<built-in function hash>
+7311464294199.022	8.272	torch/_ops.py(1263): __call__
+7311464294199.224	7.994	<built-in method _record_function_enter_new of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3cd0>
+7311464294212.522	298.02	profile_mega_moe_torch.py(105): run_fused
+7311464294217.216	54.215	torch/utils/_device.py(110): __torch_function__
+7311464294274.523	47.852	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294277.774	44.149	torch/utils/_device.py(110): __torch_function__
+7311464294278.443	43.38	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294327.213	7.169	torch/utils/_device.py(110): __torch_function__
+7311464294335.278	19.38	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294336.845	17.463	torch/utils/_device.py(110): __torch_function__
+7311464294337.258	16.989	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294357.047	5.66	torch/utils/_device.py(110): __torch_function__
+7311464294365.457	15.668	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294367.187	13.522	torch/utils/_device.py(110): __torch_function__
+7311464294367.535	13.073	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294383.143	5.775	torch/utils/_device.py(110): __torch_function__
+7311464294389.835	13.077	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294390.858	11.784	torch/utils/_device.py(110): __torch_function__
+7311464294391.168	11.35	<built-in method copy_ of Tensor object at 0x2b2da7cf3bb0>
+7311464294405.963	28.937	<built-in method empty of type object at 0x2b29ed15a240>
+7311464294411.978	22.308	torch/utils/_device.py(110): __torch_function__
+7311464294412.712	0.291	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464294413.826	20.327	<built-in method empty of type object at 0x2b29ed15a240>
+7311464294441.365	68.488	deep_gemm/mega/__init__.py(155): fp8_fp4_mega_moe
+7311464294446.723	0.915	<built-in method rank of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaa602df0>
+7311464294450.383	59.026	<built-in method fp8_fp4_mega_moe of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aac7a93f0>
+7311464294514.971	48.74	torch/autograd/profiler.py(860): __exit__
+7311464294517.332	0.07	torch/_jit_internal.py(103): is_scripting
+7311464294523.392	38.025	torch/_ops.py(1085): __call__
+7311464294524.934	11.716	torch/_ops.py(1150): _must_dispatch_in_python
+7311464294527.164	9.038	<built-in function any>
+7311464294528.757	6.58	torch/_ops.py(1151): <genexpr>
+7311464294530.427	4.705	torch/_ops.py(1136): _contains_fake_script_object
+7311464294532.969	0.821	<built-in function isinstance>
+7311464294534.332	0.196	<built-in function isinstance>
+7311464294534.947	0.083	<built-in function isinstance>
+7311464294535.682	0.128	torch/_ops.py(1151): <genexpr>
+7311464294538.727	22.631	<built-in method  of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3dd0>
+7311464294546.549	14.28	torch/utils/_device.py(110): __torch_function__
+7311464294548.22	1.102	torch/_ops.py(880): __hash__
+7311464294549.08	0.149	<built-in function hash>
+7311464294550.207	10.327	torch/_ops.py(1085): __call__
+7311464294550.53	3.307	torch/_ops.py(1150): _must_dispatch_in_python
+7311464294551.22	2.408	<built-in function any>
+7311464294551.49	1.701	torch/_ops.py(1151): <genexpr>
+7311464294551.828	1.271	torch/_ops.py(1136): _contains_fake_script_object
+7311464294552.129	0.158	<built-in function isinstance>
+7311464294552.482	0.238	<built-in function isinstance>
+7311464294552.95	0.067	<built-in function isinstance>
+7311464294553.322	0.1	torch/_ops.py(1151): <genexpr>
+7311464294554.079	6.333	<built-in method  of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3dd0>
+7311464294563.207	0.29	<built-in method __exit__ of torch._C.DisableTorchFunctionSubclass object at 0x2b2da7d518b0>
+7311464294568.682	2826.407	torch/cuda/__init__.py(1189): synchronize
+7311464294571.768	4.0	torch/cuda/__init__.py(481): _lazy_init
+7311464294573.294	2.313	torch/cuda/__init__.py(432): is_initialized
+7311464294574.925	0.564	<built-in function _cuda_isInBadFork>
+7311464294578.852	43.046	torch/cuda/__init__.py(630): __init__
+7311464294581.299	40.293	torch/cuda/_utils.py(517): _get_device_index
+7311464294581.914	0.172	<built-in function isinstance>
+7311464294582.472	0.075	<built-in function isinstance>
+7311464294583.743	0.064	<built-in function isinstance>
+7311464294584.73	0.06	torch/_jit_internal.py(103): is_scripting
+7311464294585.369	0.173	<built-in function isinstance>
+7311464294588.492	32.84	torch/_utils.py(847): _get_device_index
+7311464294588.968	0.072	<built-in function isinstance>
+7311464294589.702	0.068	<built-in function isinstance>
+7311464294590.337	0.1	<built-in function isinstance>
+7311464294591.351	0.066	torch/_jit_internal.py(103): is_scripting
+7311464294592.85	28.34	torch/_utils.py(821): _get_current_device_index
+7311464294595.354	25.636	torch/_utils.py(805): _get_device_attr
+7311464294597.014	15.968	torch/_utils.py(788): _get_available_device_type
+7311464294598.513	14.302	torch/cuda/__init__.py(161): is_available
+7311464294600.007	1.495	torch/cuda/__init__.py(152): _is_compiled
+7311464294600.807	0.633	<built-in function hasattr>
+7311464294602.683	8.559	torch/cuda/__init__.py(157): _nvml_based_avail
+7311464294604.687	6.278	<frozen os>(779): getenv
+7311464294605.439	5.413	<frozen _collections_abc>(804): get
+7311464294606.224	3.784	<frozen os>(680): __getitem__
+7311464294606.962	1.426	<frozen os>(762): encode
+7311464294607.188	0.084	<built-in function isinstance>
+7311464294607.747	0.558	<built-in method encode of str object at 0x2b2aab5012f0>
+7311464294612.279	0.411	<built-in function _cuda_getDeviceCount>
+7311464294614.575	0.319	<built-in method lower of str object at 0x2b29e0354a80>
+7311464294616.392	4.507	torch/_utils.py(823): <lambda>
+7311464294617.23	3.595	torch/cuda/__init__.py(1183): current_device
+7311464294617.73	1.016	torch/cuda/__init__.py(481): _lazy_init
+7311464294618.177	0.491	torch/cuda/__init__.py(432): is_initialized
+7311464294618.401	0.214	<built-in function _cuda_isInBadFork>
+7311464294619.783	0.976	<built-in function _cuda_getDevice>
+7311464294623.244	2.203	torch/cuda/__init__.py(634): __enter__
+7311464294624.693	0.648	<built-in function _cuda_exchangeDevice>
+7311464294626.673	2759.851	<built-in function _cuda_synchronize>
+7311464297388.264	6.276	torch/cuda/__init__.py(637): __exit__
+7311464297392.198	2.242	<built-in function _cuda_maybeExchangeDevice>
+7311464297396.718	87.941	torch/profiler/profiler.py(888): step
+7311464297397.559	25.392	torch/autograd/profiler.py(860): __exit__
+7311464297398.126	0.063	torch/_jit_internal.py(103): is_scripting
+7311464297400.064	21.92	torch/_ops.py(1085): __call__
+7311464297400.393	3.861	torch/_ops.py(1150): _must_dispatch_in_python
+7311464297400.927	2.962	<built-in function any>
+7311464297401.303	1.915	torch/_ops.py(1151): <genexpr>
+7311464297401.562	1.523	torch/_ops.py(1136): _contains_fake_script_object
+7311464297401.894	0.237	<built-in function isinstance>
+7311464297402.409	0.26	<built-in function isinstance>
+7311464297402.949	0.069	<built-in function isinstance>
+7311464297403.561	0.095	torch/_ops.py(1151): <genexpr>
+7311464297404.604	17.26	<built-in method  of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3dd0>
+7311464297411.544	9.881	torch/utils/_device.py(110): __torch_function__
+7311464297412.225	0.496	torch/_ops.py(880): __hash__
+7311464297412.509	0.128	<built-in function hash>
+7311464297413.289	7.823	torch/_ops.py(1085): __call__
+7311464297413.505	2.419	torch/_ops.py(1150): _must_dispatch_in_python
+7311464297413.858	1.923	<built-in function any>
+7311464297413.996	1.419	torch/_ops.py(1151): <genexpr>
+7311464297414.18	1.17	torch/_ops.py(1136): _contains_fake_script_object
+7311464297414.392	0.088	<built-in function isinstance>
+7311464297414.633	0.121	<built-in function isinstance>
+7311464297415.215	0.083	<built-in function isinstance>
+7311464297415.565	0.068	torch/_ops.py(1151): <genexpr>
+7311464297416.135	4.859	<built-in method  of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aab1c3dd0>
+7311464297422.572	0.228	<built-in method __exit__ of torch._C.DisableTorchFunctionSubclass object at 0x2b2da7d518b0>
+7311464297425.743	3.146	torch/profiler/profiler.py(530): schedule_fn
+7311464297431.144	53.515	torch/profiler/profiler.py(928): _transit_action
+7311464297431.744	4.638	<built-in method get of dict object at 0x2b2aaa6a2e80>
+7311464297433.332	0.946	enum.py(1267): __hash__
+7311464297433.994	0.207	<built-in function hash>
+7311464297434.569	0.669	enum.py(1267): __hash__
+7311464297434.94	0.227	<built-in function hash>
+7311464297438.308	46.351	torch/profiler/profiler.py(283): stop_trace
+7311464297440.909	43.75	torch/autograd/profiler.py(403): __exit__
+7311464297441.838	0.141	<built-in function hasattr>
+7311464297446.261	0.302	<built-in function getattr>
+7311464297446.997	0.106	<built-in function hasattr>
+7311464297447.751	36.908	torch/cuda/__init__.py(1189): synchronize
+7311464297448.079	0.794	torch/cuda/__init__.py(481): _lazy_init
+7311464297448.359	0.454	torch/cuda/__init__.py(432): is_initialized
+7311464297448.559	0.177	<built-in function _cuda_isInBadFork>
+7311464297449.609	17.188	torch/cuda/__init__.py(630): __init__
+7311464297449.887	16.703	torch/cuda/_utils.py(517): _get_device_index
+7311464297450.088	0.115	<built-in function isinstance>
+7311464297450.413	0.079	<built-in function isinstance>
+7311464297450.784	0.079	<built-in function isinstance>
+7311464297451.385	0.06	torch/_jit_internal.py(103): is_scripting
+7311464297451.896	0.226	<built-in function isinstance>
+7311464297452.683	13.737	torch/_utils.py(847): _get_device_index
+7311464297452.807	0.086	<built-in function isinstance>
+7311464297453.146	0.062	<built-in function isinstance>
+7311464297453.502	0.086	<built-in function isinstance>
+7311464297454.121	0.034	torch/_jit_internal.py(103): is_scripting
+7311464297454.6	11.692	torch/_utils.py(821): _get_current_device_index
+7311464297455.091	11.039	torch/_utils.py(805): _get_device_attr
+7311464297455.309	7.474	torch/_utils.py(788): _get_available_device_type
+7311464297455.595	7.085	torch/cuda/__init__.py(161): is_available
+7311464297456.004	0.616	torch/cuda/__init__.py(152): _is_compiled
+7311464297456.398	0.149	<built-in function hasattr>
+7311464297456.908	4.997	torch/cuda/__init__.py(157): _nvml_based_avail
+7311464297457.373	4.349	<frozen os>(779): getenv
+7311464297457.805	3.777	<frozen _collections_abc>(804): get
+7311464297458.173	2.774	<frozen os>(680): __getitem__
+7311464297458.855	1.053	<frozen os>(762): encode
+7311464297459.178	0.072	<built-in function isinstance>
+7311464297459.558	0.26	<built-in method encode of str object at 0x2b2aab5012f0>
+7311464297462.393	0.212	<built-in function _cuda_getDeviceCount>
+7311464297463.101	0.254	<built-in method lower of str object at 0x2b29e0354a80>
+7311464297463.943	2.109	torch/_utils.py(823): <lambda>
+7311464297464.199	1.788	torch/cuda/__init__.py(1183): current_device
+7311464297464.46	0.532	torch/cuda/__init__.py(481): _lazy_init
+7311464297464.648	0.29	torch/cuda/__init__.py(432): is_initialized
+7311464297464.796	0.093	<built-in function _cuda_isInBadFork>
+7311464297465.229	0.707	<built-in function _cuda_getDevice>
+7311464297467.388	0.823	torch/cuda/__init__.py(634): __enter__
+7311464297467.673	0.481	<built-in function _cuda_exchangeDevice>
+7311464297468.587	6.792	<built-in function _cuda_synchronize>
+7311464297475.793	8.866	torch/cuda/__init__.py(637): __exit__
+7311464297476.031	0.522	<built-in function _cuda_maybeExchangeDevice>
+7311464297478.298	0.365	<built-in function perf_counter_ns>
+7311464297480.668	3.991	<built-in method _disable_profiler of pybind11_builtins.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1 object at 0x2b2aaad20710>

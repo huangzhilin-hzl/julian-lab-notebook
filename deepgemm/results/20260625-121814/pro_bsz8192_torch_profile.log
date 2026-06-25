@@ -1,0 +1,152 @@
+Config:Config:Config:Config:
+
+
+
+Config:Config:Config:Config:
+
+
+
+ > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4 > MMA: fp8xfp4
+ > MMA: fp8xfp4
+ > MMA: fp8xfp4 > MMA: fp8xfp4
+
+
+ > MMA: fp8xfp4
+
+
+ > Tokens: 8192/8192 > Tokens: 8192/8192 > Tokens: 8192/8192 > Tokens: 8192/8192 > Tokens: 8192/8192
+
+ > Tokens: 8192/8192
+
+
+
+ > Tokens: 8192/8192 > Tokens: 8192/8192
+
+ > Hidden: 7168
+ > Hidden: 7168
+ > Hidden: 7168 > Hidden: 7168
+
+ > Hidden: 7168 > Hidden: 7168 > Hidden: 7168 > Hidden: 7168
+
+
+
+ > Intermediate: 3072 > Intermediate: 3072 > Intermediate: 3072
+
+
+ > Intermediate: 3072 > Intermediate: 3072
+ > Intermediate: 3072
+ > Intermediate: 3072
+
+ > Intermediate: 3072
+ > Experts: 6/384
+ > Experts: 6/384 > Experts: 6/384 > Experts: 6/384
+
+
+ > Experts: 6/384
+ > Experts: 6/384
+ > Experts: 6/384 > Experts: 6/384
+
+ > Buffer: 6.904 GiB > Buffer: 6.904 GiB
+ > Buffer: 6.904 GiB > Buffer: 6.904 GiB > Buffer: 6.904 GiB > Buffer: 6.904 GiB
+
+
+
+
+ > Buffer: 6.904 GiB
+ > Buffer: 6.904 GiB
+
+
+
+
+
+
+
+
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+Torch profile legacy: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=6144, k=7168, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=6144, expected_k=7168, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=586, last_wave_util=12, num_cycles=0)
+2026-06-25 12:19:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `_swiglu_apply_weight_to_fp8` with `out_idx=None`
+2026-06-25 12:19:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+2026-06-25 12:19:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `_swiglu_apply_weight_to_fp8`
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+GemmDesc(gemm_type=5, kernel_type=0, m=404096, n=7168, k=3072, num_groups=48, major_a=0, major_b=0, mma_kind=1, a_dtype=Float8_e4m3fn, b_dtype=Char, cd_dtype=BFloat16, with_accumulation=0, num_sms=148, tc_util=100, compiled_dims=nk, ensure_zero_padding=1, expected_m=404096, expected_n=7168, expected_k=3072, expected_num_groups=1): GemmConfig(layout=Layout(swap_ab=1, block_m=224, block_n=128, block_k=128, cluster_m=1, cluster_n=2), storage_config=StorageConfig(load_block_m=112, load_block_n=128, store_block_m=16, store_block_n=128, swizzle_a_mode=128, swizzle_b_mode=128, swizzle_cd_mode=128), pipeline_config=PipelineConfig(smem_size=202540, num_stages=6), launch_config=LaunchConfig(num_sms=148, num_sms_per_cluster=2, num_threads=256, num_tma_threads=32, num_math_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=128)), LayoutInfo(num_waves=683, last_wave_util=88, num_cycles=0)
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:229: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank2.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank7.json > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank3.json
+
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank6.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank4.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank5.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank0.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/legacy_rank1.json
+Torch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+Torch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=TrueTorch profile fused: prewarm=5, warmup=1, active=1, repeat=1, record_shapes=True, with_stack=True
+
+
+
+
+
+
+MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6)MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6)MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6)MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6): MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6): : MegaMoEConfig(block_m=192, block_n=: 128, block_k=128, load_block_m=96, load_block_n=128, store_block_m=32, sf_block_m=MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6)256, sf_block_n=128, num_ring_tokens=423936, num_sf_ring_tokens=6782976, swizzle_acts_mode=128, swizzle_weights_mode=128: MegaMoEConfig(, num_experts_per_wave=2MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6)MegaMoEConfig(num_ranks=8, num_experts=384, hidden=7168, intermediate_hidden=3072, num_max_tokens_per_rank=8448, num_tokens=8192, num_topk=6), num_stages=: MegaMoEConfig(MegaMoEConfig(block_m=: MegaMoEConfig(6: 192MegaMoEConfig(block_m=MegaMoEConfig(block_m=block_m=, smem_size=MegaMoEConfig(215332, num_dispatch_threads=128, num_non_epilogue_threads=128, num_epilogue_threads=256, num_bytes_per_pull=3584)
+block_m=192, block_n=block_m=192192192, block_n=128, block_k=128, load_block_m=96, load_block_n=128, store_block_m=32, sf_block_m=256, sf_block_n=128, num_ring_tokens=423936, num_sf_ring_tokens=6782976block_m=, swizzle_acts_mode=128, swizzle_weights_mode=128128, num_experts_per_wave=, block_k=2, block_n=, num_stages=128128, load_block_m=696, block_k=, smem_size=128, load_block_n=, load_block_m=215332192, block_n=, block_n=, num_dispatch_threads=96128128128, block_k=128, load_block_n=128, store_block_m=, block_k=, num_non_epilogue_threads=32, load_block_m=, block_n=128128, sf_block_m=12896128, store_block_m=, load_block_n=, num_epilogue_threads=, load_block_m=256, block_k=1283296, sf_block_n=, sf_block_m=128, store_block_m=256256128, sf_block_n=, load_block_n=, load_block_m=32, num_bytes_per_pull=128, num_ring_tokens=128358496, sf_block_m=256, store_block_m=), num_ring_tokens=
+, load_block_n=192423936, sf_block_n=32128423936, num_sf_ring_tokens=, num_sf_ring_tokens=, sf_block_m=, block_n=, store_block_m=12812867829766782976256, num_ring_tokens=, swizzle_acts_mode=, swizzle_acts_mode=, sf_block_n=, block_k=32128128423936128128, sf_block_m=, num_ring_tokens=, num_sf_ring_tokens=, swizzle_weights_mode=6782976256, swizzle_weights_mode=423936, load_block_m=, num_sf_ring_tokens=, sf_block_n=128128, swizzle_acts_mode=, num_experts_per_wave=128, num_experts_per_wave=96267829762, num_ring_tokens=, swizzle_acts_mode=128, num_stages=128, load_block_n=423936, swizzle_weights_mode=, swizzle_weights_mode=6128, num_stages=128, num_sf_ring_tokens=6, smem_size=, num_experts_per_wave=1286782976, smem_size=, store_block_m=215332, swizzle_acts_mode=, num_dispatch_threads=2, num_experts_per_wave=32215332128, num_dispatch_threads=2, sf_block_m=128, swizzle_weights_mode=, num_stages=128, num_stages=, num_non_epilogue_threads=256128, num_experts_per_wave=, num_non_epilogue_threads=6128, sf_block_n=6128128, smem_size=, num_epilogue_threads=2, num_stages=, num_ring_tokens=, num_epilogue_threads=215332256, num_bytes_per_pull=6423936256, num_dispatch_threads=1283584, num_bytes_per_pull=, num_sf_ring_tokens=3584, smem_size=, num_non_epilogue_threads=)6782976128)215332, num_epilogue_threads=, swizzle_acts_mode=
+
+128256, num_dispatch_threads=, swizzle_weights_mode=, num_bytes_per_pull=128128, num_experts_per_wave=, num_non_epilogue_threads=3584)2128
+, num_epilogue_threads=, num_stages=2566, smem_size=, num_bytes_per_pull=2153323584), num_dispatch_threads=128
+, num_non_epilogue_threads=128, num_epilogue_threads=256, num_bytes_per_pull=3584, smem_size=215332), num_dispatch_threads=
+128, num_non_epilogue_threads=128, num_epilogue_threads=256, num_bytes_per_pull=3584)
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank2.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank7.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank6.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank3.json > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank0.json
+
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank5.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank4.json
+ > Wrote /cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192/fused_rank1.json

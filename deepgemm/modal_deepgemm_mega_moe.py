@@ -9,6 +9,12 @@ Reproduce the PR #316 Mega MoE sweep:
     modal run deepgemm/modal_deepgemm_mega_moe.py \
       --task table --model both --gpu B200:8 --deepgemm-ref main
 
+Collect torch profiler traces for the Pro / 8192-token case:
+
+    DEEPGEMM_INSTALL_BASELINE=1 EP_DISABLE_GIN=1 \
+    modal run deepgemm/modal_deepgemm_mega_moe.py \
+      --task profile --model pro --batch-size 8192 --require-baseline
+
 The wrapper clones DeepGEMM from GitHub during Modal image build, builds it,
 and runs tests/test_mega_moe.py remotely. Results are written to a Modal
 Volume under /cache/deepgemm/results/<run_id>/.
@@ -327,6 +333,168 @@ def _parse_perf_rows(log_path: Path) -> list[dict[str, float]]:
     return rows
 
 
+def _install_torch_profile_script() -> Path:
+    """Create a profiling-specific copy of tests/test_mega_moe.py.
+
+    The upstream test keeps the fused and legacy callables nested inside
+    test(), so the least invasive way to capture both paths is to copy the
+    file in the Modal workspace and inject a small profiler block near the
+    existing benchmark site.
+    """
+
+    src = Path(WORKDIR) / "tests" / "test_mega_moe.py"
+    dst = Path(WORKDIR) / "tests" / "profile_mega_moe_torch.py"
+    text = src.read_text()
+
+    if "import json\n" not in text:
+        text = text.replace("import argparse\n", "import argparse\nimport json\n")
+
+    profile_block = r'''
+    if args.torch_profile_dir:
+        requested_profile_paths = (
+            ['legacy', 'fused']
+            if args.torch_profile_paths == 'both'
+            else [item.strip() for item in args.torch_profile_paths.split(',') if item.strip()]
+        )
+        invalid_profile_paths = [
+            item for item in requested_profile_paths if item not in ('legacy', 'fused')
+        ]
+        if invalid_profile_paths:
+            raise ValueError(f'Invalid torch profile paths: {invalid_profile_paths}')
+        if 'legacy' in requested_profile_paths and not is_legacy_loaded:
+            raise RuntimeError('Legacy torch profile requested but legacy code is not loaded')
+
+        profile_dir = os.path.abspath(args.torch_profile_dir)
+        os.makedirs(profile_dir, exist_ok=True)
+
+        def _profile_barrier():
+            if ep_buffer is not None:
+                ep_buffer.barrier(use_comm_stream=False)
+            else:
+                dist.barrier()
+
+        def _profile_one(profile_name, fn):
+            dist_print(
+                f'Torch profile {profile_name}: prewarm={args.torch_profile_prewarm_steps}, '
+                f'warmup={args.torch_profile_warmup_steps}, active={args.torch_profile_active_steps}, '
+                f'repeat={args.torch_profile_repeats}, record_shapes={args.torch_profile_record_shapes}, '
+                f'with_stack={args.torch_profile_with_stack}',
+                once_in_node=True,
+            )
+            create_inputs()
+            for _ in range(args.torch_profile_prewarm_steps):
+                _profile_barrier()
+                with torch.profiler.record_function(f'{profile_name}_prewarm'):
+                    fn()
+                torch.cuda.synchronize()
+            dist.barrier()
+
+            activities = [torch.profiler.ProfilerActivity.CPU]
+            if torch.cuda.is_available():
+                activities.append(torch.profiler.ProfilerActivity.CUDA)
+            schedule = torch.profiler.schedule(
+                wait=0,
+                warmup=args.torch_profile_warmup_steps,
+                active=args.torch_profile_active_steps,
+                repeat=args.torch_profile_repeats,
+            )
+            total_steps = (
+                (args.torch_profile_warmup_steps + args.torch_profile_active_steps)
+                * args.torch_profile_repeats
+            )
+            with torch.profiler.profile(
+                activities=activities,
+                schedule=schedule,
+                record_shapes=args.torch_profile_record_shapes,
+                with_stack=args.torch_profile_with_stack,
+                profile_memory=args.torch_profile_profile_memory,
+            ) as profiler:
+                for step in range(total_steps):
+                    _profile_barrier()
+                    with torch.profiler.record_function(f'{profile_name}_profile_step_{step}'):
+                        fn()
+                    torch.cuda.synchronize()
+                    profiler.step()
+
+            base_path = os.path.join(profile_dir, f'{profile_name}_rank{rank_idx}')
+            trace_path = f'{base_path}.json'
+            profiler.export_chrome_trace(trace_path)
+
+            table = profiler.key_averages(
+                group_by_input_shape=args.torch_profile_record_shapes,
+                group_by_stack_n=10 if args.torch_profile_with_stack else 0,
+            ).table(sort_by='cuda_time_total', row_limit=200)
+            with open(f'{base_path}_key_averages.txt', 'w') as f:
+                f.write(table)
+                f.write('\n')
+
+            stack_exports = {}
+            if args.torch_profile_with_stack:
+                for metric in ('self_cuda_time_total', 'self_cpu_time_total'):
+                    stack_path = f'{base_path}_stacks_{metric}.txt'
+                    try:
+                        profiler.export_stacks(stack_path, metric=metric)
+                        stack_exports[metric] = stack_path
+                    except Exception as ex:
+                        error_path = f'{stack_path}.error'
+                        with open(error_path, 'w') as f:
+                            f.write(repr(ex))
+                            f.write('\n')
+                        stack_exports[metric] = error_path
+
+            metadata = {
+                'profile_name': profile_name,
+                'rank': rank_idx,
+                'num_ranks': num_ranks,
+                'trace_path': trace_path,
+                'key_averages_path': f'{base_path}_key_averages.txt',
+                'stack_exports': stack_exports,
+                'record_shapes': args.torch_profile_record_shapes,
+                'with_stack': args.torch_profile_with_stack,
+                'profile_memory': args.torch_profile_profile_memory,
+                'prewarm_steps': args.torch_profile_prewarm_steps,
+                'warmup_steps': args.torch_profile_warmup_steps,
+                'active_steps': args.torch_profile_active_steps,
+                'repeats': args.torch_profile_repeats,
+            }
+            with open(f'{base_path}_metadata.json', 'w') as f:
+                json.dump(metadata, f, indent=2)
+                f.write('\n')
+            dist_print(f' > Wrote {trace_path}', once_in_node=True)
+
+        if 'legacy' in requested_profile_paths:
+            _profile_one('legacy', run_baseline)
+        if 'fused' in requested_profile_paths:
+            _profile_one('fused', run_fused)
+
+        dist.barrier()
+        buffer.destroy()
+        ep_buffer.destroy() if is_legacy_loaded else None
+        dist.destroy_process_group()
+        return
+'''
+
+    benchmark_marker = "    # Count local received tokens\n"
+    if profile_block.strip() not in text:
+        if benchmark_marker not in text:
+            raise RuntimeError("Could not locate benchmark marker in test_mega_moe.py")
+        text = text.replace(benchmark_marker, profile_block + "\n" + benchmark_marker, 1)
+
+    parser_marker = (
+        "    parser.add_argument('--dump-profile-traces', type=str, default='', "
+        "help='Dump profiling trace JSONs')\n"
+    )
+    parser_block = """    parser.add_argument('--torch-profile-dir', type=str, default='', help='Dump torch profiler artifacts to this directory')\n    parser.add_argument('--torch-profile-paths', type=str, default='both', help='Torch profile paths: legacy, fused, or both')\n    parser.add_argument('--torch-profile-prewarm-steps', type=int, default=5, help='Unprofiled warmup calls before torch profiler starts')\n    parser.add_argument('--torch-profile-warmup-steps', type=int, default=1, help='Profiler schedule warmup steps')\n    parser.add_argument('--torch-profile-active-steps', type=int, default=1, help='Profiler schedule active steps')\n    parser.add_argument('--torch-profile-repeats', type=int, default=1, help='Profiler schedule repeats')\n    parser.add_argument('--torch-profile-record-shapes', action='store_true', help='Record operator input shapes')\n    parser.add_argument('--torch-profile-with-stack', action='store_true', help='Record Python stack traces')\n    parser.add_argument('--torch-profile-profile-memory', action='store_true', help='Record tensor memory profile')\n"""
+    if "--torch-profile-dir" not in text:
+        if parser_marker not in text:
+            raise RuntimeError("Could not locate parser marker in test_mega_moe.py")
+        text = text.replace(parser_marker, parser_marker + parser_block, 1)
+
+    dst.write_text(text)
+    print(f"Wrote torch profile script: {dst}", flush=True)
+    return dst
+
+
 def _summarize_case(
     *,
     model_key: str,
@@ -516,6 +684,167 @@ def run_benchmark(
     return _format_table(summaries, result_dir)
 
 
+@app.function(
+    image=image,
+    gpu=gpu_type,
+    timeout=8 * 60 * 60,
+    volumes={"/cache": cache_volume},
+)
+def run_torch_profile(
+    model: str = "pro",
+    batch_size: int = 8192,
+    num_processes: int = 8,
+    num_correctness_tests: int = 0,
+    activation_clamp: float = 10.0,
+    fast_math: int = 1,
+    masked_ratio: float = 0.0,
+    require_baseline: bool = True,
+    profile_paths: str = "both",
+    profile_prewarm_steps: int = 5,
+    profile_warmup_steps: int = 1,
+    profile_active_steps: int = 1,
+    profile_repeats: int = 1,
+    profile_record_shapes: bool = True,
+    profile_with_stack: bool = True,
+    profile_memory: bool = True,
+) -> str:
+    _prepare_runtime(num_processes, require_baseline)
+    _enable_all_rank_printing()
+
+    selected_models = _select_models(model)
+    if len(selected_models) != 1:
+        raise ValueError("Torch profile task expects one model: flash or pro")
+    model_key = selected_models[0]
+    cfg = MODEL_CONFIGS[model_key]
+    case_name = f"{model_key}_bsz{batch_size}"
+
+    run_id = time.strftime("%Y%m%d-%H%M%S")
+    result_dir = Path("/cache/deepgemm/results") / run_id
+    profile_dir = result_dir / "torch_profile" / case_name
+    result_dir.mkdir(parents=True, exist_ok=True)
+    profile_dir.mkdir(parents=True, exist_ok=True)
+
+    script_path = _install_torch_profile_script()
+    log_path = result_dir / f"{case_name}_torch_profile.log"
+    run_metadata = _collect_run_metadata()
+
+    env = os.environ.copy()
+    env.update(
+        {
+            "MASTER_ADDR": "localhost",
+            "MASTER_PORT": "8461",
+            "DG_PRINT_CONFIGS": "1",
+            "PYTHONPATH": f"{WORKDIR}:{env.get('PYTHONPATH', '')}",
+        }
+    )
+
+    cmd = [
+        REMOTE_PYTHON,
+        str(script_path.relative_to(WORKDIR)),
+        "--num-processes",
+        str(num_processes),
+        "--num-max-tokens-per-rank",
+        str(batch_size),
+        "--num-tokens",
+        str(batch_size),
+        "--num-experts",
+        str(cfg["num_experts"]),
+        "--num-topk",
+        str(cfg["num_topk"]),
+        "--hidden",
+        str(cfg["hidden"]),
+        "--intermediate-hidden",
+        str(cfg["intermediate_hidden"]),
+        "--activation-clamp",
+        str(activation_clamp),
+        "--fast-math",
+        str(fast_math),
+        "--masked-ratio",
+        str(masked_ratio),
+        "--num-correctness-tests",
+        str(num_correctness_tests),
+        "--torch-profile-dir",
+        str(profile_dir),
+        "--torch-profile-paths",
+        profile_paths,
+        "--torch-profile-prewarm-steps",
+        str(profile_prewarm_steps),
+        "--torch-profile-warmup-steps",
+        str(profile_warmup_steps),
+        "--torch-profile-active-steps",
+        str(profile_active_steps),
+        "--torch-profile-repeats",
+        str(profile_repeats),
+    ]
+    if profile_record_shapes:
+        cmd.append("--torch-profile-record-shapes")
+    if profile_with_stack:
+        cmd.append("--torch-profile-with-stack")
+    if profile_memory:
+        cmd.append("--torch-profile-profile-memory")
+
+    _run_to_file(cmd, log_path, env=env)
+
+    tar_path = result_dir / f"{case_name}_torch_profile_artifacts.tar.gz"
+    _run(
+        [
+            "tar",
+            "-czf",
+            str(tar_path),
+            "-C",
+            str(result_dir),
+            "torch_profile",
+        ]
+    )
+
+    artifact_rows = []
+    for path in sorted(result_dir.rglob("*")):
+        if path.is_file():
+            artifact_rows.append(
+                {
+                    "path": str(path.relative_to(result_dir)),
+                    "bytes": path.stat().st_size,
+                }
+            )
+
+    manifest = {
+        "task": "torch_profile",
+        "model": MODEL_CONFIGS[model_key]["label"],
+        "model_key": model_key,
+        "batch_size": batch_size,
+        "case_name": case_name,
+        "profile_paths": profile_paths,
+        "profile_prewarm_steps": profile_prewarm_steps,
+        "profile_warmup_steps": profile_warmup_steps,
+        "profile_active_steps": profile_active_steps,
+        "profile_repeats": profile_repeats,
+        "profile_record_shapes": profile_record_shapes,
+        "profile_with_stack": profile_with_stack,
+        "profile_memory": profile_memory,
+        "result_dir": str(result_dir),
+        "profile_dir": str(profile_dir),
+        "log_path": str(log_path),
+        "tar_path": str(tar_path),
+        "artifacts": artifact_rows,
+        **run_metadata,
+    }
+    manifest_path = result_dir / "profile_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+
+    try:
+        cache_volume.commit()
+    except Exception as ex:
+        print(f"Volume commit skipped/failed: {ex}", flush=True)
+
+    return (
+        f"Torch profile complete.\n"
+        f"Result dir: {result_dir}\n"
+        f"Manifest: {manifest_path}\n"
+        f"Archive: {tar_path}\n"
+        f"Artifacts: {len(artifact_rows)} files"
+    )
+
+
 @app.local_entrypoint()
 def main(
     task: str = "table",
@@ -534,6 +863,14 @@ def main(
     require_baseline: bool = False,
     print_configs: bool = False,
     ncu_profile_only: bool = False,
+    profile_paths: str = "both",
+    profile_prewarm_steps: int = 5,
+    profile_warmup_steps: int = 1,
+    profile_active_steps: int = 1,
+    profile_repeats: int = 1,
+    profile_record_shapes: bool = True,
+    profile_with_stack: bool = True,
+    profile_memory: bool = True,
 ) -> None:
     """Run a DeepGEMM Mega MoE benchmark on Modal."""
     if deepgemm_repo != deepgemm_repo_url or deepgemm_ref != deepgemm_git_ref:
@@ -555,8 +892,36 @@ def main(
         batch_size = 1
         ncu_profile_only = True
 
+    if task == "profile":
+        if model == "both":
+            model = "pro"
+        if profile_paths == "both" or "legacy" in {
+            item.strip() for item in profile_paths.split(",")
+        }:
+            require_baseline = True
+        result = run_torch_profile.remote(
+            model=model,
+            batch_size=batch_size,
+            num_processes=num_processes,
+            num_correctness_tests=num_correctness_tests,
+            activation_clamp=activation_clamp,
+            fast_math=fast_math,
+            masked_ratio=masked_ratio,
+            require_baseline=require_baseline,
+            profile_paths=profile_paths,
+            profile_prewarm_steps=profile_prewarm_steps,
+            profile_warmup_steps=profile_warmup_steps,
+            profile_active_steps=profile_active_steps,
+            profile_repeats=profile_repeats,
+            profile_record_shapes=profile_record_shapes,
+            profile_with_stack=profile_with_stack,
+            profile_memory=profile_memory,
+        )
+        print(result)
+        return
+
     if task not in ("case", "table"):
-        raise ValueError("task must be one of: smoke, case, table")
+        raise ValueError("task must be one of: smoke, case, table, profile")
 
     result = run_benchmark.remote(
         task=task,

@@ -1,0 +1,354 @@
+{
+  "task": "torch_profile",
+  "model": "DeepSeek-V4-Pro",
+  "model_key": "pro",
+  "batch_size": 8192,
+  "case_name": "pro_bsz8192",
+  "profile_paths": "both",
+  "profile_prewarm_steps": 5,
+  "profile_warmup_steps": 1,
+  "profile_active_steps": 1,
+  "profile_repeats": 1,
+  "profile_record_shapes": true,
+  "profile_with_stack": true,
+  "profile_memory": true,
+  "result_dir": "/cache/deepgemm/results/20260625-121814",
+  "profile_dir": "/cache/deepgemm/results/20260625-121814/torch_profile/pro_bsz8192",
+  "log_path": "/cache/deepgemm/results/20260625-121814/pro_bsz8192_torch_profile.log",
+  "tar_path": "/cache/deepgemm/results/20260625-121814/pro_bsz8192_torch_profile_artifacts.tar.gz",
+  "artifacts": [
+    {
+      "path": "pro_bsz8192_torch_profile.log",
+      "bytes": 27296
+    },
+    {
+      "path": "pro_bsz8192_torch_profile_artifacts.tar.gz",
+      "bytes": 246594
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank0.json",
+      "bytes": 115748
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank0_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank0_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank0_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank0_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank1.json",
+      "bytes": 115747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank1_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank1_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank1_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank1_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank2.json",
+      "bytes": 115746
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank2_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank2_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank2_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank2_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank3.json",
+      "bytes": 115748
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank3_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank3_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank3_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank3_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank4.json",
+      "bytes": 115749
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank4_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank4_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank4_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank4_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank5.json",
+      "bytes": 115745
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank5_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank5_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank5_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank5_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank6.json",
+      "bytes": 115746
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank6_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank6_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank6_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank6_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank7.json",
+      "bytes": 115754
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank7_key_averages.txt",
+      "bytes": 7362
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank7_metadata.json",
+      "bytes": 742
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank7_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/fused_rank7_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank0.json",
+      "bytes": 150427
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank0_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank0_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank0_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank0_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank1.json",
+      "bytes": 150429
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank1_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank1_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank1_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank1_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank2.json",
+      "bytes": 150426
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank2_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank2_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank2_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank2_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank3.json",
+      "bytes": 150437
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank3_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank3_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank3_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank3_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank4.json",
+      "bytes": 150424
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank4_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank4_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank4_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank4_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank5.json",
+      "bytes": 150427
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank5_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank5_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank5_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank5_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank6.json",
+      "bytes": 150431
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank6_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank6_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank6_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank6_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank7.json",
+      "bytes": 150429
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank7_key_averages.txt",
+      "bytes": 9922
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank7_metadata.json",
+      "bytes": 747
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank7_stacks_self_cpu_time_total.txt",
+      "bytes": 0
+    },
+    {
+      "path": "torch_profile/pro_bsz8192/legacy_rank7_stacks_self_cuda_time_total.txt",
+      "bytes": 0
+    }
+  ],
+  "deepgemm_commit": "54e226124093",
+  "deepep_commit": "af9a04031883",
+  "gpu_model": "NVIDIA B200",
+  "gpu_count": 8,
+  "modal_gpu_request": "B200:8"
+}
