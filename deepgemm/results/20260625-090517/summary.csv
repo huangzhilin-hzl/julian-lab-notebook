@@ -1,0 +1,2 @@
+model,batch_size,rank_rows,expected_ranks,time_us,compute_tflops,global_memory_gbs,interconnect_gbs,speedup_vs_legacy,deepgemm_commit,deepep_commit,gpu_model,gpu_count,modal_gpu_request,log_path
+DeepSeek-V4-Flash,1,8,8,114.5,2.625,654.5,0.75,0.0,54e226124093,not-installed,NVIDIA B200,8,B200:8,/cache/deepgemm/results/20260625-090517/flash_bsz1.log

@@ -1,0 +1,19 @@
+[
+  {
+    "model": "DeepSeek-V4-Flash",
+    "batch_size": 1,
+    "rank_rows": 8,
+    "expected_ranks": 8,
+    "time_us": 114.5,
+    "compute_tflops": 2.625,
+    "global_memory_gbs": 654.5,
+    "interconnect_gbs": 0.75,
+    "speedup_vs_legacy": 0.0,
+    "log_path": "/cache/deepgemm/results/20260625-090517/flash_bsz1.log",
+    "deepgemm_commit": "54e226124093",
+    "deepep_commit": "not-installed",
+    "gpu_model": "NVIDIA B200",
+    "gpu_count": 8,
+    "modal_gpu_request": "B200:8"
+  }
+]
