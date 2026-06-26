@@ -1,0 +1,345 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2600" height="1650" viewBox="0 0 2600 1650">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06111f"/>
+      <stop offset="58%" stop-color="#07131a"/>
+      <stop offset="100%" stop-color="#0b0f18"/>
+    </linearGradient>
+    <linearGradient id="bluePanel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0e2b4c"/>
+      <stop offset="100%" stop-color="#07182d"/>
+    </linearGradient>
+    <linearGradient id="greenPanel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a3325"/>
+      <stop offset="100%" stop-color="#061c14"/>
+    </linearGradient>
+    <linearGradient id="purplePanel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#271342"/>
+      <stop offset="100%" stop-color="#130d24"/>
+    </linearGradient>
+    <linearGradient id="amberPanel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#331d08"/>
+      <stop offset="100%" stop-color="#171006"/>
+    </linearGradient>
+    <filter id="softShadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#73c2ff"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#d99aff"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ffb33e"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#69e49e"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ff6c61"/>
+    </marker>
+    <marker id="arrowYellow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ffd257"/>
+    </marker>
+    <style>
+      .font { font-family: Menlo, Consolas, "SF Mono", monospace; }
+      .title { font-size: 30px; font-weight: 800; fill: #f5fbff; }
+      .section { font-size: 23px; font-weight: 800; fill: #f3f8ff; }
+      .label { font-size: 19px; fill: #e2ecf7; }
+      .small { font-size: 15px; fill: #b8c9d8; }
+      .tiny { font-size: 13px; fill: #94a9bb; }
+      .mono { font-size: 16px; fill: #edf5ff; }
+      .monoSmall { font-size: 14px; fill: #c9d6e3; }
+      .muted { fill: #8fa2b4; }
+      .blue { fill: #7cc7ff; }
+      .purple { fill: #e0a2ff; }
+      .orange { fill: #ffbf4b; }
+      .green { fill: #6be7a4; }
+      .red { fill: #ff746b; }
+      .yellow { fill: #ffd666; }
+      .cyan { fill: #54d7ff; }
+      .panel { stroke-width: 2.4; rx: 12; filter: url(#softShadow); }
+      .box { stroke-width: 2.2; rx: 9; }
+      .thin { stroke-width: 1.8; }
+      .arrow { stroke-width: 4; fill: none; }
+      .dash { stroke-dasharray: 9 7; }
+      .headerText { font-size: 26px; font-weight: 800; fill: #f5fbff; }
+      .stepText { font-size: 23px; font-weight: 800; fill: #f7fbff; }
+    </style>
+  </defs>
+
+  <rect width="2600" height="1650" fill="url(#bg)"/>
+  <rect x="18" y="18" width="2564" height="1614" rx="18" fill="none" stroke="#1f5a88" stroke-width="3"/>
+
+  <!-- Top shapes strip -->
+  <rect x="34" y="34" width="2528" height="188" rx="12" fill="#07121d" stroke="#1d78bb" stroke-width="2.2"/>
+  <rect x="34" y="34" width="246" height="188" rx="12" fill="#09192a" stroke="#1d78bb" stroke-width="2.2"/>
+  <text x="69" y="88" class="font section">SHAPES &amp;</text>
+  <text x="69" y="125" class="font section">TILING</text>
+  <text x="83" y="161" class="font label">(bf16)</text>
+  <line x1="280" y1="34" x2="280" y2="222" stroke="#315a7b" stroke-width="2"/>
+  <line x1="1104" y1="34" x2="1104" y2="222" stroke="#315a7b" stroke-width="2"/>
+  <line x1="1942" y1="34" x2="1942" y2="222" stroke="#315a7b" stroke-width="2"/>
+
+  <text x="308" y="76" class="font mono">base_n = S;   NUM_NODES = NN;   local GPUs/node = G</text>
+  <text x="308" y="118" class="font mono">M = S,   N = S,   Ks = S / (NN * G)</text>
+  <text x="308" y="160" class="font mono">A [M,Ks] bf16,   B [Ks,N] bf16</text>
+  <text x="308" y="200" class="font mono">C_dbuf / C_final [M,N] bf16 <tspan class="orange">(multicast DistBuffer)</tspan></text>
+
+  <text x="1138" y="76" class="font mono">tile = 128 x 256 bf16 = 64 KiB</text>
+  <text x="1138" y="112" class="font mono">row_blocks = M / 128,   col_blocks = N / 256</text>
+  <text x="1138" y="148" class="font mono">slice_tiles = (M / G / 128) * (N / 256)</text>
+  <text x="1138" y="184" class="font mono">chunk_tiles = 4; <tspan class="green">chunk &lt;= 4 tiles = 256 KiB</tspan></text>
+
+  <text x="1976" y="76" class="font mono green">EXAMPLE  S=32768, NN=2, G=8</text>
+  <text x="1976" y="112" class="font monoSmall">Ks=2048; A [32768,2048]; B [2048,32768]</text>
+  <text x="1976" y="148" class="font monoSmall">local slice rows = 4096; row_blocks_per_slice = 32</text>
+  <text x="1976" y="184" class="font monoSmall">chunks per peer = 32 * ceil(128/4) = 1024</text>
+
+  <!-- Main column panels -->
+  <rect x="34" y="248" width="1066" height="878" class="panel" fill="url(#bluePanel)" stroke="#1d78bb"/>
+  <rect x="34" y="248" width="1066" height="54" rx="12" fill="#11386a" stroke="#1d78bb" stroke-width="2.2"/>
+  <text x="258" y="286" class="font headerText">LOCAL GPU PROCESS / GPU d (local rank)</text>
+
+  <rect x="1122" y="248" width="432" height="878" class="panel" fill="url(#greenPanel)" stroke="#27b575"/>
+  <rect x="1122" y="248" width="432" height="54" rx="12" fill="#0a4a32" stroke="#27b575" stroke-width="2.2"/>
+  <text x="1202" y="279" class="font headerText">CPU PROXY / NIC</text>
+  <text x="1226" y="298" class="font small">(same node)</text>
+
+  <rect x="1580" y="248" width="982" height="878" class="panel" fill="url(#purplePanel)" stroke="#7940a5"/>
+  <rect x="1580" y="248" width="982" height="54" rx="12" fill="#31164f" stroke="#7940a5" stroke-width="2.2"/>
+  <text x="1768" y="286" class="font headerText">REMOTE NODE PEER / GPU d (peer node r)</text>
+
+  <!-- Local GPU stack -->
+  <rect x="56" y="344" width="92" height="82" class="box" fill="#0b2745" stroke="#2f9cff"/>
+  <text x="78" y="392" class="font label">GPU 0</text>
+  <rect x="56" y="506" width="92" height="82" class="box" fill="#0b2745" stroke="#2f9cff"/>
+  <text x="78" y="554" class="font label">GPU 1</text>
+  <rect x="56" y="686" width="92" height="82" class="box" fill="#0b2745" stroke="#2f9cff"/>
+  <text x="78" y="734" class="font label">GPU d</text>
+  <rect x="56" y="884" width="92" height="92" class="box" fill="#0b2745" stroke="#2f9cff"/>
+  <text x="78" y="922" class="font label">GPU</text>
+  <text x="82" y="954" class="font label">G-1</text>
+  <path d="M102 426 V506 M102 588 V686 M102 768 V884" stroke="#3aa4f5" stroke-width="3" stroke-dasharray="8 12"/>
+  <path d="M148 385 C206 410 190 690 148 726" class="arrow dash" stroke="#d99aff" marker-end="url(#arrowPurple)"/>
+  <path d="M148 548 C206 590 190 684 148 726" class="arrow dash" stroke="#d99aff" marker-end="url(#arrowPurple)"/>
+  <path d="M148 930 C210 890 202 770 148 728" class="arrow dash" stroke="#d99aff" marker-end="url(#arrowPurple)"/>
+
+  <!-- Step circles helper via explicit circles -->
+  <circle cx="226" cy="382" r="26" fill="#248bdd" stroke="#a9d9ff" stroke-width="2"/>
+  <text x="218" y="391" class="font stepText">1</text>
+  <text x="264" y="390" class="font section">Compute CTAs: full tile space</text>
+  <text x="706" y="390" class="font small muted">fused_comp_sm</text>
+  <rect x="244" y="424" width="122" height="112" class="box" fill="#0a2441" stroke="#3fa4ff"/>
+  <text x="292" y="460" class="font label">A</text>
+  <text x="272" y="490" class="font monoSmall">[M,Ks]</text>
+  <text x="280" y="518" class="font monoSmall">bf16</text>
+  <rect x="438" y="424" width="122" height="112" class="box" fill="#0a2441" stroke="#3fa4ff"/>
+  <text x="486" y="460" class="font label">B</text>
+  <text x="466" y="490" class="font monoSmall">[Ks,N]</text>
+  <text x="474" y="518" class="font monoSmall">bf16</text>
+  <rect x="632" y="424" width="154" height="112" class="box" fill="#0a2441" stroke="#3fa4ff"/>
+  <text x="672" y="470" class="font label">GEMM</text>
+  <text x="682" y="502" class="font monoSmall">A @ B</text>
+  <rect x="872" y="398" width="190" height="150" class="box" fill="#0a2441" stroke="#3fa4ff"/>
+  <text x="927" y="436" class="font label">C_dbuf</text>
+  <text x="930" y="472" class="font monoSmall">[M,N]</text>
+  <text x="932" y="506" class="font monoSmall">bf16</text>
+  <text x="908" y="532" class="font monoSmall orange">multicast</text>
+  <path d="M366 480 H438" class="arrow" stroke="#73c2ff" marker-end="url(#arrowBlue)"/>
+  <path d="M560 480 H632" class="arrow" stroke="#73c2ff" marker-end="url(#arrowBlue)"/>
+  <path d="M786 480 H872" class="arrow" stroke="#73c2ff" marker-end="url(#arrowBlue)"/>
+
+  <!-- Step 2 -->
+  <rect x="184" y="586" width="902" height="250" rx="12" fill="#171027" stroke="#b65ee0" stroke-width="2.4"/>
+  <circle cx="226" cy="626" r="26" fill="#9b55d4" stroke="#edc3ff" stroke-width="2"/>
+  <text x="218" y="635" class="font stepText">2</text>
+  <text x="264" y="634" class="font section">Intra-node reduce-scatter by row slice</text>
+  <text x="782" y="634" class="font small muted">fused_intra_ar_sm</text>
+  <text x="226" y="690" class="font label">all G local GPUs</text>
+  <text x="226" y="724" class="font monoSmall orange">contribute (reduce-sum)</text>
+  <rect x="510" y="664" width="226" height="82" class="box" fill="#241436" stroke="#c98aff"/>
+  <text x="544" y="696" class="font label">row slice owner</text>
+  <text x="586" y="728" class="font label">GPU d</text>
+  <text x="808" y="690" class="font mono purple">slice rows:</text>
+  <text x="808" y="724" class="font mono">[d*M/G,</text>
+  <text x="808" y="754" class="font mono">(d+1)*M/G)</text>
+  <path d="M382 704 H510" class="arrow dash" stroke="#d99aff" marker-end="url(#arrowPurple)"/>
+  <path d="M736 704 H808" class="arrow" stroke="#d99aff" marker-end="url(#arrowPurple)"/>
+  <rect x="286" y="774" width="716" height="54" rx="8" fill="#211433" stroke="#b65ee0" stroke-width="2"/>
+  <text x="326" y="808" class="font mono">dual-store:  C_local slice result   +   staging_buf for inter-node send</text>
+
+  <!-- Step 3 -->
+  <rect x="184" y="858" width="902" height="246" rx="12" fill="#15101d" stroke="#d9921e" stroke-width="2.4"/>
+  <circle cx="226" cy="900" r="26" fill="#ff9f1d" stroke="#ffd08a" stroke-width="2"/>
+  <text x="218" y="909" class="font stepText">3</text>
+  <text x="264" y="908" class="font section">Inter-send to all remote peers</text>
+  <text x="708" y="908" class="font small muted">fused_inter_send_sm</text>
+  <text x="226" y="964" class="font label">staging_buf</text>
+  <text x="226" y="998" class="font label">slice_tiles tiles</text>
+  <text x="226" y="1032" class="font small">(after local_done_flag)</text>
+  <rect x="496" y="920" width="470" height="88" rx="9" fill="#17111c" stroke="#ffb33e" stroke-width="2.2" stroke-dasharray="10 8"/>
+  <text x="560" y="954" class="font label">Chunk sender CTAs</text>
+  <text x="558" y="982" class="font monoSmall">TransferCmd per chunk, default chunk_tiles=4</text>
+  <rect x="500" y="1032" width="520" height="82" rx="9" fill="#16100b" stroke="#ffb33e" stroke-width="2.2"/>
+  <text x="532" y="1062" class="font mono orange">TransferCmd fields</text>
+  <text x="532" y="1090" class="font tiny">dst_rank, tile_id, bytes, local/remote_offset</text>
+  <text x="532" y="1110" class="font tiny">lane_id, reserved0 = peer_slot * G + dev_idx</text>
+  <path d="M398 982 H496" class="arrow dash" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+
+  <!-- Proxy Step 4 -->
+  <circle cx="1180" cy="352" r="26" fill="#ff9f1d" stroke="#ffd08a" stroke-width="2"/>
+  <text x="1172" y="361" class="font stepText">4</text>
+  <text x="1220" y="360" class="font section orange">D2H FIFO</text>
+  <text x="1320" y="360" class="font small">(host-pinned ring)</text>
+  <g transform="translate(1184 402)">
+    <rect x="0" y="0" width="38" height="54" fill="#302108" stroke="#ffb33e" stroke-width="2"/>
+    <rect x="38" y="0" width="38" height="54" fill="#302108" stroke="#ffb33e" stroke-width="2"/>
+    <rect x="76" y="0" width="38" height="54" fill="#302108" stroke="#ffb33e" stroke-width="2"/>
+    <rect x="114" y="0" width="38" height="54" fill="#302108" stroke="#ffb33e" stroke-width="2"/>
+    <rect x="152" y="0" width="38" height="54" fill="#302108" stroke="#ffb33e" stroke-width="2"/>
+    <rect x="190" y="0" width="38" height="54" fill="#302108" stroke="#ffb33e" stroke-width="2"/>
+  </g>
+  <text x="1448" y="434" class="font label">...</text>
+  <rect x="1184" y="526" width="292" height="74" class="box" fill="#09291b" stroke="#54df98"/>
+  <text x="1246" y="573" class="font label">Proxy thread</text>
+  <text x="1190" y="642" class="font label orange">select QP / batch commands</text>
+  <text x="1250" y="674" class="font small">(per QP lane)</text>
+  <rect x="1168" y="724" width="324" height="220" rx="12" fill="#071c28" stroke="#55c7ff" stroke-width="2.4"/>
+  <text x="1230" y="762" class="font section">RDMA WR chain</text>
+  <text x="1236" y="792" class="font small">(one post_send batch)</text>
+  <rect x="1200" y="830" width="260" height="78" class="box" fill="#082b1c" stroke="#69e49e"/>
+  <text x="1258" y="862" class="font label green">Data WR</text>
+  <text x="1220" y="890" class="font small">WRITE chunk data to recv_buf</text>
+  <rect x="1200" y="932" width="260" height="78" class="box" fill="#29100e" stroke="#ff6c61" stroke-dasharray="9 7"/>
+  <text x="1222" y="964" class="font label red">Ready metadata WR</text>
+  <text x="1220" y="992" class="font small">WRITE arrival_queue entry</text>
+  <text x="1168" y="1052" class="font label red">Data WR must complete</text>
+  <text x="1168" y="1086" class="font label red">before Ready metadata WR</text>
+  <path d="M1330 456 V526" class="arrow" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+  <path d="M1330 600 V724" class="arrow" stroke="#69e49e" marker-end="url(#arrowGreen)"/>
+  <path d="M1086 982 C1112 982 1124 830 1168 830" class="arrow dash" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+
+  <!-- Remote Step 5 -->
+  <rect x="1610" y="332" width="922" height="246" rx="12" fill="#141021" stroke="#9a4cc0" stroke-width="2.4"/>
+  <circle cx="1648" cy="372" r="26" fill="#9b55d4" stroke="#edc3ff" stroke-width="2"/>
+  <text x="1640" y="381" class="font stepText">5</text>
+  <text x="1690" y="380" class="font section purple">Receive landing: memory only, no reduce yet</text>
+  <rect x="1668" y="424" width="380" height="68" class="box" fill="#092b1c" stroke="#69e49e"/>
+  <text x="1698" y="452" class="font label green">5A Data lands first</text>
+  <text x="1698" y="478" class="font monoSmall">recv_buf[peer_slot][chunk]</text>
+  <rect x="1668" y="510" width="380" height="58" class="box" fill="#29100e" stroke="#ff6c61"/>
+  <text x="1698" y="546" class="font label red">5B Ready metadata lands after data</text>
+  <rect x="2148" y="418" width="390" height="80" class="box" fill="#1e1130" stroke="#b65ee0"/>
+  <text x="2178" y="450" class="font monoSmall">recv_buf layout</text>
+  <text x="2178" y="478" class="font tiny">peer_slot x slice_tiles</text>
+  <rect x="2148" y="520" width="390" height="58" class="box" fill="#27100e" stroke="#ff6c61"/>
+  <text x="2178" y="548" class="font monoSmall red">arrival_queue[q][slot]</text>
+  <text x="2178" y="568" class="font tiny red">pack(first_tile, run_tiles)</text>
+  <path d="M1492 868 C1542 868 1548 458 1668 458" class="arrow" stroke="#69e49e" marker-end="url(#arrowGreen)"/>
+  <text x="1498" y="828" class="font small green">RDMA WRITE data</text>
+  <path d="M1492 972 C1558 972 1560 540 1668 540" class="arrow dash" stroke="#ff6c61" marker-end="url(#arrowRed)"/>
+  <text x="1498" y="930" class="font small red">RDMA WRITE ready metadata</text>
+  <path d="M1858 492 V510" class="arrow" stroke="#ff6c61" marker-end="url(#arrowRed)"/>
+  <text x="1904" y="505" class="font tiny red">data-before-ready</text>
+
+  <!-- Remote Step 6 -->
+  <rect x="1610" y="602" width="922" height="202" rx="12" fill="#101827" stroke="#2fc8dd" stroke-width="2.4"/>
+  <circle cx="1648" cy="642" r="26" fill="#20b9cf" stroke="#bff5ff" stroke-width="2"/>
+  <text x="1640" y="651" class="font stepText">6</text>
+  <text x="1690" y="650" class="font section cyan">Inter-recv-progress CTAs</text>
+  <text x="2050" y="650" class="font small muted">drain arrival_queue -> remote flag</text>
+  <rect x="1668" y="684" width="212" height="58" class="box" fill="#062631" stroke="#54d7ff"/>
+  <text x="1692" y="720" class="font label">read queue slot</text>
+  <rect x="1918" y="684" width="260" height="58" class="box" fill="#062631" stroke="#54d7ff"/>
+  <text x="1944" y="712" class="font label">decode first_tile</text>
+  <text x="1944" y="734" class="font tiny">run_tiles, peer_slot, chunk</text>
+  <rect x="2218" y="684" width="260" height="58" class="box" fill="#062631" stroke="#54d7ff"/>
+  <text x="2244" y="712" class="font label">mark remote ready</text>
+  <text x="2244" y="734" class="font tiny">peer_mask; remote_arrived_flag</text>
+  <text x="1668" y="778" class="font monoSmall cyan">__threadfence_system(); when all NN-1 peer bits arrive: release-store remote_arrived_flag[chunk] = 1</text>
+  <path d="M1858 568 V602" class="arrow" stroke="#54d7ff" marker-end="url(#arrowCyan)"/>
+  <path d="M1880 713 H1918" class="arrow" stroke="#54d7ff" marker-end="url(#arrowCyan)"/>
+  <path d="M2178 713 H2218" class="arrow" stroke="#54d7ff" marker-end="url(#arrowCyan)"/>
+
+  <!-- Remote Step 7 -->
+  <rect x="1610" y="828" width="922" height="246" rx="12" fill="#151324" stroke="#d8b200" stroke-width="2.4"/>
+  <circle cx="1648" cy="870" r="26" fill="#d4b000" stroke="#fff0a8" stroke-width="2"/>
+  <text x="1640" y="879" class="font stepText">7</text>
+  <text x="1690" y="878" class="font section yellow">Inter-reduce &amp; publish CTAs</text>
+  <text x="2082" y="878" class="font small muted">fused_inter_reduce_and_publish_sm</text>
+  <rect x="1668" y="914" width="270" height="60" class="box" fill="#241436" stroke="#d99aff"/>
+  <text x="1692" y="940" class="font monoSmall purple">local_done_flag[chunk] == 1</text>
+  <text x="1692" y="962" class="font tiny">from Step 2 local AR</text>
+  <rect x="1668" y="990" width="270" height="60" class="box" fill="#062631" stroke="#54d7ff"/>
+  <text x="1692" y="1016" class="font monoSmall cyan">remote_arrived_flag == 1</text>
+  <text x="1692" y="1038" class="font tiny">from Step 6 queue drain</text>
+  <circle cx="2008" cy="990" r="43" fill="#07121d" stroke="#f0f5fb" stroke-width="3"/>
+  <text x="1978" y="999" class="font section">AND</text>
+  <rect x="2086" y="928" width="230" height="68" class="box" fill="#1e1a09" stroke="#ffd257"/>
+  <text x="2110" y="954" class="font label">reduce chunk</text>
+  <text x="2110" y="980" class="font tiny">C_local + all C_recv peers</text>
+  <rect x="2086" y="1012" width="230" height="58" class="box" fill="#1e1a09" stroke="#ffd257"/>
+  <text x="2110" y="1048" class="font label">publish C_final</text>
+  <rect x="2348" y="928" width="160" height="142" class="box" fill="#0a2441" stroke="#3fa4ff"/>
+  <text x="2392" y="966" class="font label">C_final</text>
+  <text x="2390" y="998" class="font monoSmall">[M,N]</text>
+  <text x="2370" y="1030" class="font monoSmall orange">node-local</text>
+  <text x="2370" y="1054" class="font monoSmall orange">multicast</text>
+  <path d="M1938 944 C1962 944 1964 974 1968 982" class="arrow" stroke="#d99aff" marker-end="url(#arrowPurple)"/>
+  <path d="M1938 1020 C1962 1020 1964 1004 1968 998" class="arrow" stroke="#54d7ff" marker-end="url(#arrowCyan)"/>
+  <path d="M2051 990 H2086" class="arrow" stroke="#ffd257" marker-end="url(#arrowYellow)"/>
+  <path d="M2316 962 H2348" class="arrow" stroke="#ffd257" marker-end="url(#arrowYellow)"/>
+  <path d="M2316 1041 H2348" class="arrow" stroke="#ffd257" marker-end="url(#arrowYellow)"/>
+  <text x="1668" y="1102" class="font monoSmall yellow">publish increments published_chunks; Step 8 waits until published_chunks == total_chunks</text>
+
+  <!-- Bottom iteration end -->
+  <rect x="34" y="1152" width="2528" height="206" rx="12" fill="url(#amberPanel)" stroke="#ff9900" stroke-width="2.6"/>
+  <circle cx="84" cy="1204" r="26" fill="#ff9f1d" stroke="#ffd08a" stroke-width="2"/>
+  <text x="76" y="1213" class="font stepText">8</text>
+  <text x="126" y="1198" class="font section orange">Steady-state iteration end inside kernel</text>
+  <text x="126" y="1230" class="font small">not parallel with Step 7; starts only after every chunk is published</text>
+  <rect x="430" y="1258" width="310" height="66" class="box" fill="#1e1608" stroke="#ffb33e"/>
+  <text x="456" y="1284" class="font label">Wait gate</text>
+  <text x="456" y="1308" class="font monoSmall">published_chunks == total_chunks</text>
+  <rect x="840" y="1258" width="310" height="66" class="box" fill="#1e1608" stroke="#ffb33e"/>
+  <text x="866" y="1284" class="font label">Finish multicast</text>
+  <text x="866" y="1308" class="font small">C_final visible on this node</text>
+  <rect x="1250" y="1258" width="310" height="66" class="box" fill="#1e1608" stroke="#ffb33e"/>
+  <text x="1276" y="1284" class="font label">Reset per-iter state</text>
+  <text x="1276" y="1308" class="font small">arrival queue / flags / counters</text>
+  <rect x="1660" y="1258" width="310" height="66" class="box" fill="#1e1608" stroke="#ffb33e"/>
+  <text x="1686" y="1284" class="font label">Cross-node barrier</text>
+  <text x="1686" y="1308" class="font small">BARRIER_NOTIFY via proxy</text>
+  <rect x="2070" y="1258" width="300" height="66" class="box" fill="#1e1608" stroke="#ffb33e"/>
+  <text x="2096" y="1284" class="font label">Enter next epoch</text>
+  <text x="2096" y="1308" class="font small">steady-state run continues</text>
+  <path d="M740 1291 H840" class="arrow" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+  <path d="M1150 1291 H1250" class="arrow" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+  <path d="M1560 1291 H1660" class="arrow" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+  <path d="M1970 1291 H2070" class="arrow" stroke="#ffb33e" marker-end="url(#arrowOrange)"/>
+  <path d="M2428 1074 V1152" class="arrow dash" stroke="#ffd257" marker-end="url(#arrowYellow)"/>
+
+  <!-- CTA role map and legend -->
+  <rect x="34" y="1386" width="2528" height="132" rx="12" fill="#07121d" stroke="#335b78" stroke-width="2.2"/>
+  <text x="62" y="1432" class="font section">CTA role map</text>
+  <rect x="250" y="1408" width="330" height="44" rx="8" fill="#0a2441" stroke="#3fa4ff" stroke-width="2"/>
+  <text x="272" y="1436" class="font monoSmall blue">[0,num_comp_sms): compute</text>
+  <rect x="600" y="1408" width="360" height="44" rx="8" fill="#241436" stroke="#d99aff" stroke-width="2"/>
+  <text x="622" y="1436" class="font monoSmall purple">next: intra-AR</text>
+  <rect x="980" y="1408" width="330" height="44" rx="8" fill="#211607" stroke="#ffb33e" stroke-width="2"/>
+  <text x="1002" y="1436" class="font monoSmall orange">next: inter-send</text>
+  <rect x="1330" y="1408" width="410" height="44" rx="8" fill="#062631" stroke="#54d7ff" stroke-width="2"/>
+  <text x="1352" y="1436" class="font monoSmall cyan">next: inter-recv-progress</text>
+  <rect x="1760" y="1408" width="430" height="44" rx="8" fill="#1e1a09" stroke="#ffd257" stroke-width="2"/>
+  <text x="1782" y="1436" class="font monoSmall yellow">tail: inter-reduce/publish</text>
+  <text x="250" y="1484" class="font monoSmall green">Data WR payload</text>
+  <text x="438" y="1484" class="font monoSmall">+</text>
+  <text x="466" y="1484" class="font monoSmall red">Ready metadata</text>
+  <text x="648" y="1484" class="font monoSmall">-> Step 6 remote_arrived_flag</text>
+  <text x="1000" y="1484" class="font monoSmall">AND local_done_flag -> Step 7 reduce/publish -> Step 8 finish/reset/barrier</text>
+
+  <rect x="34" y="1540" width="2528" height="70" rx="10" fill="#07121d" stroke="#335b78" stroke-width="1.8"/>
+  <text x="62" y="1582" class="font monoSmall muted">Source anchors: src/gemm_ar.cu fused_comp_sm / fused_intra_ar_sm / fused_inter_send_sm / fused_inter_recv_progress_sm / shared_reduce_my_slice_static; proxy Data/Ready WR chain.</text>
+</svg>

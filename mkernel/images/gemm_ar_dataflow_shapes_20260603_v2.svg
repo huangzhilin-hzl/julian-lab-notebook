@@ -1,0 +1,275 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2600" height="1750" viewBox="0 0 2600 1750">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06111f"/>
+      <stop offset="58%" stop-color="#07131a"/>
+      <stop offset="100%" stop-color="#0b0f18"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10294e"/>
+      <stop offset="100%" stop-color="#0b1b33"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c3a2c"/>
+      <stop offset="100%" stop-color="#092319"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a1744"/>
+      <stop offset="100%" stop-color="#160f29"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#40230c"/>
+      <stop offset="100%" stop-color="#1f150a"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#63b3ff"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#62e7a6"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#ff6a5f"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#ffb23d"/>
+    </marker>
+    <style>
+      .font { font-family: Menlo, Consolas, "SF Mono", monospace; }
+      .title { font-size: 36px; font-weight: 800; fill: #eef6ff; }
+      .subtitle { font-size: 22px; fill: #a9c5df; }
+      .sectionTitle { font-size: 26px; font-weight: 800; fill: #f4f8ff; }
+      .label { font-size: 21px; fill: #d8e8fb; }
+      .small { font-size: 17px; fill: #b9cbda; }
+      .tiny { font-size: 15px; fill: #9fb2c5; }
+      .mono { font-size: 18px; fill: #f2f6fb; }
+      .accentBlue { fill: #79c1ff; }
+      .accentGreen { fill: #66e6a8; }
+      .accentPurple { fill: #e9a6ff; }
+      .accentOrange { fill: #ffbd45; }
+      .accentRed { fill: #ff746b; }
+      .muted { fill: #8aa0b4; }
+      .panel { stroke-width: 3; rx: 14; }
+      .box { stroke-width: 2.5; rx: 10; }
+      .thin { stroke-width: 2; }
+      .dash { stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect width="2600" height="1750" fill="url(#bg)"/>
+  <rect x="24" y="24" width="2552" height="1700" rx="18" fill="none" stroke="#1e517c" stroke-width="3"/>
+
+  <text x="54" y="70" class="font title">mKernel GEMM_AR dataflow, v2: explicit receive / reduce / publish dependency chain</text>
+  <text x="56" y="106" class="font subtitle">Key fix: Step 5 is only remote memory landing. Step 6 turns ready metadata into per-chunk readiness. Step 7 waits on local+remote readiness. Step 8 starts only after all chunks are published.</text>
+
+  <!-- Left condensed sender side -->
+  <rect x="44" y="140" width="710" height="640" class="panel" fill="url(#blue)" stroke="#1673ba"/>
+  <text x="74" y="185" class="font sectionTitle">LOCAL NODE / GPU d</text>
+  <text x="74" y="218" class="font small">condensed compute + local reduce + inter-send</text>
+
+  <circle cx="92" cy="275" r="24" fill="#1b83d6" stroke="#9cd6ff" stroke-width="2"/>
+  <text x="84" y="283" class="font sectionTitle">1</text>
+  <rect x="132" y="244" width="140" height="92" class="box" fill="#0c223d" stroke="#3da1ff"/>
+  <text x="162" y="278" class="font label">A</text>
+  <text x="150" y="305" class="font small">[M,Ks]</text>
+  <text x="154" y="328" class="font tiny">bf16</text>
+  <rect x="310" y="244" width="140" height="92" class="box" fill="#0c223d" stroke="#3da1ff"/>
+  <text x="340" y="278" class="font label">B</text>
+  <text x="327" y="305" class="font small">[Ks,N]</text>
+  <text x="334" y="328" class="font tiny">bf16</text>
+  <rect x="490" y="244" width="170" height="92" class="box" fill="#0c223d" stroke="#3da1ff"/>
+  <text x="530" y="282" class="font label">GEMM</text>
+  <text x="514" y="310" class="font small">partial C</text>
+  <path d="M272 290 H310" stroke="#7dc7ff" stroke-width="4" marker-end="url(#arrowBlue)"/>
+  <path d="M450 290 H490" stroke="#7dc7ff" stroke-width="4" marker-end="url(#arrowBlue)"/>
+
+  <circle cx="92" cy="415" r="24" fill="#8a4ac9" stroke="#efc4ff" stroke-width="2"/>
+  <text x="84" y="423" class="font sectionTitle">2</text>
+  <rect x="132" y="374" width="585" height="132" class="box" fill="#1a1230" stroke="#a960d8"/>
+  <text x="158" y="410" class="font label">Intra-node reduce-scatter by row slice</text>
+  <text x="158" y="444" class="font small">all G local GPUs contribute; GPU d owns rows</text>
+  <text x="158" y="476" class="font mono accentPurple">[d*M/G, (d+1)*M/G) x N</text>
+
+  <rect x="184" y="540" width="330" height="94" class="box" fill="#221638" stroke="#b56bea"/>
+  <text x="214" y="574" class="font label">C_local slice</text>
+  <text x="214" y="606" class="font small">local intra-node sum</text>
+  <rect x="532" y="540" width="182" height="94" class="box" fill="#221638" stroke="#b56bea"/>
+  <text x="552" y="574" class="font label">staging</text>
+  <text x="552" y="606" class="font small">send view</text>
+  <path d="M420 506 V540" stroke="#d69bff" stroke-width="4" marker-end="url(#arrowOrange)"/>
+
+  <circle cx="92" cy="698" r="24" fill="#ff9f1f" stroke="#ffd08a" stroke-width="2"/>
+  <text x="84" y="706" class="font sectionTitle">3</text>
+  <rect x="132" y="654" width="585" height="96" class="box" fill="#211607" stroke="#ffae2e"/>
+  <text x="158" y="692" class="font label">GPU sender CTAs push TransferCmd per chunk</text>
+  <text x="158" y="724" class="font small">chunk_tiles=4, tile=128x256 bf16=64KiB, chunk&lt;=256KiB</text>
+
+  <!-- Proxy lane -->
+  <rect x="790" y="140" width="410" height="640" class="panel" fill="url(#green)" stroke="#24b36f"/>
+  <text x="822" y="185" class="font sectionTitle">CPU PROXY / NIC</text>
+  <text x="822" y="218" class="font small">same host as local GPU process</text>
+
+  <circle cx="850" cy="285" r="24" fill="#ff9f1f" stroke="#ffd08a" stroke-width="2"/>
+  <text x="842" y="293" class="font sectionTitle">4</text>
+  <rect x="895" y="244" width="245" height="92" class="box" fill="#092819" stroke="#51df98"/>
+  <text x="920" y="278" class="font label">D2H FIFO</text>
+  <text x="920" y="308" class="font small">host-pinned ring</text>
+  <path d="M717 704 C760 704 770 290 890 290" stroke="#ffb23d" stroke-width="4" class="dash" fill="none" marker-end="url(#arrowOrange)"/>
+
+  <rect x="895" y="390" width="245" height="96" class="box" fill="#082416" stroke="#51df98"/>
+  <text x="927" y="428" class="font label">proxy thread</text>
+  <text x="914" y="460" class="font small">batch by QP lane</text>
+  <path d="M1018 336 V390" stroke="#62e7a6" stroke-width="4" marker-end="url(#arrowGreen)"/>
+
+  <rect x="835" y="540" width="335" height="190" class="box" fill="#061c28" stroke="#5fc3ff"/>
+  <text x="862" y="582" class="font label">RDMA WR chain</text>
+  <text x="862" y="616" class="font small accentGreen">Data WR: payload -> recv_buf</text>
+  <text x="862" y="648" class="font small accentRed">Ready WR: metadata -> arrival_queue</text>
+  <text x="862" y="682" class="font tiny">posted as ordered chain per command batch</text>
+  <text x="862" y="706" class="font tiny">receiver trusts metadata only after data</text>
+  <path d="M1018 486 V540" stroke="#62e7a6" stroke-width="4" marker-end="url(#arrowGreen)"/>
+
+  <!-- Receiver side wide dependency view -->
+  <rect x="1236" y="140" width="1320" height="1000" rx="18" fill="#080c17" stroke="#53217d" stroke-width="3"/>
+  <text x="1268" y="185" class="font sectionTitle">REMOTE NODE PEER / GPU d : ordered receive-side execution</text>
+  <text x="1268" y="218" class="font small">The arrows below show actual state dependencies for steps 5 -> 6 -> 7 -> 8.</text>
+
+  <!-- Step 5 panel -->
+  <rect x="1270" y="250" width="620" height="480" class="panel" fill="url(#purple)" stroke="#a64fd2"/>
+  <circle cx="1310" cy="300" r="24" fill="#a74fcd" stroke="#f0c7ff" stroke-width="2"/>
+  <text x="1302" y="308" class="font sectionTitle">5</text>
+  <text x="1352" y="308" class="font sectionTitle">Receive-side landing</text>
+  <text x="1352" y="342" class="font small accentOrange">memory writes only; no GPU reduction yet</text>
+
+  <rect x="1306" y="384" width="540" height="126" class="box" fill="#13152a" stroke="#6ebdff"/>
+  <text x="1328" y="420" class="font label accentGreen">5A. Data lands first</text>
+  <text x="1328" y="454" class="font mono">recv_buf[peer_slot][tile_id]</text>
+  <text x="1328" y="484" class="font small">payload: remote peer's reduced row-slice chunk</text>
+
+  <rect x="1306" y="558" width="540" height="142" class="box" fill="#201027" stroke="#ff746b"/>
+  <text x="1328" y="594" class="font label accentRed">5B. Ready metadata lands after data</text>
+  <text x="1328" y="628" class="font mono">arrival_queue[q][slot] = pack_arrival_work(...)</text>
+  <text x="1328" y="658" class="font small">encodes first_tile + run_tiles; nonzero means ready</text>
+  <path d="M1576 510 V558" stroke="#ff746b" stroke-width="4" marker-end="url(#arrowRed)"/>
+  <text x="1602" y="542" class="font tiny accentRed">data-before-ready contract</text>
+
+  <!-- RDMA arrows into 5A and 5B -->
+  <path d="M1170 600 C1210 600 1210 448 1306 448" stroke="#62e7a6" stroke-width="5" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="1174" y="552" class="font small accentGreen">RDMA WRITE data</text>
+  <path d="M1170 650 C1228 650 1228 630 1306 630" stroke="#ff746b" stroke-width="5" class="dash" fill="none" marker-end="url(#arrowRed)"/>
+  <text x="1174" y="706" class="font small accentRed">RDMA WRITE ready metadata</text>
+
+  <!-- Step 6 panel -->
+  <rect x="1940" y="250" width="502" height="480" class="panel" fill="#151427" stroke="#c95fe8"/>
+  <circle cx="1980" cy="300" r="24" fill="#a74fcd" stroke="#f0c7ff" stroke-width="2"/>
+  <text x="1972" y="308" class="font sectionTitle">6</text>
+  <text x="2022" y="308" class="font sectionTitle">GPU drains ready queue</text>
+  <text x="2022" y="342" class="font small">progress CTA or reducer CTA side work</text>
+
+  <rect x="1978" y="385" width="390" height="166" class="box" fill="#0d1124" stroke="#c95fe8"/>
+  <text x="2000" y="422" class="font label">read nonzero queue slot</text>
+  <text x="2000" y="456" class="font mono">first_tile, run_tiles</text>
+  <text x="2000" y="486" class="font small">decode peer_slot + chunk_id range</text>
+  <text x="2000" y="518" class="font small">__threadfence_system() before publish</text>
+
+  <rect x="1978" y="590" width="390" height="90" class="box" fill="#0d1124" stroke="#c95fe8"/>
+  <text x="2000" y="624" class="font mono accentPurple">remote_arrived_peer_mask |= peer_bit</text>
+  <text x="2000" y="654" class="font mono accentPurple">if all peers: remote_arrived_flag[chunk]=1</text>
+  <path d="M1846 630 C1892 630 1900 470 1978 470" stroke="#e9a6ff" stroke-width="5" fill="none" marker-end="url(#arrowBlue)"/>
+  <text x="1870" y="590" class="font tiny accentPurple">metadata drives state</text>
+
+  <!-- Step 7 panel -->
+  <rect x="1270" y="800" width="1110" height="328" class="panel" fill="#111525" stroke="#3e9fff"/>
+  <circle cx="1310" cy="850" r="24" fill="#217ed3" stroke="#a8d9ff" stroke-width="2"/>
+  <text x="1302" y="858" class="font sectionTitle">7</text>
+  <text x="1352" y="858" class="font sectionTitle">Inter-node reduce, then node-local multicast publish</text>
+  <text x="1352" y="892" class="font small">Reducer CTA cannot enter this block until both remote and local prerequisites are true for the same chunk.</text>
+
+  <rect x="1320" y="930" width="380" height="92" class="box" fill="#071827" stroke="#63b3ff"/>
+  <text x="1344" y="964" class="font label">Gate for chunk_id</text>
+  <text x="1344" y="996" class="font mono accentBlue">local_done_flag == 1</text>
+  <text x="1344" y="1020" class="font mono accentPurple">remote_arrived_flag == 1</text>
+
+  <rect x="1770" y="930" width="370" height="92" class="box" fill="#071827" stroke="#63b3ff"/>
+  <text x="1794" y="964" class="font label">Load and reduce</text>
+  <text x="1794" y="994" class="font mono">C_local[chunk] +</text>
+  <text x="1794" y="1018" class="font mono">C_recv[peer_slot][chunk]</text>
+
+  <rect x="2180" y="930" width="290" height="92" class="box" fill="#071827" stroke="#63b3ff"/>
+  <text x="2204" y="964" class="font label">Publish final</text>
+  <text x="2204" y="996" class="font mono accentOrange">multimem.st -> C_final</text>
+  <text x="2204" y="1020" class="font small">visible to local GPUs</text>
+
+  <path d="M1700 976 H1770" stroke="#63b3ff" stroke-width="5" marker-end="url(#arrowBlue)"/>
+  <path d="M2140 976 H2180" stroke="#63b3ff" stroke-width="5" marker-end="url(#arrowBlue)"/>
+  <path d="M1440 730 V930" stroke="#62e7a6" stroke-width="4" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="1460" y="775" class="font tiny accentGreen">payload is consumed here</text>
+  <path d="M2180 680 C2000 748 1690 720 1510 930" stroke="#e9a6ff" stroke-width="4" fill="none" marker-end="url(#arrowBlue)"/>
+  <text x="1810" y="746" class="font tiny accentPurple">remote_arrived_flag</text>
+  <path d="M754 586 C980 880 1130 944 1320 976" stroke="#ffb23d" stroke-width="4" class="dash" fill="none" marker-end="url(#arrowOrange)"/>
+  <text x="960" y="842" class="font tiny accentOrange">local_done_flag from intra-node AR</text>
+
+  <rect x="1320" y="1050" width="1050" height="48" rx="8" fill="#17110a" stroke="#ffb23d" stroke-width="2"/>
+  <text x="1344" y="1082" class="font mono accentOrange">after each chunk publish: __threadfence(); atomicAdd(published_chunks, 1)</text>
+
+  <!-- Step 8 bottom full-width chain -->
+  <rect x="44" y="1160" width="2512" height="320" rx="16" fill="url(#orange)" stroke="#ffb23d" stroke-width="3" opacity="0.98"/>
+  <circle cx="92" cy="1230" r="24" fill="#ff9f1f" stroke="#ffd08a" stroke-width="2"/>
+  <text x="84" y="1238" class="font sectionTitle">8</text>
+  <text x="132" y="1238" class="font sectionTitle">Iteration-end dependency chain inside kernel</text>
+  <text x="132" y="1272" class="font small">This is not parallel with Step 7. It starts only after every statically owned chunk has been published.</text>
+
+  <rect x="150" y="1328" width="380" height="86" class="box" fill="#241707" stroke="#ffbd45"/>
+  <text x="174" y="1362" class="font label accentOrange">Wait gate</text>
+  <text x="174" y="1390" class="font mono">published_chunks == total_chunks</text>
+
+  <rect x="620" y="1328" width="370" height="86" class="box" fill="#241707" stroke="#ffbd45"/>
+  <text x="644" y="1362" class="font label">Finish multicast</text>
+  <text x="644" y="1390" class="font small">threadfence_system + signal/wait local GPUs</text>
+
+  <rect x="1080" y="1328" width="350" height="86" class="box" fill="#241707" stroke="#ffbd45"/>
+  <text x="1104" y="1362" class="font label">Reset per-iter state</text>
+  <text x="1104" y="1390" class="font small">arrival_queue / flags / counters</text>
+
+  <rect x="1520" y="1328" width="350" height="86" class="box" fill="#241707" stroke="#ffbd45"/>
+  <text x="1544" y="1362" class="font label">Cross-node barrier</text>
+  <text x="1544" y="1390" class="font mono">BARRIER_NOTIFY via proxy</text>
+
+  <rect x="1960" y="1328" width="300" height="86" class="box" fill="#241707" stroke="#ffbd45"/>
+  <text x="1984" y="1362" class="font label">Next epoch / run</text>
+  <text x="1984" y="1390" class="font small">steady-state loop continues</text>
+
+  <path d="M530 1371 H620" stroke="#ffbd45" stroke-width="5" marker-end="url(#arrowOrange)"/>
+  <path d="M990 1371 H1080" stroke="#ffbd45" stroke-width="5" marker-end="url(#arrowOrange)"/>
+  <path d="M1430 1371 H1520" stroke="#ffbd45" stroke-width="5" marker-end="url(#arrowOrange)"/>
+  <path d="M1870 1371 H1960" stroke="#ffbd45" stroke-width="5" marker-end="url(#arrowOrange)"/>
+
+  <!-- Dependency legend -->
+  <rect x="44" y="1508" width="2512" height="150" rx="14" fill="#050a12" stroke="#254a66" stroke-width="2"/>
+  <text x="78" y="1548" class="font sectionTitle">Dependency summary</text>
+  <text x="78" y="1588" class="font mono accentGreen">recv_buf payload</text>
+  <text x="282" y="1588" class="font mono"> + </text>
+  <text x="326" y="1588" class="font mono accentPurple">arrival_queue metadata</text>
+  <text x="594" y="1588" class="font mono"> -> Step 6 -> </text>
+  <text x="780" y="1588" class="font mono accentPurple">remote_arrived_flag[chunk]</text>
+  <text x="1110" y="1588" class="font mono"> ; </text>
+  <text x="1150" y="1588" class="font mono accentOrange">local_done_flag[chunk]</text>
+  <text x="1438" y="1588" class="font mono"> &amp;&amp; </text>
+  <text x="1500" y="1588" class="font mono accentPurple">remote_arrived_flag[chunk]</text>
+  <text x="1830" y="1588" class="font mono"> -> Step 7 reduce/publish</text>
+  <text x="78" y="1630" class="font mono">Step 7 increments </text>
+  <text x="294" y="1630" class="font mono accentOrange">published_chunks</text>
+  <text x="510" y="1630" class="font mono">; Step 8 waits </text>
+  <text x="710" y="1630" class="font mono accentOrange">published_chunks == total_chunks</text>
+  <text x="1110" y="1630" class="font mono"> before finish_multicast, reset, BARRIER_NOTIFY, and next epoch.</text>
+  <text x="78" y="1664" class="font small muted">Important: Step 7 publish is node-local CUDA multicast (multimem.st to C_final), not cross-node broadcast. Cross-node movement happened earlier via proxy RDMA writes.</text>
+
+  <!-- Source anchor footer -->
+  <text x="54" y="1700" class="font tiny muted">Source anchors: proxy.h Data/Ready WR chain; gemm_ar.cuh drain_arrival_queue_publish_flags; gemm_ar.cuh sum/publish/finalize; src/gemm_ar.cu reducer wait/reduce/publish loop.</text>
+</svg>
