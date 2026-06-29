@@ -1,24 +1,44 @@
-# DSpark Related Work Reference Map
+# DSpark 官方资料、权重、框架集成与参考工作
 
 记录时间：2026-06-29
 
-来源：本地 `DSpark_paper.pdf`，远程链接：[DSpark_paper.pdf](https://github.com/deepseek-ai/DeepSpec/blob/main/DSpark_paper.pdf)。范围为 Section 6 Related Work 和 References。
+## 1. DSpark_paper.pdf 原始链接来源
 
-## 一句话结论
+| 项目 | 链接 | 说明 |
+| --- | --- | --- |
+| DSpark paper | [DSpark_paper.pdf](https://github.com/deepseek-ai/DeepSpec/blob/main/DSpark_paper.pdf) | DeepSeek-AI / DeepSpec 仓库中的论文 PDF 原始远程链接。 |
+| 训练代码仓库 | [deepseek-ai/DeepSpec](https://github.com/deepseek-ai/DeepSpec) | DeepSpec 是 DeepSeek 发布的 speculative decoding 训练和评测代码库。 |
+| 本地来源 | `DSpark_paper.pdf` | 本笔记最初基于本地 PDF 阅读整理，随后补充远程链接和公开 PR 状态。 |
 
-DSpark 的 Related Work 可以分成三条线：
+## 2. DSpark 官方权重和训练代码
 
-| 主线 | DSpark 借鉴 / 对比点 |
+### 2.1 DeepSeek-V4 DSpark 模型权重
+
+| 模型 | 链接 | 说明 |
 | --- | --- |
-| Speculative decoding algorithms | 从小模型 drafter、多头/MTP、self-speculation，发展到 DFlash/DART/PARD 这类 block-parallel drafter。DSpark 属于 parallel drafter 的增强版。 |
-| System-aware scheduling | 研究重点从“能 draft 几个 token”转向“当前负载下应该生成/验证几个 token”。DSpark 的 hardware-aware prefix scheduler 属于这一线。 |
-| Parallel generation / NAT | 并行生成容易出现 multi-modal mixing / cross-mode collision。DSpark 的 sequential head 是用轻量局部修正解决这个问题，同时保留 per-token softmax 概率。 |
+| DeepSeek-V4-Flash-DSpark | [Hugging Face](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-DSpark) | DeepSeek-V4-Flash checkpoint with DSpark speculative module. |
+| DeepSeek-V4-Pro-DSpark | [Hugging Face](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-DSpark) | DeepSeek-V4-Pro checkpoint with DSpark speculative module. |
 
-## 当前训练和推理框架集成进展（2026-06-29）
+### 2.2 DeepSpec 发布的 DSpark draft checkpoints
+
+| Target model | DSpark checkpoint | 链接 |
+| --- | --- | --- |
+| `Qwen/Qwen3-4B` | `deepseek-ai/dspark_qwen3_4b_block7` | [Hugging Face](https://huggingface.co/deepseek-ai/dspark_qwen3_4b_block7) |
+| `Qwen/Qwen3-8B` | `deepseek-ai/dspark_qwen3_8b_block7` | [Hugging Face](https://huggingface.co/deepseek-ai/dspark_qwen3_8b_block7) |
+| `Qwen/Qwen3-14B` | `deepseek-ai/dspark_qwen3_14b_block7` | [Hugging Face](https://huggingface.co/deepseek-ai/dspark_qwen3_14b_block7) |
+| `google/gemma-4-12B-it` | `deepseek-ai/dspark_gemma4_12b_block7` | [Hugging Face](https://huggingface.co/deepseek-ai/dspark_gemma4_12b_block7) |
+
+### 2.3 训练代码
+
+| 仓库 | 链接 | 说明 |
+| --- | --- | --- |
+| DeepSpec | [deepseek-ai/DeepSpec](https://github.com/deepseek-ai/DeepSpec) | 官方训练和评测代码，README 中列出 DSpark、DFlash、Eagle3 三类 draft model，并提供 data preparation、training、evaluation 工作流。 |
+
+## 3. 当前训练和推理框架集成进展（2026-06-29）
 
 这里的口径区分三件事：DeepSpec/DSpark 官方训练代码、DFlash/MTP 基础设施、以及完整 DSpark 推理路径。当前训练侧进展更快；推理侧 SGLang 和 vLLM 都已有主线 PR，但还没有合入稳定主线。
 
-### 训练框架
+### 3.1 训练框架
 
 | 框架 | 当前状态 | 对应 PR / 链接 | 备注 |
 | --- | --- | --- | --- |
@@ -30,7 +50,7 @@ DSpark 的 Related Work 可以分成三条线：
 | vLLM speculators | 进行中 | [speculators #677](https://github.com/vllm-project/speculators/pull/677), [speculators #678](https://github.com/vllm-project/speculators/pull/678) | #677 加 DSpark speculator 模型和 loss；#678 继续补完整训练逻辑。 |
 | NVIDIA NeMo Automodel | 已合入早期训练支持 | [Automodel #2810](https://github.com/NVIDIA-NeMo/Automodel/pull/2810), [Automodel #2828](https://github.com/NVIDIA-NeMo/Automodel/pull/2828) | #2810 merged，加入 DSpark draft model / training objective；#2828 是文档更新。 |
 
-### 推理框架
+### 3.2 推理框架
 
 | 框架 | 当前状态 | 对应 PR / 链接 | 备注 |
 | --- | --- | --- | --- |
@@ -42,7 +62,17 @@ DSpark 的 Related Work 可以分成三条线：
 | TensorRT-LLM | 暂无 DSpark 主 PR | [TensorRT-LLM #15666](https://github.com/NVIDIA/TensorRT-LLM/pull/15666) | 当前看到的是 Laguna DFlash drafter support，不是 DSpark。 |
 | NVIDIA Model Optimizer | 很早期 | [Model-Optimizer #1849](https://github.com/NVIDIA/Model-Optimizer/pull/1849) | 标题为 Support Dspark，但仍是 draft 且描述未完整填写，暂不算可用集成。 |
 
-## Speculative Decoding Algorithms
+## 4. 相关参考工作
+
+DSpark 的参考工作可以按三条线读：
+
+| 主线 | DSpark 借鉴 / 对比点 |
+| --- | --- |
+| Speculative decoding algorithms | 从小模型 drafter、多头/MTP、self-speculation，发展到 DFlash/DART/PARD 这类 block-parallel drafter。DSpark 属于 parallel drafter 的增强版。 |
+| System-aware scheduling | 研究重点从“能 draft 几个 token”转向“当前负载下应该生成/验证几个 token”。DSpark 的 hardware-aware prefix scheduler 属于这一线。 |
+| Parallel generation / NAT | 并行生成容易出现 multi-modal mixing / cross-mode collision。DSpark 的 sequential head 是用轻量局部修正解决这个问题，同时保留 per-token softmax 概率。 |
+
+### 4.1 Speculative Decoding Algorithms
 
 | 论文 / 项目 | 作者团队 | 方向 | 链接 |
 | --- | --- | --- | --- |
@@ -80,7 +110,7 @@ DSpark 的 Related Work 可以分成三条线：
 | Domino: Decoupling Causal Modeling from Autoregressive Drafting in Speculative Decoding | Huang, Zhang, Zhang, Lin, Xu, Zhang | DFlash 上加 CausalEncoder | [arXiv](https://arxiv.org/abs/2605.29707) |
 | DFlare: Scaling up Draft Capacity for Block Diffusion Speculative Decoding | Zhang et al. | layer-wise fusion 改善 DFlash conditioning | [arXiv](https://arxiv.org/abs/2606.02091) |
 
-## System-Aware Scheduling For Speculative Decoding
+### 4.2 System-Aware Scheduling For Speculative Decoding
 
 | 论文 / 项目 | 作者团队 | 方向 | 链接 |
 | --- | --- | --- | --- |
@@ -101,7 +131,7 @@ DSpark 的 Related Work 可以分成三条线：
 | MagicDec: Breaking the Latency-Throughput Tradeoff for Long Context Generation with Speculative Decoding | Sadhukhan et al. | long-context speculative serving | [OpenReview](https://openreview.net/forum?id=CS2JWaziYr) |
 | TETRIS: Optimal Draft Token Selection for Batch Speculative Decoding | Wu, Zhou, Verma, Prakash, Rus, Low | batch 内 token selection / scheduling | [ACL](https://aclanthology.org/2025.acl-long.1598/) |
 
-## Parallel Generation / NAT Background
+### 4.3 Parallel Generation / NAT Background
 
 | 论文 | 作者团队 | 方向 | 链接 |
 | --- | --- | --- | --- |
@@ -124,7 +154,7 @@ DSpark 的 Related Work 可以分成三条线：
 | Non-Autoregressive Machine Translation with Probabilistic Context-Free Grammar | Gui, Shao, Ma, Zhang, Chen, Feng | PCFG structured output | [OpenReview](https://openreview.net/forum?id=LloZFVwWvj) |
 | Speculative Decoding with CTC-Based Draft Model for LLM Inference Acceleration | Wen, Gui, Feng | CTC drafter for speculative decoding | [NeurIPS PDF](https://proceedings.neurips.cc/paper_files/paper/2024/file/a79054a9da91d73ed3cb1a9e87d7cd2d-Paper-Conference.pdf) |
 
-## DSpark 在这张图谱里的位置
+### 4.4 DSpark 在参考工作里的位置
 
 | 对比维度 | DSpark 的位置 |
 | --- | --- |
@@ -134,7 +164,7 @@ DSpark 的 Related Work 可以分成三条线：
 | 与 NAT 的关系 | DSpark 借鉴 NAT 中“并行生成会混合多种 plausible modes”的问题意识，但不用全局归一化结构，保留逐 token softmax，便于标准 speculative rejection sampling。 |
 | 与 serving 调度的关系 | DSpark 把 draft token selection 写成期望吞吐 `Theta = tau * SPS(B)` 最大化问题，和 TETRIS / AdaSpec / TurboSpec / MagicDec 等系统线相近。 |
 
-## 推荐阅读顺序
+### 4.5 推荐阅读顺序
 
 | 顺序 | 资料 | 目标 |
 | ---: | --- | --- |
