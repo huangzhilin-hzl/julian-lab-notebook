@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSpark Related Work Reference Map - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5f6d80;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1440px; margin: 0 auto; padding: 28px; }
+    h1, h2 { margin: 0; line-height: 1.25; letter-spacing: 0; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 20px; }
+    p { margin: 10px 0 0; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+    .hero, .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .subtle { color: var(--muted); }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .nav a {
+      display: inline-flex;
+      min-height: 26px;
+      align-items: center;
+      padding: 3px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfcfe;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+    .meta b { display: block; margin-bottom: 4px; }
+    .table-wrap {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      background: #fff;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--head);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #374151;
+      white-space: nowrap;
+    }
+    td:first-child { font-weight: 700; min-width: 260px; }
+    td:nth-child(2) { min-width: 220px; }
+    td:nth-child(3) { min-width: 260px; }
+    td:last-child { min-width: 150px; white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    ul { margin: 10px 0 0; padding-left: 18px; }
+    @media (max-width: 820px) {
+      main { padding: 18px; }
+      h1 { font-size: 24px; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .hero, .section { padding: 16px; }
+    }
+</style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>DSpark Related Work Reference Map</h1>
+      <p class="subtle">记录时间：2026-06-29。来源：本地 DSpark_paper.pdf 与远程 <a href="https://github.com/deepseek-ai/DeepSpec/blob/main/DSpark_paper.pdf">DSpark_paper.pdf</a>，范围为 Section 6 Related Work 和 References。</p>
+      <div class="meta-grid">
+        <div class="meta"><b>主线一</b>Speculative decoding algorithms</div>
+        <div class="meta"><b>主线二</b>System-aware scheduling</div>
+        <div class="meta"><b>主线三</b>Parallel generation / NAT</div>
+        <div class="meta"><b>用途</b>DSpark Related Work 速查表</div>
+      </div>
+      <nav class="nav"><a href="#section-1">一句话结论</a><a href="#speculative-decoding-algorithms">Speculative Decoding Algorithms</a><a href="#system-aware-scheduling-for-speculative-decoding">System-Aware Scheduling For Speculative Decoding</a><a href="#parallel-generation-nat-background">Parallel Generation / NAT Background</a><a href="#dspark">DSpark 在这张图谱里的位置</a><a href="#section-6">推荐阅读顺序</a></nav>
+    </section>
+    <section class="section" id="section-1">
+  <h2>一句话结论</h2>
+  <p>DSpark 的 Related Work 可以分成三条线：</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>主线</th><th>DSpark 借鉴 / 对比点</th></tr></thead>
+      <tbody>
+        <tr><td>Speculative decoding algorithms</td><td>从小模型 drafter、多头/MTP、self-speculation，发展到 DFlash/DART/PARD 这类 block-parallel drafter。DSpark 属于 parallel drafter 的增强版。</td></tr>
+        <tr><td>System-aware scheduling</td><td>研究重点从“能 draft 几个 token”转向“当前负载下应该生成/验证几个 token”。DSpark 的 hardware-aware prefix scheduler 属于这一线。</td></tr>
+        <tr><td>Parallel generation / NAT</td><td>并行生成容易出现 multi-modal mixing / cross-mode collision。DSpark 的 sequential head 是用轻量局部修正解决这个问题，同时保留 per-token softmax 概率。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section" id="speculative-decoding-algorithms">
+  <h2>Speculative Decoding Algorithms</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>论文 / 项目</th><th>作者团队</th><th>方向</th><th>链接</th></tr></thead>
+      <tbody>
+        <tr><td>Lossless Acceleration for Seq2Seq Generation with Aggressive Decoding</td><td>Ge, Xia, Sun, Chen, Wei</td><td>早期 blockwise / aggressive decoding</td><td><a href="https://arxiv.org/abs/2205.10350">arXiv</a></td></tr>
+        <tr><td>Blockwise Parallel Decoding for Deep Autoregressive Models</td><td>Stern, Shazeer, Uszkoreit</td><td>blockwise parallel decoding</td><td><a href="https://proceedings.neurips.cc/paper_files/paper/2018/file/c4127b9194fe8562c64dc0f5bf2c93bc-Paper.pdf">NeurIPS PDF</a></td></tr>
+        <tr><td>Instantaneous Grammatical Error Correction with Shallow Aggressive Decoding</td><td>Sun, Ge, Wei, Wang</td><td>aggressive decoding 用于 GEC</td><td><a href="https://aclanthology.org/2021.acl-long.462/">ACL</a></td></tr>
+        <tr><td>Speculative Decoding: Exploiting Speculative Execution for Accelerating Seq2Seq Generation</td><td>Xia, Ge, Wang, Chen, Wei, Sui</td><td>seq2seq speculative decoding</td><td><a href="https://aclanthology.org/2023.findings-emnlp.257/">ACL</a></td></tr>
+        <tr><td>Accelerating Large Language Model Decoding with Speculative Sampling</td><td>Chen, Borgeaud, Irving, Lespiau, Sifre, Jumper</td><td>rejection-sampling speculative decoding</td><td><a href="https://arxiv.org/abs/2302.01318">arXiv</a></td></tr>
+        <tr><td>Fast Inference from Transformers via Speculative Decoding</td><td>Leviathan, Kalman, Matias</td><td>标准 draft-then-verify 框架</td><td><a href="https://proceedings.mlr.press/v202/leviathan23a.html">PMLR</a></td></tr>
+        <tr><td>Hydra: Sequentially-dependent Draft Heads for Medusa Decoding</td><td>Ankner, Parthasarathy, Nrusimha, Rinard, Ragan-Kelley, Brandon</td><td>多 draft heads 加 head 间依赖</td><td><a href="https://openreview.net/forum?id=FbhjirzvJG">OpenReview</a></td></tr>
+        <tr><td>Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</td><td>Cai, Li, Geng, Peng, Lee, Chen, Dao</td><td>target 上接多个 decoding heads</td><td><a href="https://proceedings.mlr.press/v235/cai24b.html">PMLR</a></td></tr>
+        <tr><td>FastMTP: Accelerating LLM Inference with Enhanced Multi-token Prediction</td><td>Cai et al.</td><td>增强 multi-token prediction</td><td><a href="https://arxiv.org/abs/2509.18362">arXiv</a></td></tr>
+        <tr><td>DeepSeek-V3 Technical Report</td><td>DeepSeek-AI</td><td>MTP / 大模型推理技术报告</td><td><a href="https://arxiv.org/abs/2412.19437">arXiv</a></td></tr>
+        <tr><td>Better &amp; Faster Large Language Models via Multi-token Prediction</td><td>Gloeckle, Idrissi, Roziere, Lopez-Paz, Synnaeve</td><td>训练期 MTP 提升推理</td><td><a href="https://proceedings.mlr.press/v235/gloeckle24a.html">PMLR</a></td></tr>
+        <tr><td>EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty</td><td>Li, Wei, Zhang, Zhang</td><td>feature-level autoregressive drafter</td><td><a href="https://proceedings.mlr.press/v235/li24bt.html">PMLR</a></td></tr>
+        <tr><td>EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees</td><td>Li, Wei, Zhang, Zhang</td><td>动态 draft tree</td><td><a href="https://aclanthology.org/2024.emnlp-main.422/">ACL</a></td></tr>
+        <tr><td>EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test</td><td>Li, Wei, Zhang, Zhang</td><td>EAGLE 系列扩展</td><td><a href="https://openreview.net/forum?id=4exx1hUffq">OpenReview</a></td></tr>
+        <tr><td>Learning Harmonized Representations for Speculative Sampling</td><td>Zhang, Wang, Huang, Xu</td><td>draft-target 表示对齐</td><td><a href="https://arxiv.org/abs/2408.15766">arXiv</a></td></tr>
+        <tr><td>LayerSkip: Enabling Early Exit Inference and Self-Speculative Decoding</td><td>Elhoushi et al.</td><td>early-exit self-speculation</td><td><a href="https://aclanthology.org/2024.acl-long.681/">ACL</a></td></tr>
+        <tr><td>Kangaroo: Lossless Self-Speculative Decoding for Accelerating LLMs via Double Early Exiting</td><td>Liu, Tang, Liu, Ni, Tang, Han, Wang</td><td>双 early-exit self-speculation</td><td><a href="https://proceedings.neurips.cc/paper_files/paper/2024/file/16336d94a5ffca8de019087ab7fe403f-Paper-Conference.pdf">NeurIPS PDF</a></td></tr>
+        <tr><td>SWIFT: On-the-fly Self-Speculative Decoding for LLM Inference Acceleration</td><td>Xia, Yang, Dong, Wang, Li, Ge, Liu, Li, Sui</td><td>在线 self-speculative decoding</td><td><a href="https://openreview.net/forum?id=EKJhH5D5wA">OpenReview</a></td></tr>
+        <tr><td>Draft &amp; Verify: Lossless LLM Acceleration via Self-Speculative Decoding</td><td>Zhang et al.</td><td>self-speculative decoding</td><td><a href="https://aclanthology.org/2024.acl-long.607/">ACL</a></td></tr>
+        <tr><td>Speculative Decoding with a Speculative Vocabulary</td><td>Williams, Kwon, Li, Kouris, Venieris</td><td>speculative vocabulary / 词表压缩</td><td><a href="https://arxiv.org/abs/2602.13836">arXiv</a></td></tr>
+        <tr><td>FR-Spec: Accelerating Large-Vocabulary Language Models via Frequency-Ranked Speculative Sampling</td><td>Zhao et al.</td><td>频率排序降低大词表 speculative 开销</td><td><a href="https://aclanthology.org/2025.acl-long.198/">ACL</a></td></tr>
+        <tr><td>Prompt Lookup Decoding</td><td>Saxena</td><td>prompt n-gram lookup drafter</td><td><a href="https://github.com/apoorvumang/prompt-lookup-decoding/">GitHub</a></td></tr>
+        <tr><td>PLD+: Accelerating LLM Inference by Leveraging Language Model Artifacts</td><td>Somasundaram, Phukan, Saxena</td><td>prompt lookup 扩展</td><td><a href="https://aclanthology.org/2025.findings-naacl.338/">ACL</a></td></tr>
+        <tr><td>SAM Decoding: Speculative Decoding via Suffix Automaton</td><td>Hu et al.</td><td>suffix automaton drafter</td><td><a href="https://aclanthology.org/2025.acl-long.595/">ACL</a></td></tr>
+        <tr><td>REST: Retrieval-Based Speculative Decoding</td><td>He, Zhong, Cai, Lee, He</td><td>检索式 speculative drafter</td><td><a href="https://arxiv.org/abs/2311.08252">arXiv</a></td></tr>
+        <tr><td>Draft Less, Retrieve More: Hybrid Tree Construction for Speculative Decoding</td><td>Shen et al.</td><td>retrieval + hybrid draft tree</td><td><a href="https://arxiv.org/abs/2605.20104">arXiv</a></td></tr>
+        <tr><td>P-EAGLE: Parallel-Drafting EAGLE with Scalable Training</td><td>Hui et al.</td><td>并行化 EAGLE</td><td><a href="https://arxiv.org/abs/2602.01469">arXiv</a></td></tr>
+        <tr><td>PARD: Accelerating LLM Inference with Low-cost PARallel Draft Model Adaptation</td><td>An, Bai, Liu, Li, Barsoum</td><td>low-cost parallel drafter adaptation</td><td><a href="https://openreview.net/forum?id=XbOyv7iVGL">OpenReview</a></td></tr>
+        <tr><td>DFlash: Block Diffusion for Flash Speculative Decoding</td><td>Chen, Liang, Liu</td><td>block diffusion parallel drafter</td><td><a href="https://arxiv.org/abs/2602.06036">arXiv</a></td></tr>
+        <tr><td>DART: Diffusion-Inspired Speculative Decoding for Fast LLM Inference</td><td>Liu et al.</td><td>diffusion-inspired block drafter</td><td><a href="https://arxiv.org/abs/2601.19278">arXiv</a></td></tr>
+        <tr><td>Accelerating Speculative Decoding with Block Diffusion Draft Trees</td><td>Ringel, Romano</td><td>diffusion draft tree</td><td><a href="https://arxiv.org/abs/2604.12989">arXiv</a></td></tr>
+        <tr><td>Domino: Decoupling Causal Modeling from Autoregressive Drafting in Speculative Decoding</td><td>Huang, Zhang, Zhang, Lin, Xu, Zhang</td><td>DFlash 上加 CausalEncoder</td><td><a href="https://arxiv.org/abs/2605.29707">arXiv</a></td></tr>
+        <tr><td>DFlare: Scaling up Draft Capacity for Block Diffusion Speculative Decoding</td><td>Zhang et al.</td><td>layer-wise fusion 改善 DFlash conditioning</td><td><a href="https://arxiv.org/abs/2606.02091">arXiv</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section" id="system-aware-scheduling-for-speculative-decoding">
+  <h2>System-Aware Scheduling For Speculative Decoding</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>论文 / 项目</th><th>作者团队</th><th>方向</th><th>链接</th></tr></thead>
+      <tbody>
+        <tr><td>GliDe with a CaPE: A Low-Hassle Method to Accelerate Speculative Decoding</td><td>Du et al.</td><td>adaptive length / low-hassle speculative decoding</td><td><a href="https://proceedings.mlr.press/v235/du24c.html">PMLR</a></td></tr>
+        <tr><td>TALON: Confidence-Aware Speculative Decoding with Adaptive Token Trees</td><td>Liu, Lv, Shen, Sun, Sun</td><td>confidence-aware adaptive token tree</td><td><a href="https://arxiv.org/abs/2601.07353">arXiv</a></td></tr>
+        <tr><td>Dynamic Speculation Lookahead Accelerates Speculative Decoding of Large Language Models</td><td>Mamou et al.</td><td>dynamic speculation lookahead</td><td><a href="https://proceedings.mlr.press/v262/mamou24a.html">PMLR</a></td></tr>
+        <tr><td>SpecBound: Adaptive Bounded Self-Speculation with Layer-Wise Confidence Calibration</td><td>Wen, Feng</td><td>layer-wise confidence calibration</td><td><a href="https://arxiv.org/abs/2604.12247">arXiv</a></td></tr>
+        <tr><td>SpecDec++: Boosting Speculative Decoding via Adaptive Candidate Lengths</td><td>Huang, Guo, Wang</td><td>adaptive candidate length</td><td><a href="https://arxiv.org/abs/2405.19715">arXiv</a></td></tr>
+        <tr><td>AutoMTP_vLLM</td><td>Zacks917</td><td>vLLM MTP early-stop 工程实现</td><td><a href="https://github.com/Zacks917/AutoMTP_vLLM">GitHub</a></td></tr>
+        <tr><td>Not-a-Bandit: Provably No-Regret Drafter Selection in Speculative Decoding for LLMs</td><td>Liu, Huang, Jia, Park, Wang</td><td>多 drafter 在线选择</td><td><a href="https://arxiv.org/abs/2510.20064">arXiv</a></td></tr>
+        <tr><td>D-Cut: Adaptive Verification Depth Pruning for Speculative Decoding</td><td>AngelSlim Team</td><td>adaptive verification depth pruning</td><td><a href="https://angelslim.readthedocs.io/zh-cn/latest/dcut.html">Docs</a></td></tr>
+        <tr><td>ECHO: Elastic Speculative Decoding with Sparse Gating for High-Concurrency Scenarios</td><td>Hu et al.</td><td>高并发下 sparse gating / budget scheduling</td><td><a href="https://arxiv.org/abs/2604.09603">arXiv</a></td></tr>
+        <tr><td>AdaSpec: Adaptive Speculative Decoding for Fast, SLO-Aware LLM Serving</td><td>Huang, Wu, Shi, Zou, Yu, Shi</td><td>SLO-aware serving 调度</td><td><a href="https://doi.org/10.1145/3772052.3772239">ACM DOI</a></td></tr>
+        <tr><td>Nightjar: Dynamic Adaptive Speculative Decoding for Large Language Models Serving</td><td>Li et al.</td><td>按负载动态调整 speculation</td><td><a href="https://arxiv.org/abs/2512.22420">arXiv</a></td></tr>
+        <tr><td>Optimizing Speculative Decoding for Serving LLMs Using Goodput</td><td>Liu, Daniel, Hu, Kwon, Li, Mo, Cheung, Deng, Stoica, Zhang</td><td>goodput-oriented serving 分析；后续 arXiv 版本演进为 TurboSpec 口径</td><td><a href="https://arxiv.org/abs/2406.14066">arXiv</a></td></tr>
+        <tr><td>TurboSpec: Closed-loop Speculation Control System for Optimizing LLM Serving Goodput</td><td>Liu et al.</td><td>closed-loop speculation control；与上一项属于同一 arXiv 演进线</td><td><a href="https://arxiv.org/abs/2406.14066">arXiv</a></td></tr>
+        <tr><td>SpecInfer: Accelerating LLM Serving with Tree-Based Speculative Inference and Verification</td><td>Miao et al.</td><td>tree-based speculative serving system</td><td><a href="https://dl.acm.org/doi/10.1145/3620666.3651335">ACM</a></td></tr>
+        <tr><td>MagicDec: Breaking the Latency-Throughput Tradeoff for Long Context Generation with Speculative Decoding</td><td>Sadhukhan et al.</td><td>long-context speculative serving</td><td><a href="https://openreview.net/forum?id=CS2JWaziYr">OpenReview</a></td></tr>
+        <tr><td>TETRIS: Optimal Draft Token Selection for Batch Speculative Decoding</td><td>Wu, Zhou, Verma, Prakash, Rus, Low</td><td>batch 内 token selection / scheduling</td><td><a href="https://aclanthology.org/2025.acl-long.1598/">ACL</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section" id="parallel-generation-nat-background">
+  <h2>Parallel Generation / NAT Background</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>论文</th><th>作者团队</th><th>方向</th><th>链接</th></tr></thead>
+      <tbody>
+        <tr><td>Non-Autoregressive Neural Machine Translation</td><td>Gu, Bradbury, Xiong, Li, Socher</td><td>NAT 基础工作</td><td><a href="https://openreview.net/forum?id=B1l8BtlCb">OpenReview</a></td></tr>
+        <tr><td>Fast Decoding in Sequence Models Using Discrete Latent Variables</td><td>Kaiser et al.</td><td>latent variable parallel decoding</td><td><a href="https://proceedings.mlr.press/v80/kaiser18a.html">PMLR</a></td></tr>
+        <tr><td>FlowSeq: Non-Autoregressive Conditional Sequence Generation with Generative Flow</td><td>Ma, Zhou, Li, Neubig, Hovy</td><td>flow-based NAT</td><td><a href="https://aclanthology.org/D19-1437/">ACL</a></td></tr>
+        <tr><td>Order-Agnostic Cross Entropy for Non-Autoregressive Machine Translation</td><td>Du, Tu, Jiang</td><td>放松训练目标，缓解多模态平均</td><td><a href="https://proceedings.mlr.press/v139/du21c.html">PMLR</a></td></tr>
+        <tr><td>Glancing Transformer for Non-Autoregressive Neural Machine Translation</td><td>Qian et al.</td><td>glancing training</td><td><a href="https://aclanthology.org/2021.acl-long.155/">ACL</a></td></tr>
+        <tr><td>Sequence-Level Training for Non-Autoregressive Neural Machine Translation</td><td>Shao, Feng, Zhang, Meng, Zhou</td><td>sequence-level NAT training</td><td><a href="https://aclanthology.org/2021.cl-4.29/">ACL</a></td></tr>
+        <tr><td>Beyond MLE: Convex Learning for Text Generation</td><td>Shao, Ma, Zhang, Feng</td><td>放松 MLE 目标，提升生成一致性</td><td><a href="https://openreview.net/forum?id=sla7V80uWA">OpenReview</a></td></tr>
+        <tr><td>Structured Denoising Diffusion Models in Discrete State-Spaces</td><td>Austin, Johnson, Ho, Tarlow, van den Berg</td><td>discrete diffusion / iterative re-prediction</td><td><a href="https://openreview.net/forum?id=h7-XixPCAL">OpenReview</a></td></tr>
+        <tr><td>Mask-Predict: Parallel Decoding of Conditional Masked Language Models</td><td>Ghazvininejad, Levy, Liu, Zettlemoyer</td><td>iterative mask-predict</td><td><a href="https://aclanthology.org/D19-1633/">ACL</a></td></tr>
+        <tr><td>Diffusion-LM Improves Controllable Text Generation</td><td>Li, Thickstun, Gulrajani, Liang, Hashimoto</td><td>diffusion language model</td><td><a href="https://openreview.net/forum?id=3s9IrEsjLyk">OpenReview</a></td></tr>
+        <tr><td>Block Diffusion: Interpolating Between Autoregressive and Diffusion Language Models</td><td>Arriola et al.</td><td>block-level autoregression / diffusion</td><td><a href="https://openreview.net/forum?id=tyEyYT267x">OpenReview</a></td></tr>
+        <tr><td>Semi-Autoregressive Neural Machine Translation</td><td>Wang, Zhang, Chen</td><td>block-level semi-autoregressive NMT</td><td><a href="https://aclanthology.org/D18-1044/">ACL</a></td></tr>
+        <tr><td>Fast Structured Decoding for Sequence Models</td><td>Sun et al.</td><td>CRF-NAT / structured output layer</td><td><a href="https://proceedings.neurips.cc/paper_files/paper/2019/file/74563ba21a90da13dacf2a73e3ddefa7-Paper.pdf">NeurIPS PDF</a></td></tr>
+        <tr><td>End-to-End Non-Autoregressive Neural Machine Translation with Connectionist Temporal Classification</td><td>Libovicky, Helcl</td><td>CTC output layer</td><td><a href="https://aclanthology.org/D18-1336/">ACL</a></td></tr>
+        <tr><td>Non-Autoregressive Machine Translation with Latent Alignments</td><td>Saharia, Chan, Saxena, Norouzi</td><td>latent alignment NAT</td><td><a href="https://aclanthology.org/2020.emnlp-main.83/">ACL</a></td></tr>
+        <tr><td>Directed Acyclic Transformer for Non-Autoregressive Machine Translation</td><td>Huang, Zhou, Liu, Li, Huang</td><td>DAT / HMM-like path modeling</td><td><a href="https://proceedings.mlr.press/v162/huang22m.html">PMLR</a></td></tr>
+        <tr><td>Non-Autoregressive Machine Translation with Probabilistic Context-Free Grammar</td><td>Gui, Shao, Ma, Zhang, Chen, Feng</td><td>PCFG structured output</td><td><a href="https://openreview.net/forum?id=LloZFVwWvj">OpenReview</a></td></tr>
+        <tr><td>Speculative Decoding with CTC-Based Draft Model for LLM Inference Acceleration</td><td>Wen, Gui, Feng</td><td>CTC drafter for speculative decoding</td><td><a href="https://proceedings.neurips.cc/paper_files/paper/2024/file/a79054a9da91d73ed3cb1a9e87d7cd2d-Paper-Conference.pdf">NeurIPS PDF</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section" id="dspark">
+  <h2>DSpark 在这张图谱里的位置</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>对比维度</th><th>DSpark 的位置</th></tr></thead>
+      <tbody>
+        <tr><td>Drafter architecture</td><td>继承 DFlash 这类 block-parallel drafter，但用 Markov / RNN sequential head 给 block 内 token 注入 causal dependency。</td></tr>
+        <tr><td>Verification policy</td><td>不固定验证整段 draft block，而是用 calibrated confidence 和 SPS(B) 曲线选择 per-request prefix length。</td></tr>
+        <tr><td>与 Domino 的关系</td><td>Domino 主要改 DFlash 的 causal modeling；DSpark 同时做 causal modeling 和 production-oriented verification scheduling。</td></tr>
+        <tr><td>与 NAT 的关系</td><td>DSpark 借鉴 NAT 中“并行生成会混合多种 plausible modes”的问题意识，但不用全局归一化结构，保留逐 token softmax，便于标准 speculative rejection sampling。</td></tr>
+        <tr><td>与 serving 调度的关系</td><td>DSpark 把 draft token selection 写成期望吞吐 <code>Theta = tau * SPS(B)</code> 最大化问题，和 TETRIS / AdaSpec / TurboSpec / MagicDec 等系统线相近。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section" id="section-6">
+  <h2>推荐阅读顺序</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>顺序</th><th>资料</th><th>目标</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Leviathan et al.; Chen et al.</td><td>先理解 lossless speculative decoding 为什么保持 target distribution。</td></tr>
+        <tr><td>2</td><td>Medusa / MTP / EAGLE 系列</td><td>看 drafter 如何从小模型发展到多头和 feature extrapolator。</td></tr>
+        <tr><td>3</td><td>DFlash / DART / PARD / Domino / DFlare</td><td>看 block-parallel drafter 如何降低 draft-side sequential cost。</td></tr>
+        <tr><td>4</td><td>SpecDec++ / TALON / TETRIS / AdaSpec / TurboSpec</td><td>看 verification length / token selection 如何变成调度问题。</td></tr>
+        <tr><td>5</td><td>NAT / semi-autoregressive / CRF / CTC / DAT / PCFG</td><td>回看 DSpark sequential head 为什么选择局部 logit bias，而不是全局 structured output。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+  </main>
+</body>
+</html>
