@@ -1,0 +1,2095 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlashInfer PR #3738 vs Humming GEMM Latency Report</title>
+<style>
+:root {
+  color-scheme: light;
+  --text: #1f2933;
+  --muted: #667085;
+  --line: #d9e1ea;
+  --panel: #f7f9fc;
+  --panel-2: #f2f6fa;
+  --flash: #2563a8;
+  --humming: #0f8b6d;
+  --accent: #b44a2c;
+  --good: #05805c;
+  --bad: #d92d2d;
+  --neutral: #667085;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+main {
+  width: min(1840px, calc(100vw - 56px));
+  margin: 0 auto;
+  padding: 36px 0 56px;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+.subtitle {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 400;
+}
+section { margin-top: 28px; }
+h2 {
+  margin: 0 0 14px;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  text-align: center;
+  white-space: nowrap;
+}
+th {
+  background: var(--panel-2);
+  color: #344054;
+  font-weight: 600;
+}
+td {
+  color: #2f3a49;
+  font-weight: 400;
+}
+tr:last-child td { border-bottom: 0; }
+a { color: #1769c2; text-decoration: none; font-weight: 600; }
+a:hover { text-decoration: underline; }
+.note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--accent);
+  background: var(--panel);
+  color: #344054;
+  font-weight: 400;
+}
+.legend {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #344054;
+  font-weight: 600;
+}
+.axis-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: -8px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.axis-guide span {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.config-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 10px 28px;
+  margin-top: 4px;
+}
+.config-item {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 2px 0;
+}
+.config-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.config-value {
+  color: #26313f;
+  font-size: 14px;
+  font-weight: 400;
+}
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px 16px;
+  margin: -2px 0 12px;
+}
+.filter-control {
+  display: grid;
+  gap: 4px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 500;
+}
+.filter-control select {
+  min-width: 150px;
+  height: 34px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #26313f;
+  font: inherit;
+}
+.filter-status {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+  padding-bottom: 7px;
+}
+.swatch {
+  display: inline-block;
+  width: 22px;
+  height: 4px;
+  margin-right: 8px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+.swatch.flash { background: var(--flash); }
+.swatch.humming { background: var(--humming); }
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(280px, 1fr));
+  gap: 16px;
+}
+.chart {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 10px 4px;
+}
+.chart figcaption {
+  font-weight: 600;
+  color: #26313f;
+  margin: 0 0 6px 2px;
+}
+.chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+}
+.grid { stroke: #e5eaf0; stroke-width: 1; }
+.axis { stroke: #8a98a8; stroke-width: 1.2; }
+.axis-label { fill: #5f6f82; font-size: 11px; font-weight: 500; }
+.line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.line.flash, .pt.flash { stroke: var(--flash); }
+.line.humming, .pt.humming { stroke: var(--humming); }
+.pt { fill: #fff; stroke-width: 2; cursor: crosshair; }
+.pt.flash:hover { fill: var(--flash); }
+.pt.humming:hover { fill: var(--humming); }
+.tooltip {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  max-width: 360px;
+  padding: 9px 10px;
+  border: 1px solid #344054;
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.94);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-line;
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+.num {
+  text-align: center;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.speedup-cell,
+.percent-cell {
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.total-ms-cell {
+  color: #1f2933;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.speedup-good,
+.percent-good {
+  color: var(--good);
+  background: transparent;
+}
+.speedup-bad,
+.percent-bad {
+  color: var(--bad);
+  background: transparent;
+}
+.speedup-neutral,
+.percent-neutral {
+  color: var(--neutral);
+  background: transparent;
+}
+.footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+@media (max-width: 1200px) {
+  .chart-grid { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+}
+@media (max-width: 700px) {
+  main { width: min(100vw - 24px, 1840px); padding-top: 24px; }
+  h1 { font-size: 30px; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .config-meta { grid-template-columns: 1fr; }
+  .config-item { grid-template-columns: 1fr; gap: 2px; }
+  th, td { padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>FlashInfer PR #3738 vs Humming GEMM Latency</h1>
+  <p class="subtitle">GEMM-scope only. Main sweep uses CUDA events and reports median latency in milliseconds. Total GEMM(w13+w2) is the sum of w13/GEMM1 and w2/GEMM2.</p>
+
+  <section>
+    <h2>Benchmark Configuration</h2>
+    <div class="config-meta">
+      <div class="config-item"><span class="config-label">GPU</span><span class="config-value">8 x NVIDIA H20 (SM90), driver 550.127.08</span></div>
+      <div class="config-item"><span class="config-label">Image</span><span class="config-value"><code>docker.1ms.run/lmsysorg/sglang:dev</code></span></div>
+      <div class="config-item"><span class="config-label">Runtime</span><span class="config-value">Python 3.12.3, PyTorch 2.9.1+cu129, CUDA 12.9</span></div>
+      <div class="config-item"><span class="config-label">Workloads</span><span class="config-value">DSv4 Flash / DSv4 Pro</span></div>
+      <div class="config-item"><span class="config-label">FlashInfer</span><span class="config-value">PR #3738 MXFP4xFP8 Humming-style GEMM path, commit <a href="https://github.com/flashinfer-ai/flashinfer/commit/96397d18b5801c4bae10931bb258de4a25c64270">96397d18</a></span></div>
+      <div class="config-item"><span class="config-label">Humming</span><span class="config-value"><code>HummingLayer</code> indexed grouped GEMM, commit <a href="https://github.com/huangzhilin-hzl/humming/commit/f6241bba8d507c19ca9ce4e5958a5d0641fc8eb4">f6241bba</a></span></div>
+      <div class="config-item"><span class="config-label">Sweep</span><span class="config-value">TP/EP = 1/8, 2/4, 4/2, 8/1; batch/rank = 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192</span></div>
+      <div class="config-item"><span class="config-label">Timing</span><span class="config-value">CUDA events; median latency; warmup 20; repeat 100; w13/GEMM1 and w2/GEMM2 measured separately.</span></div>
+    </div>
+    <p class="note">Scope: FlashInfer measures PR #3738 GEMM path from <code>run_gemm_profile</code>; Humming measures <code>HummingLayer</code> indexed grouped GEMM. This report does not compare end-to-end MoE latency.</p>
+  </section>
+
+  <section><h2>Total GEMM(w13+w2) Latency Charts</h2><div class="legend"><span><i class="swatch flash"></i>FlashInfer PR #3738</span><span><i class="swatch humming"></i>Humming baseline</span></div><div class="axis-guide"><span>X axis: Batch per rank</span><span>Y axis: Median GEMM latency (ms)</span></div><div class="chart-grid"><figure class="chart"><figcaption>dsv4-flash TP1/EP8</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP1/EP8 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">5.500</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">11.00</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,233.2 94.8,235.0 135.6,234.4 176.4,233.5 217.2,233.1 258.0,232.8 298.8,232.5 339.6,231.9 380.4,228.3 421.2,220.5 462.0,209.8"></polyline><polyline class="line humming" points="54.0,232.5 94.8,232.3 135.6,231.8 176.4,231.5 217.2,231.1 258.0,224.0 298.8,220.9 339.6,210.5 380.4,190.4 421.2,149.2 462.0,66.7"></polyline><circle class="pt flash" cx="54.0" cy="233.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=8
+FlashInfer: 0.2062 ms
+Humming: 0.2443 ms
+Humming / FlashInfer: 1.185x"></circle><circle class="pt humming" cx="54.0" cy="232.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=8
+FlashInfer: 0.2062 ms
+Humming: 0.2443 ms
+Humming / FlashInfer: 1.185x"></circle><circle class="pt flash" cx="94.8" cy="235.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=16
+FlashInfer: 0.1064 ms
+Humming: 0.2546 ms
+Humming / FlashInfer: 2.394x"></circle><circle class="pt humming" cx="94.8" cy="232.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=16
+FlashInfer: 0.1064 ms
+Humming: 0.2546 ms
+Humming / FlashInfer: 2.394x"></circle><circle class="pt flash" cx="135.6" cy="234.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=32
+FlashInfer: 0.1397 ms
+Humming: 0.2800 ms
+Humming / FlashInfer: 2.004x"></circle><circle class="pt humming" cx="135.6" cy="231.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=32
+FlashInfer: 0.1397 ms
+Humming: 0.2800 ms
+Humming / FlashInfer: 2.004x"></circle><circle class="pt flash" cx="176.4" cy="233.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=64
+FlashInfer: 0.1905 ms
+Humming: 0.2983 ms
+Humming / FlashInfer: 1.566x"></circle><circle class="pt humming" cx="176.4" cy="231.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=64
+FlashInfer: 0.1905 ms
+Humming: 0.2983 ms
+Humming / FlashInfer: 1.566x"></circle><circle class="pt flash" cx="217.2" cy="233.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=128
+FlashInfer: 0.2128 ms
+Humming: 0.3195 ms
+Humming / FlashInfer: 1.501x"></circle><circle class="pt humming" cx="217.2" cy="231.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=128
+FlashInfer: 0.2128 ms
+Humming: 0.3195 ms
+Humming / FlashInfer: 1.501x"></circle><circle class="pt flash" cx="258.0" cy="232.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=256
+FlashInfer: 0.2249 ms
+Humming: 0.7066 ms
+Humming / FlashInfer: 3.142x"></circle><circle class="pt humming" cx="258.0" cy="224.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=256
+FlashInfer: 0.2249 ms
+Humming: 0.7066 ms
+Humming / FlashInfer: 3.142x"></circle><circle class="pt flash" cx="298.8" cy="232.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=512
+FlashInfer: 0.2421 ms
+Humming: 0.8700 ms
+Humming / FlashInfer: 3.594x"></circle><circle class="pt humming" cx="298.8" cy="220.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=512
+FlashInfer: 0.2421 ms
+Humming: 0.8700 ms
+Humming / FlashInfer: 3.594x"></circle><circle class="pt flash" cx="339.6" cy="231.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=1024
+FlashInfer: 0.2790 ms
+Humming: 1.436 ms
+Humming / FlashInfer: 5.145x"></circle><circle class="pt humming" cx="339.6" cy="210.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=1024
+FlashInfer: 0.2790 ms
+Humming: 1.436 ms
+Humming / FlashInfer: 5.145x"></circle><circle class="pt flash" cx="380.4" cy="228.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=2048
+FlashInfer: 0.4690 ms
+Humming: 2.526 ms
+Humming / FlashInfer: 5.386x"></circle><circle class="pt humming" cx="380.4" cy="190.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=2048
+FlashInfer: 0.4690 ms
+Humming: 2.526 ms
+Humming / FlashInfer: 5.386x"></circle><circle class="pt flash" cx="421.2" cy="220.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=4096
+FlashInfer: 0.8918 ms
+Humming: 4.757 ms
+Humming / FlashInfer: 5.335x"></circle><circle class="pt humming" cx="421.2" cy="149.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=4096
+FlashInfer: 0.8918 ms
+Humming: 4.757 ms
+Humming / FlashInfer: 5.335x"></circle><circle class="pt flash" cx="462.0" cy="209.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=8192
+FlashInfer: 1.471 ms
+Humming: 9.230 ms
+Humming / FlashInfer: 6.273x"></circle><circle class="pt humming" cx="462.0" cy="66.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP1/EP8 batch=8192
+FlashInfer: 1.471 ms
+Humming: 9.230 ms
+Humming / FlashInfer: 6.273x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP2/EP4</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP2/EP4 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">2.700</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">5.400</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,233.7 94.8,228.6 135.6,231.1 176.4,229.3 217.2,228.0 258.0,227.5 298.8,226.8 339.6,225.6 380.4,218.0 421.2,205.2 462.0,179.3"></polyline><polyline class="line humming" points="54.0,229.9 94.8,227.8 135.6,227.1 176.4,226.3 217.2,226.0 258.0,224.5 298.8,218.0 339.6,204.3 380.4,184.4 421.2,141.1 462.0,58.0"></polyline><circle class="pt flash" cx="54.0" cy="233.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=8
+FlashInfer: 0.0877 ms
+Humming: 0.1899 ms
+Humming / FlashInfer: 2.166x"></circle><circle class="pt humming" cx="54.0" cy="229.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=8
+FlashInfer: 0.0877 ms
+Humming: 0.1899 ms
+Humming / FlashInfer: 2.166x"></circle><circle class="pt flash" cx="94.8" cy="228.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=16
+FlashInfer: 0.2224 ms
+Humming: 0.2436 ms
+Humming / FlashInfer: 1.095x"></circle><circle class="pt humming" cx="94.8" cy="227.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=16
+FlashInfer: 0.2224 ms
+Humming: 0.2436 ms
+Humming / FlashInfer: 1.095x"></circle><circle class="pt flash" cx="135.6" cy="231.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=32
+FlashInfer: 0.1572 ms
+Humming: 0.2620 ms
+Humming / FlashInfer: 1.666x"></circle><circle class="pt humming" cx="135.6" cy="227.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=32
+FlashInfer: 0.1572 ms
+Humming: 0.2620 ms
+Humming / FlashInfer: 1.666x"></circle><circle class="pt flash" cx="176.4" cy="229.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=64
+FlashInfer: 0.2049 ms
+Humming: 0.2841 ms
+Humming / FlashInfer: 1.387x"></circle><circle class="pt humming" cx="176.4" cy="226.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=64
+FlashInfer: 0.2049 ms
+Humming: 0.2841 ms
+Humming / FlashInfer: 1.387x"></circle><circle class="pt flash" cx="217.2" cy="228.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=128
+FlashInfer: 0.2391 ms
+Humming: 0.2923 ms
+Humming / FlashInfer: 1.222x"></circle><circle class="pt humming" cx="217.2" cy="226.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=128
+FlashInfer: 0.2391 ms
+Humming: 0.2923 ms
+Humming / FlashInfer: 1.222x"></circle><circle class="pt flash" cx="258.0" cy="227.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=256
+FlashInfer: 0.2537 ms
+Humming: 0.3337 ms
+Humming / FlashInfer: 1.315x"></circle><circle class="pt humming" cx="258.0" cy="224.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=256
+FlashInfer: 0.2537 ms
+Humming: 0.3337 ms
+Humming / FlashInfer: 1.315x"></circle><circle class="pt flash" cx="298.8" cy="226.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=512
+FlashInfer: 0.2720 ms
+Humming: 0.5061 ms
+Humming / FlashInfer: 1.860x"></circle><circle class="pt humming" cx="298.8" cy="218.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=512
+FlashInfer: 0.2720 ms
+Humming: 0.5061 ms
+Humming / FlashInfer: 1.860x"></circle><circle class="pt flash" cx="339.6" cy="225.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=1024
+FlashInfer: 0.3021 ms
+Humming: 0.8689 ms
+Humming / FlashInfer: 2.876x"></circle><circle class="pt humming" cx="339.6" cy="204.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=1024
+FlashInfer: 0.3021 ms
+Humming: 0.8689 ms
+Humming / FlashInfer: 2.876x"></circle><circle class="pt flash" cx="380.4" cy="218.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=2048
+FlashInfer: 0.5061 ms
+Humming: 1.398 ms
+Humming / FlashInfer: 2.762x"></circle><circle class="pt humming" cx="380.4" cy="184.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=2048
+FlashInfer: 0.5061 ms
+Humming: 1.398 ms
+Humming / FlashInfer: 2.762x"></circle><circle class="pt flash" cx="421.2" cy="205.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=4096
+FlashInfer: 0.8447 ms
+Humming: 2.551 ms
+Humming / FlashInfer: 3.020x"></circle><circle class="pt humming" cx="421.2" cy="141.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=4096
+FlashInfer: 0.8447 ms
+Humming: 2.551 ms
+Humming / FlashInfer: 3.020x"></circle><circle class="pt flash" cx="462.0" cy="179.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=8192
+FlashInfer: 1.535 ms
+Humming: 4.762 ms
+Humming / FlashInfer: 3.103x"></circle><circle class="pt humming" cx="462.0" cy="58.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP2/EP4 batch=8192
+FlashInfer: 1.535 ms
+Humming: 4.762 ms
+Humming / FlashInfer: 3.103x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP4/EP2</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP4/EP2 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.450</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">2.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,229.2 94.8,228.1 135.6,224.4 176.4,220.2 217.2,217.2 258.0,216.2 298.8,213.8 339.6,210.0 380.4,198.8 421.2,173.5 462.0,118.3"></polyline><polyline class="line humming" points="54.0,225.2 94.8,222.7 135.6,219.9 176.4,217.4 217.2,216.6 258.0,215.4 298.8,212.8 339.6,199.7 380.4,173.6 421.2,134.9 462.0,56.4"></polyline><circle class="pt flash" cx="54.0" cy="229.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=8
+FlashInfer: 0.1115 ms
+Humming: 0.1685 ms
+Humming / FlashInfer: 1.512x"></circle><circle class="pt humming" cx="54.0" cy="225.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=8
+FlashInfer: 0.1115 ms
+Humming: 0.1685 ms
+Humming / FlashInfer: 1.512x"></circle><circle class="pt flash" cx="94.8" cy="228.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=16
+FlashInfer: 0.1276 ms
+Humming: 0.2048 ms
+Humming / FlashInfer: 1.605x"></circle><circle class="pt humming" cx="94.8" cy="222.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=16
+FlashInfer: 0.1276 ms
+Humming: 0.2048 ms
+Humming / FlashInfer: 1.605x"></circle><circle class="pt flash" cx="135.6" cy="224.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=32
+FlashInfer: 0.1797 ms
+Humming: 0.2437 ms
+Humming / FlashInfer: 1.356x"></circle><circle class="pt humming" cx="135.6" cy="219.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=32
+FlashInfer: 0.1797 ms
+Humming: 0.2437 ms
+Humming / FlashInfer: 1.356x"></circle><circle class="pt flash" cx="176.4" cy="220.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=64
+FlashInfer: 0.2405 ms
+Humming: 0.2802 ms
+Humming / FlashInfer: 1.165x"></circle><circle class="pt humming" cx="176.4" cy="217.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=64
+FlashInfer: 0.2405 ms
+Humming: 0.2802 ms
+Humming / FlashInfer: 1.165x"></circle><circle class="pt flash" cx="217.2" cy="217.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=128
+FlashInfer: 0.2827 ms
+Humming: 0.2910 ms
+Humming / FlashInfer: 1.030x"></circle><circle class="pt humming" cx="217.2" cy="216.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=128
+FlashInfer: 0.2827 ms
+Humming: 0.2910 ms
+Humming / FlashInfer: 1.030x"></circle><circle class="pt flash" cx="258.0" cy="216.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=256
+FlashInfer: 0.2967 ms
+Humming: 0.3080 ms
+Humming / FlashInfer: 1.038x"></circle><circle class="pt humming" cx="258.0" cy="215.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=256
+FlashInfer: 0.2967 ms
+Humming: 0.3080 ms
+Humming / FlashInfer: 1.038x"></circle><circle class="pt flash" cx="298.8" cy="213.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=512
+FlashInfer: 0.3320 ms
+Humming: 0.3454 ms
+Humming / FlashInfer: 1.040x"></circle><circle class="pt humming" cx="298.8" cy="212.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=512
+FlashInfer: 0.3320 ms
+Humming: 0.3454 ms
+Humming / FlashInfer: 1.040x"></circle><circle class="pt flash" cx="339.6" cy="210.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=1024
+FlashInfer: 0.3859 ms
+Humming: 0.5332 ms
+Humming / FlashInfer: 1.382x"></circle><circle class="pt humming" cx="339.6" cy="199.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=1024
+FlashInfer: 0.3859 ms
+Humming: 0.5332 ms
+Humming / FlashInfer: 1.382x"></circle><circle class="pt flash" cx="380.4" cy="198.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=2048
+FlashInfer: 0.5454 ms
+Humming: 0.9062 ms
+Humming / FlashInfer: 1.662x"></circle><circle class="pt humming" cx="380.4" cy="173.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=2048
+FlashInfer: 0.5454 ms
+Humming: 0.9062 ms
+Humming / FlashInfer: 1.662x"></circle><circle class="pt flash" cx="421.2" cy="173.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=4096
+FlashInfer: 0.9068 ms
+Humming: 1.458 ms
+Humming / FlashInfer: 1.608x"></circle><circle class="pt humming" cx="421.2" cy="134.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=4096
+FlashInfer: 0.9068 ms
+Humming: 1.458 ms
+Humming / FlashInfer: 1.608x"></circle><circle class="pt flash" cx="462.0" cy="118.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=8192
+FlashInfer: 1.695 ms
+Humming: 2.579 ms
+Humming / FlashInfer: 1.522x"></circle><circle class="pt humming" cx="462.0" cy="56.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP4/EP2 batch=8192
+FlashInfer: 1.695 ms
+Humming: 2.579 ms
+Humming / FlashInfer: 1.522x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP8/EP1</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP8/EP1 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.200</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">2.400</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,226.2 94.8,223.5 135.6,218.2 176.4,211.3 217.2,199.3 258.0,195.9 298.8,194.4 339.6,193.7 380.4,175.1 421.2,139.5 462.0,56.3"></polyline><polyline class="line humming" points="54.0,224.5 94.8,222.3 135.6,219.3 176.4,215.3 217.2,213.0 258.0,210.9 298.8,206.2 339.6,205.6 380.4,189.4 421.2,156.8 462.0,106.3"></polyline><circle class="pt flash" cx="54.0" cy="226.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=8
+FlashInfer: 0.1273 ms
+Humming: 0.1475 ms
+Humming / FlashInfer: 1.159x"></circle><circle class="pt humming" cx="54.0" cy="224.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=8
+FlashInfer: 0.1273 ms
+Humming: 0.1475 ms
+Humming / FlashInfer: 1.159x"></circle><circle class="pt flash" cx="94.8" cy="223.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=16
+FlashInfer: 0.1594 ms
+Humming: 0.1741 ms
+Humming / FlashInfer: 1.092x"></circle><circle class="pt humming" cx="94.8" cy="222.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=16
+FlashInfer: 0.1594 ms
+Humming: 0.1741 ms
+Humming / FlashInfer: 1.092x"></circle><circle class="pt flash" cx="135.6" cy="218.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=32
+FlashInfer: 0.2219 ms
+Humming: 0.2088 ms
+Humming / FlashInfer: 0.941x"></circle><circle class="pt humming" cx="135.6" cy="219.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=32
+FlashInfer: 0.2219 ms
+Humming: 0.2088 ms
+Humming / FlashInfer: 0.941x"></circle><circle class="pt flash" cx="176.4" cy="211.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=64
+FlashInfer: 0.3044 ms
+Humming: 0.2568 ms
+Humming / FlashInfer: 0.844x"></circle><circle class="pt humming" cx="176.4" cy="215.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=64
+FlashInfer: 0.3044 ms
+Humming: 0.2568 ms
+Humming / FlashInfer: 0.844x"></circle><circle class="pt flash" cx="217.2" cy="199.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=128
+FlashInfer: 0.4460 ms
+Humming: 0.2833 ms
+Humming / FlashInfer: 0.635x"></circle><circle class="pt humming" cx="217.2" cy="213.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=128
+FlashInfer: 0.4460 ms
+Humming: 0.2833 ms
+Humming / FlashInfer: 0.635x"></circle><circle class="pt flash" cx="258.0" cy="195.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=256
+FlashInfer: 0.4864 ms
+Humming: 0.3089 ms
+Humming / FlashInfer: 0.635x"></circle><circle class="pt humming" cx="258.0" cy="210.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=256
+FlashInfer: 0.4864 ms
+Humming: 0.3089 ms
+Humming / FlashInfer: 0.635x"></circle><circle class="pt flash" cx="298.8" cy="194.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=512
+FlashInfer: 0.5042 ms
+Humming: 0.3639 ms
+Humming / FlashInfer: 0.722x"></circle><circle class="pt humming" cx="298.8" cy="206.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=512
+FlashInfer: 0.5042 ms
+Humming: 0.3639 ms
+Humming / FlashInfer: 0.722x"></circle><circle class="pt flash" cx="339.6" cy="193.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=1024
+FlashInfer: 0.5125 ms
+Humming: 0.3711 ms
+Humming / FlashInfer: 0.724x"></circle><circle class="pt humming" cx="339.6" cy="205.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=1024
+FlashInfer: 0.5125 ms
+Humming: 0.3711 ms
+Humming / FlashInfer: 0.724x"></circle><circle class="pt flash" cx="380.4" cy="175.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=2048
+FlashInfer: 0.7321 ms
+Humming: 0.5623 ms
+Humming / FlashInfer: 0.768x"></circle><circle class="pt humming" cx="380.4" cy="189.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=2048
+FlashInfer: 0.7321 ms
+Humming: 0.5623 ms
+Humming / FlashInfer: 0.768x"></circle><circle class="pt flash" cx="421.2" cy="139.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=4096
+FlashInfer: 1.153 ms
+Humming: 0.9478 ms
+Humming / FlashInfer: 0.822x"></circle><circle class="pt humming" cx="421.2" cy="156.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=4096
+FlashInfer: 1.153 ms
+Humming: 0.9478 ms
+Humming / FlashInfer: 0.822x"></circle><circle class="pt flash" cx="462.0" cy="56.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=8192
+FlashInfer: 2.136 ms
+Humming: 1.546 ms
+Humming / FlashInfer: 0.724x"></circle><circle class="pt humming" cx="462.0" cy="106.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-flash TP8/EP1 batch=8192
+FlashInfer: 2.136 ms
+Humming: 1.546 ms
+Humming / FlashInfer: 0.724x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP1/EP8</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP1/EP8 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">13.50</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">27.00</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,236.0 94.8,235.5 135.6,234.8 176.4,233.6 217.2,232.8 258.0,232.2 298.8,231.3 339.6,230.3 380.4,227.6 421.2,221.7 462.0,208.9"></polyline><polyline class="line humming" points="54.0,232.7 94.8,231.9 135.6,231.6 176.4,231.3 217.2,230.2 258.0,227.8 298.8,219.6 339.6,209.7 380.4,187.5 421.2,143.9 462.0,57.0"></polyline><circle class="pt flash" cx="54.0" cy="236.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=8
+FlashInfer: 0.1327 ms
+Humming: 0.5739 ms
+Humming / FlashInfer: 4.326x"></circle><circle class="pt humming" cx="54.0" cy="232.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=8
+FlashInfer: 0.1327 ms
+Humming: 0.5739 ms
+Humming / FlashInfer: 4.326x"></circle><circle class="pt flash" cx="94.8" cy="235.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=16
+FlashInfer: 0.1955 ms
+Humming: 0.6727 ms
+Humming / FlashInfer: 3.440x"></circle><circle class="pt humming" cx="94.8" cy="231.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=16
+FlashInfer: 0.1955 ms
+Humming: 0.6727 ms
+Humming / FlashInfer: 3.440x"></circle><circle class="pt flash" cx="135.6" cy="234.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=32
+FlashInfer: 0.2934 ms
+Humming: 0.7236 ms
+Humming / FlashInfer: 2.466x"></circle><circle class="pt humming" cx="135.6" cy="231.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=32
+FlashInfer: 0.2934 ms
+Humming: 0.7236 ms
+Humming / FlashInfer: 2.466x"></circle><circle class="pt flash" cx="176.4" cy="233.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=64
+FlashInfer: 0.4547 ms
+Humming: 0.7612 ms
+Humming / FlashInfer: 1.674x"></circle><circle class="pt humming" cx="176.4" cy="231.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=64
+FlashInfer: 0.4547 ms
+Humming: 0.7612 ms
+Humming / FlashInfer: 1.674x"></circle><circle class="pt flash" cx="217.2" cy="232.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=128
+FlashInfer: 0.5611 ms
+Humming: 0.9100 ms
+Humming / FlashInfer: 1.622x"></circle><circle class="pt humming" cx="217.2" cy="230.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=128
+FlashInfer: 0.5611 ms
+Humming: 0.9100 ms
+Humming / FlashInfer: 1.622x"></circle><circle class="pt flash" cx="258.0" cy="232.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=256
+FlashInfer: 0.6357 ms
+Humming: 1.230 ms
+Humming / FlashInfer: 1.934x"></circle><circle class="pt humming" cx="258.0" cy="227.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=256
+FlashInfer: 0.6357 ms
+Humming: 1.230 ms
+Humming / FlashInfer: 1.934x"></circle><circle class="pt flash" cx="298.8" cy="231.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=512
+FlashInfer: 0.7643 ms
+Humming: 2.316 ms
+Humming / FlashInfer: 3.031x"></circle><circle class="pt humming" cx="298.8" cy="219.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=512
+FlashInfer: 0.7643 ms
+Humming: 2.316 ms
+Humming / FlashInfer: 3.031x"></circle><circle class="pt flash" cx="339.6" cy="230.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=1024
+FlashInfer: 0.8907 ms
+Humming: 3.628 ms
+Humming / FlashInfer: 4.074x"></circle><circle class="pt humming" cx="339.6" cy="209.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=1024
+FlashInfer: 0.8907 ms
+Humming: 3.628 ms
+Humming / FlashInfer: 4.074x"></circle><circle class="pt flash" cx="380.4" cy="227.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=2048
+FlashInfer: 1.250 ms
+Humming: 6.581 ms
+Humming / FlashInfer: 5.265x"></circle><circle class="pt humming" cx="380.4" cy="187.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=2048
+FlashInfer: 1.250 ms
+Humming: 6.581 ms
+Humming / FlashInfer: 5.265x"></circle><circle class="pt flash" cx="421.2" cy="221.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=4096
+FlashInfer: 2.033 ms
+Humming: 12.38 ms
+Humming / FlashInfer: 6.092x"></circle><circle class="pt humming" cx="421.2" cy="143.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=4096
+FlashInfer: 2.033 ms
+Humming: 12.38 ms
+Humming / FlashInfer: 6.092x"></circle><circle class="pt flash" cx="462.0" cy="208.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=8192
+FlashInfer: 3.737 ms
+Humming: 23.94 ms
+Humming / FlashInfer: 6.405x"></circle><circle class="pt humming" cx="462.0" cy="57.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP1/EP8 batch=8192
+FlashInfer: 3.737 ms
+Humming: 23.94 ms
+Humming / FlashInfer: 6.405x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP2/EP4</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP2/EP4 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">7.500</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">15.00</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,235.1 94.8,231.5 135.6,232.8 176.4,230.7 217.2,228.9 258.0,228.0 298.8,227.5 339.6,225.2 380.4,219.6 421.2,206.7 462.0,184.3"></polyline><polyline class="line humming" points="54.0,231.7 94.8,230.3 135.6,228.0 176.4,226.9 217.2,226.5 258.0,224.6 298.8,220.3 339.6,205.6 380.4,186.2 421.2,147.3 462.0,67.7"></polyline><circle class="pt flash" cx="54.0" cy="235.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=8
+FlashInfer: 0.1431 ms
+Humming: 0.3893 ms
+Humming / FlashInfer: 2.720x"></circle><circle class="pt humming" cx="54.0" cy="231.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=8
+FlashInfer: 0.1431 ms
+Humming: 0.3893 ms
+Humming / FlashInfer: 2.720x"></circle><circle class="pt flash" cx="94.8" cy="231.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=16
+FlashInfer: 0.4038 ms
+Humming: 0.4981 ms
+Humming / FlashInfer: 1.234x"></circle><circle class="pt humming" cx="94.8" cy="230.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=16
+FlashInfer: 0.4038 ms
+Humming: 0.4981 ms
+Humming / FlashInfer: 1.234x"></circle><circle class="pt flash" cx="135.6" cy="232.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=32
+FlashInfer: 0.3126 ms
+Humming: 0.6681 ms
+Humming / FlashInfer: 2.137x"></circle><circle class="pt humming" cx="135.6" cy="228.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=32
+FlashInfer: 0.3126 ms
+Humming: 0.6681 ms
+Humming / FlashInfer: 2.137x"></circle><circle class="pt flash" cx="176.4" cy="230.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=64
+FlashInfer: 0.4625 ms
+Humming: 0.7461 ms
+Humming / FlashInfer: 1.613x"></circle><circle class="pt humming" cx="176.4" cy="226.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=64
+FlashInfer: 0.4625 ms
+Humming: 0.7461 ms
+Humming / FlashInfer: 1.613x"></circle><circle class="pt flash" cx="217.2" cy="228.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=128
+FlashInfer: 0.5949 ms
+Humming: 0.7781 ms
+Humming / FlashInfer: 1.308x"></circle><circle class="pt humming" cx="217.2" cy="226.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=128
+FlashInfer: 0.5949 ms
+Humming: 0.7781 ms
+Humming / FlashInfer: 1.308x"></circle><circle class="pt flash" cx="258.0" cy="228.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=256
+FlashInfer: 0.6668 ms
+Humming: 0.9160 ms
+Humming / FlashInfer: 1.374x"></circle><circle class="pt humming" cx="258.0" cy="224.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=256
+FlashInfer: 0.6668 ms
+Humming: 0.9160 ms
+Humming / FlashInfer: 1.374x"></circle><circle class="pt flash" cx="298.8" cy="227.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=512
+FlashInfer: 0.7004 ms
+Humming: 1.235 ms
+Humming / FlashInfer: 1.763x"></circle><circle class="pt humming" cx="298.8" cy="220.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=512
+FlashInfer: 0.7004 ms
+Humming: 1.235 ms
+Humming / FlashInfer: 1.763x"></circle><circle class="pt flash" cx="339.6" cy="225.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=1024
+FlashInfer: 0.8728 ms
+Humming: 2.321 ms
+Humming / FlashInfer: 2.659x"></circle><circle class="pt humming" cx="339.6" cy="205.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=1024
+FlashInfer: 0.8728 ms
+Humming: 2.321 ms
+Humming / FlashInfer: 2.659x"></circle><circle class="pt flash" cx="380.4" cy="219.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=2048
+FlashInfer: 1.286 ms
+Humming: 3.751 ms
+Humming / FlashInfer: 2.916x"></circle><circle class="pt humming" cx="380.4" cy="186.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=2048
+FlashInfer: 1.286 ms
+Humming: 3.751 ms
+Humming / FlashInfer: 2.916x"></circle><circle class="pt flash" cx="421.2" cy="206.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=4096
+FlashInfer: 2.237 ms
+Humming: 6.628 ms
+Humming / FlashInfer: 2.963x"></circle><circle class="pt humming" cx="421.2" cy="147.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=4096
+FlashInfer: 2.237 ms
+Humming: 6.628 ms
+Humming / FlashInfer: 2.963x"></circle><circle class="pt flash" cx="462.0" cy="184.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=8192
+FlashInfer: 3.892 ms
+Humming: 12.51 ms
+Humming / FlashInfer: 3.215x"></circle><circle class="pt humming" cx="462.0" cy="67.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP2/EP4 batch=8192
+FlashInfer: 3.892 ms
+Humming: 12.51 ms
+Humming / FlashInfer: 3.215x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP4/EP2</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP4/EP2 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">3.800</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">7.600</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,232.8 94.8,230.8 135.6,227.4 176.4,222.6 217.2,215.8 258.0,215.2 298.8,214.4 339.6,209.7 380.4,198.4 421.2,176.4 462.0,128.4"></polyline><polyline class="line humming" points="54.0,229.9 94.8,227.2 135.6,223.5 176.4,219.7 217.2,216.8 258.0,215.6 298.8,211.6 339.6,203.0 380.4,168.3 421.2,137.2 462.0,57.6"></polyline><circle class="pt flash" cx="54.0" cy="232.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=8
+FlashInfer: 0.1558 ms
+Humming: 0.2644 ms
+Humming / FlashInfer: 1.698x"></circle><circle class="pt humming" cx="54.0" cy="229.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=8
+FlashInfer: 0.1558 ms
+Humming: 0.2644 ms
+Humming / FlashInfer: 1.698x"></circle><circle class="pt flash" cx="94.8" cy="230.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=16
+FlashInfer: 0.2312 ms
+Humming: 0.3664 ms
+Humming / FlashInfer: 1.585x"></circle><circle class="pt humming" cx="94.8" cy="227.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=16
+FlashInfer: 0.2312 ms
+Humming: 0.3664 ms
+Humming / FlashInfer: 1.585x"></circle><circle class="pt flash" cx="135.6" cy="227.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=32
+FlashInfer: 0.3612 ms
+Humming: 0.5067 ms
+Humming / FlashInfer: 1.403x"></circle><circle class="pt humming" cx="135.6" cy="223.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=32
+FlashInfer: 0.3612 ms
+Humming: 0.5067 ms
+Humming / FlashInfer: 1.403x"></circle><circle class="pt flash" cx="176.4" cy="222.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=64
+FlashInfer: 0.5409 ms
+Humming: 0.6482 ms
+Humming / FlashInfer: 1.198x"></circle><circle class="pt humming" cx="176.4" cy="219.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=64
+FlashInfer: 0.5409 ms
+Humming: 0.6482 ms
+Humming / FlashInfer: 1.198x"></circle><circle class="pt flash" cx="217.2" cy="215.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=128
+FlashInfer: 0.7946 ms
+Humming: 0.7551 ms
+Humming / FlashInfer: 0.950x"></circle><circle class="pt humming" cx="217.2" cy="216.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=128
+FlashInfer: 0.7946 ms
+Humming: 0.7551 ms
+Humming / FlashInfer: 0.950x"></circle><circle class="pt flash" cx="258.0" cy="215.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=256
+FlashInfer: 0.8171 ms
+Humming: 0.8020 ms
+Humming / FlashInfer: 0.982x"></circle><circle class="pt humming" cx="258.0" cy="215.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=256
+FlashInfer: 0.8171 ms
+Humming: 0.8020 ms
+Humming / FlashInfer: 0.982x"></circle><circle class="pt flash" cx="298.8" cy="214.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=512
+FlashInfer: 0.8462 ms
+Humming: 0.9501 ms
+Humming / FlashInfer: 1.123x"></circle><circle class="pt humming" cx="298.8" cy="211.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=512
+FlashInfer: 0.8462 ms
+Humming: 0.9501 ms
+Humming / FlashInfer: 1.123x"></circle><circle class="pt flash" cx="339.6" cy="209.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=1024
+FlashInfer: 1.023 ms
+Humming: 1.273 ms
+Humming / FlashInfer: 1.244x"></circle><circle class="pt humming" cx="339.6" cy="203.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=1024
+FlashInfer: 1.023 ms
+Humming: 1.273 ms
+Humming / FlashInfer: 1.244x"></circle><circle class="pt flash" cx="380.4" cy="198.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=2048
+FlashInfer: 1.446 ms
+Humming: 2.573 ms
+Humming / FlashInfer: 1.780x"></circle><circle class="pt humming" cx="380.4" cy="168.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=2048
+FlashInfer: 1.446 ms
+Humming: 2.573 ms
+Humming / FlashInfer: 1.780x"></circle><circle class="pt flash" cx="421.2" cy="176.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=4096
+FlashInfer: 2.267 ms
+Humming: 3.737 ms
+Humming / FlashInfer: 1.648x"></circle><circle class="pt humming" cx="421.2" cy="137.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=4096
+FlashInfer: 2.267 ms
+Humming: 3.737 ms
+Humming / FlashInfer: 1.648x"></circle><circle class="pt flash" cx="462.0" cy="128.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=8192
+FlashInfer: 4.066 ms
+Humming: 6.718 ms
+Humming / FlashInfer: 1.652x"></circle><circle class="pt humming" cx="462.0" cy="57.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP4/EP2 batch=8192
+FlashInfer: 4.066 ms
+Humming: 6.718 ms
+Humming / FlashInfer: 1.652x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP8/EP1</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP8/EP1 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">2.550</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">5.100</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,229.8 94.8,226.0 135.6,219.0 176.4,209.9 217.2,200.7 258.0,195.4 298.8,192.4 339.6,183.7 380.4,166.0 421.2,129.3 462.0,56.3"></polyline><polyline class="line humming" points="54.0,229.1 94.8,226.5 135.6,221.5 176.4,215.2 217.2,209.4 258.0,206.3 298.8,203.7 339.6,198.2 380.4,183.6 421.2,139.3 462.0,78.9"></polyline><circle class="pt flash" cx="54.0" cy="229.8" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=8
+FlashInfer: 0.1817 ms
+Humming: 0.1982 ms
+Humming / FlashInfer: 1.091x"></circle><circle class="pt humming" cx="54.0" cy="229.1" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=8
+FlashInfer: 0.1817 ms
+Humming: 0.1982 ms
+Humming / FlashInfer: 1.091x"></circle><circle class="pt flash" cx="94.8" cy="226.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=16
+FlashInfer: 0.2773 ms
+Humming: 0.2635 ms
+Humming / FlashInfer: 0.950x"></circle><circle class="pt humming" cx="94.8" cy="226.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=16
+FlashInfer: 0.2773 ms
+Humming: 0.2635 ms
+Humming / FlashInfer: 0.950x"></circle><circle class="pt flash" cx="135.6" cy="219.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=32
+FlashInfer: 0.4530 ms
+Humming: 0.3898 ms
+Humming / FlashInfer: 0.860x"></circle><circle class="pt humming" cx="135.6" cy="221.5" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=32
+FlashInfer: 0.4530 ms
+Humming: 0.3898 ms
+Humming / FlashInfer: 0.860x"></circle><circle class="pt flash" cx="176.4" cy="209.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=64
+FlashInfer: 0.6816 ms
+Humming: 0.5465 ms
+Humming / FlashInfer: 0.802x"></circle><circle class="pt humming" cx="176.4" cy="215.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=64
+FlashInfer: 0.6816 ms
+Humming: 0.5465 ms
+Humming / FlashInfer: 0.802x"></circle><circle class="pt flash" cx="217.2" cy="200.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=128
+FlashInfer: 0.9114 ms
+Humming: 0.6929 ms
+Humming / FlashInfer: 0.760x"></circle><circle class="pt humming" cx="217.2" cy="209.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=128
+FlashInfer: 0.9114 ms
+Humming: 0.6929 ms
+Humming / FlashInfer: 0.760x"></circle><circle class="pt flash" cx="258.0" cy="195.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=256
+FlashInfer: 1.045 ms
+Humming: 0.7705 ms
+Humming / FlashInfer: 0.737x"></circle><circle class="pt humming" cx="258.0" cy="206.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=256
+FlashInfer: 1.045 ms
+Humming: 0.7705 ms
+Humming / FlashInfer: 0.737x"></circle><circle class="pt flash" cx="298.8" cy="192.4" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=512
+FlashInfer: 1.122 ms
+Humming: 0.8364 ms
+Humming / FlashInfer: 0.746x"></circle><circle class="pt humming" cx="298.8" cy="203.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=512
+FlashInfer: 1.122 ms
+Humming: 0.8364 ms
+Humming / FlashInfer: 0.746x"></circle><circle class="pt flash" cx="339.6" cy="183.7" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=1024
+FlashInfer: 1.340 ms
+Humming: 0.9757 ms
+Humming / FlashInfer: 0.728x"></circle><circle class="pt humming" cx="339.6" cy="198.2" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=1024
+FlashInfer: 1.340 ms
+Humming: 0.9757 ms
+Humming / FlashInfer: 0.728x"></circle><circle class="pt flash" cx="380.4" cy="166.0" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=2048
+FlashInfer: 1.784 ms
+Humming: 1.342 ms
+Humming / FlashInfer: 0.753x"></circle><circle class="pt humming" cx="380.4" cy="183.6" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=2048
+FlashInfer: 1.784 ms
+Humming: 1.342 ms
+Humming / FlashInfer: 0.753x"></circle><circle class="pt flash" cx="421.2" cy="129.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=4096
+FlashInfer: 2.705 ms
+Humming: 2.454 ms
+Humming / FlashInfer: 0.907x"></circle><circle class="pt humming" cx="421.2" cy="139.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=4096
+FlashInfer: 2.705 ms
+Humming: 2.454 ms
+Humming / FlashInfer: 0.907x"></circle><circle class="pt flash" cx="462.0" cy="56.3" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=8192
+FlashInfer: 4.539 ms
+Humming: 3.973 ms
+Humming / FlashInfer: 0.875x"></circle><circle class="pt humming" cx="462.0" cy="78.9" r="4.2" data-tip="Total GEMM(w13+w2) | dsv4-pro TP8/EP1 batch=8192
+FlashInfer: 4.539 ms
+Humming: 3.973 ms
+Humming / FlashInfer: 0.875x"></circle></svg></figure></div></section>
+  <section><h2>w13/GEMM1 Latency Charts</h2><div class="legend"><span><i class="swatch flash"></i>FlashInfer PR #3738</span><span><i class="swatch humming"></i>Humming baseline</span></div><div class="axis-guide"><span>X axis: Batch per rank</span><span>Y axis: Median GEMM latency (ms)</span></div><div class="chart-grid"><figure class="chart"><figcaption>dsv4-flash TP1/EP8</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP1/EP8 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">3.450</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">6.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,235.6 94.8,235.2 135.6,234.6 176.4,233.6 217.2,233.2 258.0,233.0 298.8,232.6 339.6,231.9 380.4,228.3 421.2,219.5 462.0,209.8"></polyline><polyline class="line humming" points="54.0,232.8 94.8,232.5 135.6,232.1 176.4,231.7 217.2,231.3 258.0,227.9 298.8,220.6 339.6,209.6 380.4,188.3 421.2,144.9 462.0,57.8"></polyline><circle class="pt flash" cx="54.0" cy="235.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=8
+FlashInfer: 0.0464 ms
+Humming: 0.1438 ms
+Humming / FlashInfer: 3.096x"></circle><circle class="pt humming" cx="54.0" cy="232.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=8
+FlashInfer: 0.0464 ms
+Humming: 0.1438 ms
+Humming / FlashInfer: 3.096x"></circle><circle class="pt flash" cx="94.8" cy="235.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=16
+FlashInfer: 0.0614 ms
+Humming: 0.1521 ms
+Humming / FlashInfer: 2.477x"></circle><circle class="pt humming" cx="94.8" cy="232.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=16
+FlashInfer: 0.0614 ms
+Humming: 0.1521 ms
+Humming / FlashInfer: 2.477x"></circle><circle class="pt flash" cx="135.6" cy="234.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=32
+FlashInfer: 0.0816 ms
+Humming: 0.1672 ms
+Humming / FlashInfer: 2.048x"></circle><circle class="pt humming" cx="135.6" cy="232.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=32
+FlashInfer: 0.0816 ms
+Humming: 0.1672 ms
+Humming / FlashInfer: 2.048x"></circle><circle class="pt flash" cx="176.4" cy="233.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=64
+FlashInfer: 0.1141 ms
+Humming: 0.1803 ms
+Humming / FlashInfer: 1.581x"></circle><circle class="pt humming" cx="176.4" cy="231.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=64
+FlashInfer: 0.1141 ms
+Humming: 0.1803 ms
+Humming / FlashInfer: 1.581x"></circle><circle class="pt flash" cx="217.2" cy="233.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=128
+FlashInfer: 0.1286 ms
+Humming: 0.1924 ms
+Humming / FlashInfer: 1.496x"></circle><circle class="pt humming" cx="217.2" cy="231.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=128
+FlashInfer: 0.1286 ms
+Humming: 0.1924 ms
+Humming / FlashInfer: 1.496x"></circle><circle class="pt flash" cx="258.0" cy="233.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=256
+FlashInfer: 0.1370 ms
+Humming: 0.3096 ms
+Humming / FlashInfer: 2.260x"></circle><circle class="pt humming" cx="258.0" cy="227.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=256
+FlashInfer: 0.1370 ms
+Humming: 0.3096 ms
+Humming / FlashInfer: 2.260x"></circle><circle class="pt flash" cx="298.8" cy="232.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=512
+FlashInfer: 0.1480 ms
+Humming: 0.5569 ms
+Humming / FlashInfer: 3.763x"></circle><circle class="pt humming" cx="298.8" cy="220.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=512
+FlashInfer: 0.1480 ms
+Humming: 0.5569 ms
+Humming / FlashInfer: 3.763x"></circle><circle class="pt flash" cx="339.6" cy="231.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=1024
+FlashInfer: 0.1720 ms
+Humming: 0.9311 ms
+Humming / FlashInfer: 5.413x"></circle><circle class="pt humming" cx="339.6" cy="209.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=1024
+FlashInfer: 0.1720 ms
+Humming: 0.9311 ms
+Humming / FlashInfer: 5.413x"></circle><circle class="pt flash" cx="380.4" cy="228.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=2048
+FlashInfer: 0.2953 ms
+Humming: 1.655 ms
+Humming / FlashInfer: 5.605x"></circle><circle class="pt humming" cx="380.4" cy="188.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=2048
+FlashInfer: 0.2953 ms
+Humming: 1.655 ms
+Humming / FlashInfer: 5.605x"></circle><circle class="pt flash" cx="421.2" cy="219.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=4096
+FlashInfer: 0.5952 ms
+Humming: 3.130 ms
+Humming / FlashInfer: 5.259x"></circle><circle class="pt humming" cx="421.2" cy="144.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=4096
+FlashInfer: 0.5952 ms
+Humming: 3.130 ms
+Humming / FlashInfer: 5.259x"></circle><circle class="pt flash" cx="462.0" cy="209.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=8192
+FlashInfer: 0.9244 ms
+Humming: 6.093 ms
+Humming / FlashInfer: 6.591x"></circle><circle class="pt humming" cx="462.0" cy="57.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP1/EP8 batch=8192
+FlashInfer: 0.9244 ms
+Humming: 6.093 ms
+Humming / FlashInfer: 6.591x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP2/EP4</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP2/EP4 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.750</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">3.500</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,234.3 94.8,233.3 135.6,232.1 176.4,230.4 217.2,229.3 258.0,228.8 298.8,228.2 339.6,226.9 380.4,218.2 421.2,207.0 462.0,182.0"></polyline><polyline class="line humming" points="54.0,230.7 94.8,228.6 135.6,228.0 176.4,227.2 217.2,226.9 258.0,225.3 298.8,218.6 339.6,204.7 380.4,184.5 421.2,140.5 462.0,56.1"></polyline><circle class="pt flash" cx="54.0" cy="234.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=8
+FlashInfer: 0.0463 ms
+Humming: 0.1093 ms
+Humming / FlashInfer: 2.360x"></circle><circle class="pt humming" cx="54.0" cy="230.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=8
+FlashInfer: 0.0463 ms
+Humming: 0.1093 ms
+Humming / FlashInfer: 2.360x"></circle><circle class="pt flash" cx="94.8" cy="233.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=16
+FlashInfer: 0.0646 ms
+Humming: 0.1448 ms
+Humming / FlashInfer: 2.243x"></circle><circle class="pt humming" cx="94.8" cy="228.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=16
+FlashInfer: 0.0646 ms
+Humming: 0.1448 ms
+Humming / FlashInfer: 2.243x"></circle><circle class="pt flash" cx="135.6" cy="232.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=32
+FlashInfer: 0.0852 ms
+Humming: 0.1557 ms
+Humming / FlashInfer: 1.827x"></circle><circle class="pt humming" cx="135.6" cy="228.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=32
+FlashInfer: 0.0852 ms
+Humming: 0.1557 ms
+Humming / FlashInfer: 1.827x"></circle><circle class="pt flash" cx="176.4" cy="230.4" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=64
+FlashInfer: 0.1143 ms
+Humming: 0.1686 ms
+Humming / FlashInfer: 1.475x"></circle><circle class="pt humming" cx="176.4" cy="227.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=64
+FlashInfer: 0.1143 ms
+Humming: 0.1686 ms
+Humming / FlashInfer: 1.475x"></circle><circle class="pt flash" cx="217.2" cy="229.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=128
+FlashInfer: 0.1330 ms
+Humming: 0.1744 ms
+Humming / FlashInfer: 1.311x"></circle><circle class="pt humming" cx="217.2" cy="226.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=128
+FlashInfer: 0.1330 ms
+Humming: 0.1744 ms
+Humming / FlashInfer: 1.311x"></circle><circle class="pt flash" cx="258.0" cy="228.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=256
+FlashInfer: 0.1413 ms
+Humming: 0.2009 ms
+Humming / FlashInfer: 1.422x"></circle><circle class="pt humming" cx="258.0" cy="225.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=256
+FlashInfer: 0.1413 ms
+Humming: 0.2009 ms
+Humming / FlashInfer: 1.422x"></circle><circle class="pt flash" cx="298.8" cy="228.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=512
+FlashInfer: 0.1522 ms
+Humming: 0.3170 ms
+Humming / FlashInfer: 2.083x"></circle><circle class="pt humming" cx="298.8" cy="218.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=512
+FlashInfer: 0.1522 ms
+Humming: 0.3170 ms
+Humming / FlashInfer: 2.083x"></circle><circle class="pt flash" cx="339.6" cy="226.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=1024
+FlashInfer: 0.1746 ms
+Humming: 0.5572 ms
+Humming / FlashInfer: 3.192x"></circle><circle class="pt humming" cx="339.6" cy="204.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=1024
+FlashInfer: 0.1746 ms
+Humming: 0.5572 ms
+Humming / FlashInfer: 3.192x"></circle><circle class="pt flash" cx="380.4" cy="218.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=2048
+FlashInfer: 0.3242 ms
+Humming: 0.9048 ms
+Humming / FlashInfer: 2.791x"></circle><circle class="pt humming" cx="380.4" cy="184.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=2048
+FlashInfer: 0.3242 ms
+Humming: 0.9048 ms
+Humming / FlashInfer: 2.791x"></circle><circle class="pt flash" cx="421.2" cy="207.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=4096
+FlashInfer: 0.5164 ms
+Humming: 1.663 ms
+Humming / FlashInfer: 3.221x"></circle><circle class="pt humming" cx="421.2" cy="140.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=4096
+FlashInfer: 0.5164 ms
+Humming: 1.663 ms
+Humming / FlashInfer: 3.221x"></circle><circle class="pt flash" cx="462.0" cy="182.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=8192
+FlashInfer: 0.9485 ms
+Humming: 3.120 ms
+Humming / FlashInfer: 3.289x"></circle><circle class="pt humming" cx="462.0" cy="56.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP2/EP4 batch=8192
+FlashInfer: 0.9485 ms
+Humming: 3.120 ms
+Humming / FlashInfer: 3.289x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP4/EP2</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP4/EP2 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">0.9500</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">1.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,230.8 94.8,230.3 135.6,227.9 176.4,224.6 217.2,222.6 258.0,221.7 298.8,220.3 339.6,217.4 380.4,203.5 421.2,178.5 462.0,129.6"></polyline><polyline class="line humming" points="54.0,227.3 94.8,224.8 135.6,222.1 176.4,219.5 217.2,218.9 258.0,217.7 298.8,215.7 339.6,203.4 380.4,177.6 421.2,138.6 462.0,60.0"></polyline><circle class="pt flash" cx="54.0" cy="230.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=8
+FlashInfer: 0.0585 ms
+Humming: 0.0911 ms
+Humming / FlashInfer: 1.558x"></circle><circle class="pt humming" cx="54.0" cy="227.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=8
+FlashInfer: 0.0585 ms
+Humming: 0.0911 ms
+Humming / FlashInfer: 1.558x"></circle><circle class="pt flash" cx="94.8" cy="230.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=16
+FlashInfer: 0.0624 ms
+Humming: 0.1146 ms
+Humming / FlashInfer: 1.836x"></circle><circle class="pt humming" cx="94.8" cy="224.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=16
+FlashInfer: 0.0624 ms
+Humming: 0.1146 ms
+Humming / FlashInfer: 1.836x"></circle><circle class="pt flash" cx="135.6" cy="227.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=32
+FlashInfer: 0.0849 ms
+Humming: 0.1396 ms
+Humming / FlashInfer: 1.644x"></circle><circle class="pt humming" cx="135.6" cy="222.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=32
+FlashInfer: 0.0849 ms
+Humming: 0.1396 ms
+Humming / FlashInfer: 1.644x"></circle><circle class="pt flash" cx="176.4" cy="224.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=64
+FlashInfer: 0.1161 ms
+Humming: 0.1640 ms
+Humming / FlashInfer: 1.413x"></circle><circle class="pt humming" cx="176.4" cy="219.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=64
+FlashInfer: 0.1161 ms
+Humming: 0.1640 ms
+Humming / FlashInfer: 1.413x"></circle><circle class="pt flash" cx="217.2" cy="222.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=128
+FlashInfer: 0.1349 ms
+Humming: 0.1692 ms
+Humming / FlashInfer: 1.255x"></circle><circle class="pt humming" cx="217.2" cy="218.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=128
+FlashInfer: 0.1349 ms
+Humming: 0.1692 ms
+Humming / FlashInfer: 1.255x"></circle><circle class="pt flash" cx="258.0" cy="221.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=256
+FlashInfer: 0.1435 ms
+Humming: 0.1802 ms
+Humming / FlashInfer: 1.256x"></circle><circle class="pt humming" cx="258.0" cy="217.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=256
+FlashInfer: 0.1435 ms
+Humming: 0.1802 ms
+Humming / FlashInfer: 1.256x"></circle><circle class="pt flash" cx="298.8" cy="220.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=512
+FlashInfer: 0.1564 ms
+Humming: 0.1998 ms
+Humming / FlashInfer: 1.278x"></circle><circle class="pt humming" cx="298.8" cy="215.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=512
+FlashInfer: 0.1564 ms
+Humming: 0.1998 ms
+Humming / FlashInfer: 1.278x"></circle><circle class="pt flash" cx="339.6" cy="217.4" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=1024
+FlashInfer: 0.1831 ms
+Humming: 0.3143 ms
+Humming / FlashInfer: 1.717x"></circle><circle class="pt humming" cx="339.6" cy="203.4" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=1024
+FlashInfer: 0.1831 ms
+Humming: 0.3143 ms
+Humming / FlashInfer: 1.717x"></circle><circle class="pt flash" cx="380.4" cy="203.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=2048
+FlashInfer: 0.3139 ms
+Humming: 0.5556 ms
+Humming / FlashInfer: 1.770x"></circle><circle class="pt humming" cx="380.4" cy="177.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=2048
+FlashInfer: 0.3139 ms
+Humming: 0.5556 ms
+Humming / FlashInfer: 1.770x"></circle><circle class="pt flash" cx="421.2" cy="178.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=4096
+FlashInfer: 0.5477 ms
+Humming: 0.9210 ms
+Humming / FlashInfer: 1.682x"></circle><circle class="pt humming" cx="421.2" cy="138.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=4096
+FlashInfer: 0.5477 ms
+Humming: 0.9210 ms
+Humming / FlashInfer: 1.682x"></circle><circle class="pt flash" cx="462.0" cy="129.6" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=8192
+FlashInfer: 1.006 ms
+Humming: 1.656 ms
+Humming / FlashInfer: 1.647x"></circle><circle class="pt humming" cx="462.0" cy="60.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP4/EP2 batch=8192
+FlashInfer: 1.006 ms
+Humming: 1.656 ms
+Humming / FlashInfer: 1.647x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP8/EP1</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP8/EP1 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">0.6500</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">1.300</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,229.7 94.8,227.1 135.6,223.8 176.4,219.2 217.2,203.4 258.0,199.4 298.8,211.2 339.6,205.9 380.4,183.1 421.2,141.4 462.0,59.0"></polyline><polyline class="line humming" points="54.0,224.9 94.8,222.3 135.6,219.2 176.4,214.8 217.2,212.3 258.0,210.1 298.8,206.0 339.6,205.1 380.4,187.5 421.2,149.7 462.0,92.5"></polyline><circle class="pt flash" cx="54.0" cy="229.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=8
+FlashInfer: 0.0465 ms
+Humming: 0.0775 ms
+Humming / FlashInfer: 1.665x"></circle><circle class="pt humming" cx="54.0" cy="224.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=8
+FlashInfer: 0.0465 ms
+Humming: 0.0775 ms
+Humming / FlashInfer: 1.665x"></circle><circle class="pt flash" cx="94.8" cy="227.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=16
+FlashInfer: 0.0634 ms
+Humming: 0.0939 ms
+Humming / FlashInfer: 1.480x"></circle><circle class="pt humming" cx="94.8" cy="222.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=16
+FlashInfer: 0.0634 ms
+Humming: 0.0939 ms
+Humming / FlashInfer: 1.480x"></circle><circle class="pt flash" cx="135.6" cy="223.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=32
+FlashInfer: 0.0844 ms
+Humming: 0.1143 ms
+Humming / FlashInfer: 1.354x"></circle><circle class="pt humming" cx="135.6" cy="219.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=32
+FlashInfer: 0.0844 ms
+Humming: 0.1143 ms
+Humming / FlashInfer: 1.354x"></circle><circle class="pt flash" cx="176.4" cy="219.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=64
+FlashInfer: 0.1143 ms
+Humming: 0.1419 ms
+Humming / FlashInfer: 1.242x"></circle><circle class="pt humming" cx="176.4" cy="214.8" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=64
+FlashInfer: 0.1143 ms
+Humming: 0.1419 ms
+Humming / FlashInfer: 1.242x"></circle><circle class="pt flash" cx="217.2" cy="203.4" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=128
+FlashInfer: 0.2153 ms
+Humming: 0.1584 ms
+Humming / FlashInfer: 0.736x"></circle><circle class="pt humming" cx="217.2" cy="212.3" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=128
+FlashInfer: 0.2153 ms
+Humming: 0.1584 ms
+Humming / FlashInfer: 0.736x"></circle><circle class="pt flash" cx="258.0" cy="199.4" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=256
+FlashInfer: 0.2410 ms
+Humming: 0.1725 ms
+Humming / FlashInfer: 0.716x"></circle><circle class="pt humming" cx="258.0" cy="210.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=256
+FlashInfer: 0.2410 ms
+Humming: 0.1725 ms
+Humming / FlashInfer: 0.716x"></circle><circle class="pt flash" cx="298.8" cy="211.2" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=512
+FlashInfer: 0.1650 ms
+Humming: 0.1983 ms
+Humming / FlashInfer: 1.201x"></circle><circle class="pt humming" cx="298.8" cy="206.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=512
+FlashInfer: 0.1650 ms
+Humming: 0.1983 ms
+Humming / FlashInfer: 1.201x"></circle><circle class="pt flash" cx="339.6" cy="205.9" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=1024
+FlashInfer: 0.1995 ms
+Humming: 0.2043 ms
+Humming / FlashInfer: 1.024x"></circle><circle class="pt humming" cx="339.6" cy="205.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=1024
+FlashInfer: 0.1995 ms
+Humming: 0.2043 ms
+Humming / FlashInfer: 1.024x"></circle><circle class="pt flash" cx="380.4" cy="183.1" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=2048
+FlashInfer: 0.3450 ms
+Humming: 0.3173 ms
+Humming / FlashInfer: 0.920x"></circle><circle class="pt humming" cx="380.4" cy="187.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=2048
+FlashInfer: 0.3450 ms
+Humming: 0.3173 ms
+Humming / FlashInfer: 0.920x"></circle><circle class="pt flash" cx="421.2" cy="141.4" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=4096
+FlashInfer: 0.6123 ms
+Humming: 0.5592 ms
+Humming / FlashInfer: 0.913x"></circle><circle class="pt humming" cx="421.2" cy="149.7" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=4096
+FlashInfer: 0.6123 ms
+Humming: 0.5592 ms
+Humming / FlashInfer: 0.913x"></circle><circle class="pt flash" cx="462.0" cy="59.0" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=8192
+FlashInfer: 1.140 ms
+Humming: 0.9252 ms
+Humming / FlashInfer: 0.812x"></circle><circle class="pt humming" cx="462.0" cy="92.5" r="4.2" data-tip="w13/GEMM1 | dsv4-flash TP8/EP1 batch=8192
+FlashInfer: 1.140 ms
+Humming: 0.9252 ms
+Humming / FlashInfer: 0.812x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP1/EP8</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP1/EP8 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">9.000</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">18.00</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,236.1 94.8,235.7 135.6,235.0 176.4,233.8 217.2,233.1 258.0,232.6 298.8,232.3 339.6,230.4 380.4,227.8 421.2,222.3 462.0,209.7"></polyline><polyline class="line humming" points="54.0,232.9 94.8,232.2 135.6,231.8 176.4,231.6 217.2,230.4 258.0,228.0 298.8,219.9 339.6,210.0 380.4,187.9 421.2,144.7 462.0,58.2"></polyline><circle class="pt flash" cx="54.0" cy="236.1" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=8
+FlashInfer: 0.0757 ms
+Humming: 0.3591 ms
+Humming / FlashInfer: 4.741x"></circle><circle class="pt humming" cx="54.0" cy="232.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=8
+FlashInfer: 0.0757 ms
+Humming: 0.3591 ms
+Humming / FlashInfer: 4.741x"></circle><circle class="pt flash" cx="94.8" cy="235.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=16
+FlashInfer: 0.1160 ms
+Humming: 0.4243 ms
+Humming / FlashInfer: 3.659x"></circle><circle class="pt humming" cx="94.8" cy="232.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=16
+FlashInfer: 0.1160 ms
+Humming: 0.4243 ms
+Humming / FlashInfer: 3.659x"></circle><circle class="pt flash" cx="135.6" cy="235.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=32
+FlashInfer: 0.1768 ms
+Humming: 0.4582 ms
+Humming / FlashInfer: 2.591x"></circle><circle class="pt humming" cx="135.6" cy="231.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=32
+FlashInfer: 0.1768 ms
+Humming: 0.4582 ms
+Humming / FlashInfer: 2.591x"></circle><circle class="pt flash" cx="176.4" cy="233.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=64
+FlashInfer: 0.2796 ms
+Humming: 0.4827 ms
+Humming / FlashInfer: 1.727x"></circle><circle class="pt humming" cx="176.4" cy="231.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=64
+FlashInfer: 0.2796 ms
+Humming: 0.4827 ms
+Humming / FlashInfer: 1.727x"></circle><circle class="pt flash" cx="217.2" cy="233.1" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=128
+FlashInfer: 0.3445 ms
+Humming: 0.5822 ms
+Humming / FlashInfer: 1.690x"></circle><circle class="pt humming" cx="217.2" cy="230.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=128
+FlashInfer: 0.3445 ms
+Humming: 0.5822 ms
+Humming / FlashInfer: 1.690x"></circle><circle class="pt flash" cx="258.0" cy="232.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=256
+FlashInfer: 0.3912 ms
+Humming: 0.7975 ms
+Humming / FlashInfer: 2.038x"></circle><circle class="pt humming" cx="258.0" cy="228.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=256
+FlashInfer: 0.3912 ms
+Humming: 0.7975 ms
+Humming / FlashInfer: 2.038x"></circle><circle class="pt flash" cx="298.8" cy="232.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=512
+FlashInfer: 0.4164 ms
+Humming: 1.519 ms
+Humming / FlashInfer: 3.647x"></circle><circle class="pt humming" cx="298.8" cy="219.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=512
+FlashInfer: 0.4164 ms
+Humming: 1.519 ms
+Humming / FlashInfer: 3.647x"></circle><circle class="pt flash" cx="339.6" cy="230.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=1024
+FlashInfer: 0.5868 ms
+Humming: 2.392 ms
+Humming / FlashInfer: 4.076x"></circle><circle class="pt humming" cx="339.6" cy="210.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=1024
+FlashInfer: 0.5868 ms
+Humming: 2.392 ms
+Humming / FlashInfer: 4.076x"></circle><circle class="pt flash" cx="380.4" cy="227.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=2048
+FlashInfer: 0.8115 ms
+Humming: 4.352 ms
+Humming / FlashInfer: 5.364x"></circle><circle class="pt humming" cx="380.4" cy="187.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=2048
+FlashInfer: 0.8115 ms
+Humming: 4.352 ms
+Humming / FlashInfer: 5.364x"></circle><circle class="pt flash" cx="421.2" cy="222.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=4096
+FlashInfer: 1.306 ms
+Humming: 8.185 ms
+Humming / FlashInfer: 6.268x"></circle><circle class="pt humming" cx="421.2" cy="144.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=4096
+FlashInfer: 1.306 ms
+Humming: 8.185 ms
+Humming / FlashInfer: 6.268x"></circle><circle class="pt flash" cx="462.0" cy="209.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=8192
+FlashInfer: 2.422 ms
+Humming: 15.85 ms
+Humming / FlashInfer: 6.547x"></circle><circle class="pt humming" cx="462.0" cy="58.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP1/EP8 batch=8192
+FlashInfer: 2.422 ms
+Humming: 15.85 ms
+Humming / FlashInfer: 6.547x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP2/EP4</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP2/EP4 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">4.600</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">9.200</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,235.2 94.8,230.1 135.6,232.9 176.4,231.0 217.2,229.3 258.0,228.3 298.8,227.7 339.6,224.9 380.4,219.0 421.2,207.3 462.0,184.1"></polyline><polyline class="line humming" points="54.0,231.8 94.8,230.3 135.6,227.9 176.4,226.8 217.2,226.2 258.0,224.3 298.8,219.6 339.6,203.9 380.4,183.2 421.2,141.4 462.0,56.0"></polyline><circle class="pt flash" cx="54.0" cy="235.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=8
+FlashInfer: 0.0829 ms
+Humming: 0.2344 ms
+Humming / FlashInfer: 2.827x"></circle><circle class="pt humming" cx="54.0" cy="231.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=8
+FlashInfer: 0.0829 ms
+Humming: 0.2344 ms
+Humming / FlashInfer: 2.827x"></circle><circle class="pt flash" cx="94.8" cy="230.1" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=16
+FlashInfer: 0.3113 ms
+Humming: 0.3055 ms
+Humming / FlashInfer: 0.981x"></circle><circle class="pt humming" cx="94.8" cy="230.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=16
+FlashInfer: 0.3113 ms
+Humming: 0.3055 ms
+Humming / FlashInfer: 0.981x"></circle><circle class="pt flash" cx="135.6" cy="232.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=32
+FlashInfer: 0.1846 ms
+Humming: 0.4127 ms
+Humming / FlashInfer: 2.235x"></circle><circle class="pt humming" cx="135.6" cy="227.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=32
+FlashInfer: 0.1846 ms
+Humming: 0.4127 ms
+Humming / FlashInfer: 2.235x"></circle><circle class="pt flash" cx="176.4" cy="231.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=64
+FlashInfer: 0.2734 ms
+Humming: 0.4627 ms
+Humming / FlashInfer: 1.693x"></circle><circle class="pt humming" cx="176.4" cy="226.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=64
+FlashInfer: 0.2734 ms
+Humming: 0.4627 ms
+Humming / FlashInfer: 1.693x"></circle><circle class="pt flash" cx="217.2" cy="229.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=128
+FlashInfer: 0.3508 ms
+Humming: 0.4876 ms
+Humming / FlashInfer: 1.390x"></circle><circle class="pt humming" cx="217.2" cy="226.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=128
+FlashInfer: 0.3508 ms
+Humming: 0.4876 ms
+Humming / FlashInfer: 1.390x"></circle><circle class="pt flash" cx="258.0" cy="228.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=256
+FlashInfer: 0.3965 ms
+Humming: 0.5758 ms
+Humming / FlashInfer: 1.452x"></circle><circle class="pt humming" cx="258.0" cy="224.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=256
+FlashInfer: 0.3965 ms
+Humming: 0.5758 ms
+Humming / FlashInfer: 1.452x"></circle><circle class="pt flash" cx="298.8" cy="227.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=512
+FlashInfer: 0.4194 ms
+Humming: 0.7892 ms
+Humming / FlashInfer: 1.882x"></circle><circle class="pt humming" cx="298.8" cy="219.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=512
+FlashInfer: 0.4194 ms
+Humming: 0.7892 ms
+Humming / FlashInfer: 1.882x"></circle><circle class="pt flash" cx="339.6" cy="224.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=1024
+FlashInfer: 0.5486 ms
+Humming: 1.501 ms
+Humming / FlashInfer: 2.736x"></circle><circle class="pt humming" cx="339.6" cy="203.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=1024
+FlashInfer: 0.5486 ms
+Humming: 1.501 ms
+Humming / FlashInfer: 2.736x"></circle><circle class="pt flash" cx="380.4" cy="219.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=2048
+FlashInfer: 0.8154 ms
+Humming: 2.440 ms
+Humming / FlashInfer: 2.993x"></circle><circle class="pt humming" cx="380.4" cy="183.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=2048
+FlashInfer: 0.8154 ms
+Humming: 2.440 ms
+Humming / FlashInfer: 2.993x"></circle><circle class="pt flash" cx="421.2" cy="207.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=4096
+FlashInfer: 1.344 ms
+Humming: 4.333 ms
+Humming / FlashInfer: 3.223x"></circle><circle class="pt humming" cx="421.2" cy="141.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=4096
+FlashInfer: 1.344 ms
+Humming: 4.333 ms
+Humming / FlashInfer: 3.223x"></circle><circle class="pt flash" cx="462.0" cy="184.1" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=8192
+FlashInfer: 2.395 ms
+Humming: 8.201 ms
+Humming / FlashInfer: 3.424x"></circle><circle class="pt humming" cx="462.0" cy="56.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP2/EP4 batch=8192
+FlashInfer: 2.395 ms
+Humming: 8.201 ms
+Humming / FlashInfer: 3.424x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP4/EP2</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP4/EP2 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">2.450</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">4.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,233.7 94.8,232.2 135.6,229.4 176.4,225.6 217.2,221.8 258.0,219.9 298.8,219.5 339.6,214.0 380.4,202.5 421.2,181.3 462.0,133.5"></polyline><polyline class="line humming" points="54.0,230.5 94.8,227.9 135.6,224.2 176.4,220.6 217.2,217.8 258.0,217.0 298.8,212.7 339.6,203.7 380.4,165.6 421.2,137.3 462.0,57.3"></polyline><circle class="pt flash" cx="54.0" cy="233.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=8
+FlashInfer: 0.0794 ms
+Humming: 0.1566 ms
+Humming / FlashInfer: 1.973x"></circle><circle class="pt humming" cx="54.0" cy="230.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=8
+FlashInfer: 0.0794 ms
+Humming: 0.1566 ms
+Humming / FlashInfer: 1.973x"></circle><circle class="pt flash" cx="94.8" cy="232.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=16
+FlashInfer: 0.1168 ms
+Humming: 0.2206 ms
+Humming / FlashInfer: 1.889x"></circle><circle class="pt humming" cx="94.8" cy="227.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=16
+FlashInfer: 0.1168 ms
+Humming: 0.2206 ms
+Humming / FlashInfer: 1.889x"></circle><circle class="pt flash" cx="135.6" cy="229.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=32
+FlashInfer: 0.1833 ms
+Humming: 0.3091 ms
+Humming / FlashInfer: 1.686x"></circle><circle class="pt humming" cx="135.6" cy="224.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=32
+FlashInfer: 0.1833 ms
+Humming: 0.3091 ms
+Humming / FlashInfer: 1.686x"></circle><circle class="pt flash" cx="176.4" cy="225.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=64
+FlashInfer: 0.2761 ms
+Humming: 0.3960 ms
+Humming / FlashInfer: 1.434x"></circle><circle class="pt humming" cx="176.4" cy="220.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=64
+FlashInfer: 0.2761 ms
+Humming: 0.3960 ms
+Humming / FlashInfer: 1.434x"></circle><circle class="pt flash" cx="217.2" cy="221.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=128
+FlashInfer: 0.3674 ms
+Humming: 0.4633 ms
+Humming / FlashInfer: 1.261x"></circle><circle class="pt humming" cx="217.2" cy="217.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=128
+FlashInfer: 0.3674 ms
+Humming: 0.4633 ms
+Humming / FlashInfer: 1.261x"></circle><circle class="pt flash" cx="258.0" cy="219.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=256
+FlashInfer: 0.4128 ms
+Humming: 0.4838 ms
+Humming / FlashInfer: 1.172x"></circle><circle class="pt humming" cx="258.0" cy="217.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=256
+FlashInfer: 0.4128 ms
+Humming: 0.4838 ms
+Humming / FlashInfer: 1.172x"></circle><circle class="pt flash" cx="298.8" cy="219.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=512
+FlashInfer: 0.4217 ms
+Humming: 0.5857 ms
+Humming / FlashInfer: 1.389x"></circle><circle class="pt humming" cx="298.8" cy="212.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=512
+FlashInfer: 0.4217 ms
+Humming: 0.5857 ms
+Humming / FlashInfer: 1.389x"></circle><circle class="pt flash" cx="339.6" cy="214.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=1024
+FlashInfer: 0.5551 ms
+Humming: 0.8028 ms
+Humming / FlashInfer: 1.446x"></circle><circle class="pt humming" cx="339.6" cy="203.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=1024
+FlashInfer: 0.5551 ms
+Humming: 0.8028 ms
+Humming / FlashInfer: 1.446x"></circle><circle class="pt flash" cx="380.4" cy="202.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=2048
+FlashInfer: 0.8316 ms
+Humming: 1.724 ms
+Humming / FlashInfer: 2.073x"></circle><circle class="pt humming" cx="380.4" cy="165.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=2048
+FlashInfer: 0.8316 ms
+Humming: 1.724 ms
+Humming / FlashInfer: 2.073x"></circle><circle class="pt flash" cx="421.2" cy="181.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=4096
+FlashInfer: 1.345 ms
+Humming: 2.407 ms
+Humming / FlashInfer: 1.789x"></circle><circle class="pt humming" cx="421.2" cy="137.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=4096
+FlashInfer: 1.345 ms
+Humming: 2.407 ms
+Humming / FlashInfer: 1.789x"></circle><circle class="pt flash" cx="462.0" cy="133.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=8192
+FlashInfer: 2.497 ms
+Humming: 4.339 ms
+Humming / FlashInfer: 1.737x"></circle><circle class="pt humming" cx="462.0" cy="57.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP4/EP2 batch=8192
+FlashInfer: 2.497 ms
+Humming: 4.339 ms
+Humming / FlashInfer: 1.737x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP8/EP1</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP8/EP1 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.450</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">2.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,231.6 94.8,228.8 135.6,224.1 176.4,217.4 217.2,211.3 258.0,207.4 298.8,205.8 339.6,197.5 380.4,178.3 421.2,137.3 462.0,57.7"></polyline><polyline class="line humming" points="54.0,229.4 94.8,226.5 135.6,221.0 176.4,214.2 217.2,207.9 258.0,204.4 298.8,202.7 339.6,196.0 380.4,180.7 421.2,130.2 462.0,59.5"></polyline><circle class="pt flash" cx="54.0" cy="231.6" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=8
+FlashInfer: 0.0765 ms
+Humming: 0.1080 ms
+Humming / FlashInfer: 1.413x"></circle><circle class="pt humming" cx="54.0" cy="229.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=8
+FlashInfer: 0.0765 ms
+Humming: 0.1080 ms
+Humming / FlashInfer: 1.413x"></circle><circle class="pt flash" cx="94.8" cy="228.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=16
+FlashInfer: 0.1172 ms
+Humming: 0.1500 ms
+Humming / FlashInfer: 1.280x"></circle><circle class="pt humming" cx="94.8" cy="226.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=16
+FlashInfer: 0.1172 ms
+Humming: 0.1500 ms
+Humming / FlashInfer: 1.280x"></circle><circle class="pt flash" cx="135.6" cy="224.1" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=32
+FlashInfer: 0.1841 ms
+Humming: 0.2285 ms
+Humming / FlashInfer: 1.241x"></circle><circle class="pt humming" cx="135.6" cy="221.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=32
+FlashInfer: 0.1841 ms
+Humming: 0.2285 ms
+Humming / FlashInfer: 1.241x"></circle><circle class="pt flash" cx="176.4" cy="217.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=64
+FlashInfer: 0.2794 ms
+Humming: 0.3262 ms
+Humming / FlashInfer: 1.167x"></circle><circle class="pt humming" cx="176.4" cy="214.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=64
+FlashInfer: 0.2794 ms
+Humming: 0.3262 ms
+Humming / FlashInfer: 1.167x"></circle><circle class="pt flash" cx="217.2" cy="211.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=128
+FlashInfer: 0.3667 ms
+Humming: 0.4161 ms
+Humming / FlashInfer: 1.135x"></circle><circle class="pt humming" cx="217.2" cy="207.9" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=128
+FlashInfer: 0.3667 ms
+Humming: 0.4161 ms
+Humming / FlashInfer: 1.135x"></circle><circle class="pt flash" cx="258.0" cy="207.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=256
+FlashInfer: 0.4226 ms
+Humming: 0.4656 ms
+Humming / FlashInfer: 1.102x"></circle><circle class="pt humming" cx="258.0" cy="204.4" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=256
+FlashInfer: 0.4226 ms
+Humming: 0.4656 ms
+Humming / FlashInfer: 1.102x"></circle><circle class="pt flash" cx="298.8" cy="205.8" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=512
+FlashInfer: 0.4457 ms
+Humming: 0.4897 ms
+Humming / FlashInfer: 1.099x"></circle><circle class="pt humming" cx="298.8" cy="202.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=512
+FlashInfer: 0.4457 ms
+Humming: 0.4897 ms
+Humming / FlashInfer: 1.099x"></circle><circle class="pt flash" cx="339.6" cy="197.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=1024
+FlashInfer: 0.5646 ms
+Humming: 0.5854 ms
+Humming / FlashInfer: 1.037x"></circle><circle class="pt humming" cx="339.6" cy="196.0" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=1024
+FlashInfer: 0.5646 ms
+Humming: 0.5854 ms
+Humming / FlashInfer: 1.037x"></circle><circle class="pt flash" cx="380.4" cy="178.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=2048
+FlashInfer: 0.8386 ms
+Humming: 0.8046 ms
+Humming / FlashInfer: 0.959x"></circle><circle class="pt humming" cx="380.4" cy="180.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=2048
+FlashInfer: 0.8386 ms
+Humming: 0.8046 ms
+Humming / FlashInfer: 0.959x"></circle><circle class="pt flash" cx="421.2" cy="137.3" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=4096
+FlashInfer: 1.425 ms
+Humming: 1.526 ms
+Humming / FlashInfer: 1.071x"></circle><circle class="pt humming" cx="421.2" cy="130.2" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=4096
+FlashInfer: 1.425 ms
+Humming: 1.526 ms
+Humming / FlashInfer: 1.071x"></circle><circle class="pt flash" cx="462.0" cy="57.7" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=8192
+FlashInfer: 2.562 ms
+Humming: 2.536 ms
+Humming / FlashInfer: 0.990x"></circle><circle class="pt humming" cx="462.0" cy="59.5" r="4.2" data-tip="w13/GEMM1 | dsv4-pro TP8/EP1 batch=8192
+FlashInfer: 2.562 ms
+Humming: 2.536 ms
+Humming / FlashInfer: 0.990x"></circle></svg></figure></div></section>
+  <section><h2>w2/GEMM2 Latency Charts</h2><div class="legend"><span><i class="swatch flash"></i>FlashInfer PR #3738</span><span><i class="swatch humming"></i>Humming baseline</span></div><div class="axis-guide"><span>X axis: Batch per rank</span><span>Y axis: Median GEMM latency (ms)</span></div><div class="chart-grid"><figure class="chart"><figcaption>dsv4-flash TP1/EP8</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP1/EP8 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.800</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">3.600</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,228.0 94.8,234.5 135.6,233.7 176.4,232.7 217.2,232.3 258.0,232.0 298.8,231.7 339.6,231.0 380.4,227.2 421.2,220.3 462.0,206.2"></polyline><polyline class="line humming" points="54.0,231.3 94.8,231.2 135.6,230.6 176.4,230.4 217.2,229.8 258.0,214.6 298.8,219.3 339.6,208.6 380.4,187.9 421.2,145.2 462.0,60.1"></polyline><circle class="pt flash" cx="54.0" cy="228.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=8
+FlashInfer: 0.1598 ms
+Humming: 0.1005 ms
+Humming / FlashInfer: 0.629x"></circle><circle class="pt humming" cx="54.0" cy="231.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=8
+FlashInfer: 0.1598 ms
+Humming: 0.1005 ms
+Humming / FlashInfer: 0.629x"></circle><circle class="pt flash" cx="94.8" cy="234.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=16
+FlashInfer: 0.0450 ms
+Humming: 0.1026 ms
+Humming / FlashInfer: 2.281x"></circle><circle class="pt humming" cx="94.8" cy="231.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=16
+FlashInfer: 0.0450 ms
+Humming: 0.1026 ms
+Humming / FlashInfer: 2.281x"></circle><circle class="pt flash" cx="135.6" cy="233.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=32
+FlashInfer: 0.0580 ms
+Humming: 0.1127 ms
+Humming / FlashInfer: 1.942x"></circle><circle class="pt humming" cx="135.6" cy="230.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=32
+FlashInfer: 0.0580 ms
+Humming: 0.1127 ms
+Humming / FlashInfer: 1.942x"></circle><circle class="pt flash" cx="176.4" cy="232.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=64
+FlashInfer: 0.0764 ms
+Humming: 0.1179 ms
+Humming / FlashInfer: 1.544x"></circle><circle class="pt humming" cx="176.4" cy="230.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=64
+FlashInfer: 0.0764 ms
+Humming: 0.1179 ms
+Humming / FlashInfer: 1.544x"></circle><circle class="pt flash" cx="217.2" cy="232.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=128
+FlashInfer: 0.0842 ms
+Humming: 0.1272 ms
+Humming / FlashInfer: 1.510x"></circle><circle class="pt humming" cx="217.2" cy="229.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=128
+FlashInfer: 0.0842 ms
+Humming: 0.1272 ms
+Humming / FlashInfer: 1.510x"></circle><circle class="pt flash" cx="258.0" cy="232.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=256
+FlashInfer: 0.0879 ms
+Humming: 0.3970 ms
+Humming / FlashInfer: 4.516x"></circle><circle class="pt humming" cx="258.0" cy="214.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=256
+FlashInfer: 0.0879 ms
+Humming: 0.3970 ms
+Humming / FlashInfer: 4.516x"></circle><circle class="pt flash" cx="298.8" cy="231.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=512
+FlashInfer: 0.0941 ms
+Humming: 0.3131 ms
+Humming / FlashInfer: 3.328x"></circle><circle class="pt humming" cx="298.8" cy="219.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=512
+FlashInfer: 0.0941 ms
+Humming: 0.3131 ms
+Humming / FlashInfer: 3.328x"></circle><circle class="pt flash" cx="339.6" cy="231.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=1024
+FlashInfer: 0.1070 ms
+Humming: 0.5045 ms
+Humming / FlashInfer: 4.714x"></circle><circle class="pt humming" cx="339.6" cy="208.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=1024
+FlashInfer: 0.1070 ms
+Humming: 0.5045 ms
+Humming / FlashInfer: 4.714x"></circle><circle class="pt flash" cx="380.4" cy="227.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=2048
+FlashInfer: 0.1737 ms
+Humming: 0.8708 ms
+Humming / FlashInfer: 5.013x"></circle><circle class="pt humming" cx="380.4" cy="187.9" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=2048
+FlashInfer: 0.1737 ms
+Humming: 0.8708 ms
+Humming / FlashInfer: 5.013x"></circle><circle class="pt flash" cx="421.2" cy="220.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=4096
+FlashInfer: 0.2966 ms
+Humming: 1.627 ms
+Humming / FlashInfer: 5.487x"></circle><circle class="pt humming" cx="421.2" cy="145.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=4096
+FlashInfer: 0.2966 ms
+Humming: 1.627 ms
+Humming / FlashInfer: 5.487x"></circle><circle class="pt flash" cx="462.0" cy="206.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=8192
+FlashInfer: 0.5470 ms
+Humming: 3.138 ms
+Humming / FlashInfer: 5.736x"></circle><circle class="pt humming" cx="462.0" cy="60.1" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP1/EP8 batch=8192
+FlashInfer: 0.5470 ms
+Humming: 3.138 ms
+Humming / FlashInfer: 5.736x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP2/EP4</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP2/EP4 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">0.9500</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">1.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,232.6 94.8,220.1 135.6,229.3 176.4,227.3 217.2,225.7 258.0,225.0 298.8,224.2 339.6,223.4 380.4,217.6 421.2,201.9 462.0,174.4"></polyline><polyline class="line humming" points="54.0,228.4 94.8,226.4 135.6,225.6 176.4,224.7 217.2,224.4 258.0,222.8 298.8,216.8 339.6,203.7 380.4,184.3 421.2,142.1 462.0,61.5"></polyline><circle class="pt flash" cx="54.0" cy="232.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=8
+FlashInfer: 0.0414 ms
+Humming: 0.0806 ms
+Humming / FlashInfer: 1.948x"></circle><circle class="pt humming" cx="54.0" cy="228.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=8
+FlashInfer: 0.0414 ms
+Humming: 0.0806 ms
+Humming / FlashInfer: 1.948x"></circle><circle class="pt flash" cx="94.8" cy="220.1" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=16
+FlashInfer: 0.1578 ms
+Humming: 0.0988 ms
+Humming / FlashInfer: 0.626x"></circle><circle class="pt humming" cx="94.8" cy="226.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=16
+FlashInfer: 0.1578 ms
+Humming: 0.0988 ms
+Humming / FlashInfer: 0.626x"></circle><circle class="pt flash" cx="135.6" cy="229.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=32
+FlashInfer: 0.0720 ms
+Humming: 0.1063 ms
+Humming / FlashInfer: 1.476x"></circle><circle class="pt humming" cx="135.6" cy="225.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=32
+FlashInfer: 0.0720 ms
+Humming: 0.1063 ms
+Humming / FlashInfer: 1.476x"></circle><circle class="pt flash" cx="176.4" cy="227.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=64
+FlashInfer: 0.0906 ms
+Humming: 0.1155 ms
+Humming / FlashInfer: 1.275x"></circle><circle class="pt humming" cx="176.4" cy="224.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=64
+FlashInfer: 0.0906 ms
+Humming: 0.1155 ms
+Humming / FlashInfer: 1.275x"></circle><circle class="pt flash" cx="217.2" cy="225.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=128
+FlashInfer: 0.1061 ms
+Humming: 0.1179 ms
+Humming / FlashInfer: 1.111x"></circle><circle class="pt humming" cx="217.2" cy="224.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=128
+FlashInfer: 0.1061 ms
+Humming: 0.1179 ms
+Humming / FlashInfer: 1.111x"></circle><circle class="pt flash" cx="258.0" cy="225.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=256
+FlashInfer: 0.1124 ms
+Humming: 0.1328 ms
+Humming / FlashInfer: 1.181x"></circle><circle class="pt humming" cx="258.0" cy="222.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=256
+FlashInfer: 0.1124 ms
+Humming: 0.1328 ms
+Humming / FlashInfer: 1.181x"></circle><circle class="pt flash" cx="298.8" cy="224.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=512
+FlashInfer: 0.1199 ms
+Humming: 0.1891 ms
+Humming / FlashInfer: 1.578x"></circle><circle class="pt humming" cx="298.8" cy="216.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=512
+FlashInfer: 0.1199 ms
+Humming: 0.1891 ms
+Humming / FlashInfer: 1.578x"></circle><circle class="pt flash" cx="339.6" cy="223.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=1024
+FlashInfer: 0.1276 ms
+Humming: 0.3118 ms
+Humming / FlashInfer: 2.444x"></circle><circle class="pt humming" cx="339.6" cy="203.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=1024
+FlashInfer: 0.1276 ms
+Humming: 0.3118 ms
+Humming / FlashInfer: 2.444x"></circle><circle class="pt flash" cx="380.4" cy="217.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=2048
+FlashInfer: 0.1819 ms
+Humming: 0.4932 ms
+Humming / FlashInfer: 2.711x"></circle><circle class="pt humming" cx="380.4" cy="184.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=2048
+FlashInfer: 0.1819 ms
+Humming: 0.4932 ms
+Humming / FlashInfer: 2.711x"></circle><circle class="pt flash" cx="421.2" cy="201.9" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=4096
+FlashInfer: 0.3283 ms
+Humming: 0.8879 ms
+Humming / FlashInfer: 2.705x"></circle><circle class="pt humming" cx="421.2" cy="142.1" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=4096
+FlashInfer: 0.3283 ms
+Humming: 0.8879 ms
+Humming / FlashInfer: 2.705x"></circle><circle class="pt flash" cx="462.0" cy="174.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=8192
+FlashInfer: 0.5862 ms
+Humming: 1.642 ms
+Humming / FlashInfer: 2.802x"></circle><circle class="pt humming" cx="462.0" cy="61.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP2/EP4 batch=8192
+FlashInfer: 0.5862 ms
+Humming: 1.642 ms
+Humming / FlashInfer: 2.802x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP4/EP2</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP4/EP2 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">0.5500</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">1.100</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,227.2 94.8,225.0 135.6,219.5 176.4,214.0 217.2,209.7 258.0,208.7 298.8,204.6 339.6,199.6 380.4,194.3 421.2,170.7 462.0,109.7"></polyline><polyline class="line humming" points="54.0,222.7 94.8,220.3 135.6,217.8 176.4,215.5 217.2,214.5 258.0,213.4 298.8,210.1 339.6,196.6 380.4,172.3 421.2,137.9 462.0,66.7"></polyline><circle class="pt flash" cx="54.0" cy="227.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=8
+FlashInfer: 0.0530 ms
+Humming: 0.0774 ms
+Humming / FlashInfer: 1.461x"></circle><circle class="pt humming" cx="54.0" cy="222.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=8
+FlashInfer: 0.0530 ms
+Humming: 0.0774 ms
+Humming / FlashInfer: 1.461x"></circle><circle class="pt flash" cx="94.8" cy="225.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=16
+FlashInfer: 0.0652 ms
+Humming: 0.0902 ms
+Humming / FlashInfer: 1.384x"></circle><circle class="pt humming" cx="94.8" cy="220.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=16
+FlashInfer: 0.0652 ms
+Humming: 0.0902 ms
+Humming / FlashInfer: 1.384x"></circle><circle class="pt flash" cx="135.6" cy="219.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=32
+FlashInfer: 0.0948 ms
+Humming: 0.1040 ms
+Humming / FlashInfer: 1.098x"></circle><circle class="pt humming" cx="135.6" cy="217.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=32
+FlashInfer: 0.0948 ms
+Humming: 0.1040 ms
+Humming / FlashInfer: 1.098x"></circle><circle class="pt flash" cx="176.4" cy="214.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=64
+FlashInfer: 0.1244 ms
+Humming: 0.1163 ms
+Humming / FlashInfer: 0.934x"></circle><circle class="pt humming" cx="176.4" cy="215.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=64
+FlashInfer: 0.1244 ms
+Humming: 0.1163 ms
+Humming / FlashInfer: 0.934x"></circle><circle class="pt flash" cx="217.2" cy="209.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=128
+FlashInfer: 0.1478 ms
+Humming: 0.1218 ms
+Humming / FlashInfer: 0.824x"></circle><circle class="pt humming" cx="217.2" cy="214.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=128
+FlashInfer: 0.1478 ms
+Humming: 0.1218 ms
+Humming / FlashInfer: 0.824x"></circle><circle class="pt flash" cx="258.0" cy="208.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=256
+FlashInfer: 0.1532 ms
+Humming: 0.1277 ms
+Humming / FlashInfer: 0.833x"></circle><circle class="pt humming" cx="258.0" cy="213.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=256
+FlashInfer: 0.1532 ms
+Humming: 0.1277 ms
+Humming / FlashInfer: 0.833x"></circle><circle class="pt flash" cx="298.8" cy="204.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=512
+FlashInfer: 0.1757 ms
+Humming: 0.1457 ms
+Humming / FlashInfer: 0.829x"></circle><circle class="pt humming" cx="298.8" cy="210.1" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=512
+FlashInfer: 0.1757 ms
+Humming: 0.1457 ms
+Humming / FlashInfer: 0.829x"></circle><circle class="pt flash" cx="339.6" cy="199.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=1024
+FlashInfer: 0.2028 ms
+Humming: 0.2189 ms
+Humming / FlashInfer: 1.079x"></circle><circle class="pt humming" cx="339.6" cy="196.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=1024
+FlashInfer: 0.2028 ms
+Humming: 0.2189 ms
+Humming / FlashInfer: 1.079x"></circle><circle class="pt flash" cx="380.4" cy="194.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=2048
+FlashInfer: 0.2315 ms
+Humming: 0.3506 ms
+Humming / FlashInfer: 1.515x"></circle><circle class="pt humming" cx="380.4" cy="172.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=2048
+FlashInfer: 0.2315 ms
+Humming: 0.3506 ms
+Humming / FlashInfer: 1.515x"></circle><circle class="pt flash" cx="421.2" cy="170.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=4096
+FlashInfer: 0.3591 ms
+Humming: 0.5369 ms
+Humming / FlashInfer: 1.495x"></circle><circle class="pt humming" cx="421.2" cy="137.9" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=4096
+FlashInfer: 0.3591 ms
+Humming: 0.5369 ms
+Humming / FlashInfer: 1.495x"></circle><circle class="pt flash" cx="462.0" cy="109.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=8192
+FlashInfer: 0.6895 ms
+Humming: 0.9230 ms
+Humming / FlashInfer: 1.339x"></circle><circle class="pt humming" cx="462.0" cy="66.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP4/EP2 batch=8192
+FlashInfer: 0.6895 ms
+Humming: 0.9230 ms
+Humming / FlashInfer: 1.339x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-flash TP8/EP1</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-flash TP8/EP1 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">0.6000</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">1.200</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,223.3 94.8,220.8 135.6,213.7 176.4,204.8 217.2,198.0 258.0,195.5 298.8,179.6 339.6,184.0 380.4,171.5 421.2,145.6 462.0,68.5"></polyline><polyline class="line humming" points="54.0,225.2 94.8,223.4 135.6,221.0 176.4,217.6 217.2,215.9 258.0,213.9 298.8,209.0 339.6,208.8 380.4,195.6 421.2,171.3 462.0,132.0"></polyline><circle class="pt flash" cx="54.0" cy="223.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=8
+FlashInfer: 0.0808 ms
+Humming: 0.0700 ms
+Humming / FlashInfer: 0.867x"></circle><circle class="pt humming" cx="54.0" cy="225.2" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=8
+FlashInfer: 0.0808 ms
+Humming: 0.0700 ms
+Humming / FlashInfer: 0.867x"></circle><circle class="pt flash" cx="94.8" cy="220.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=16
+FlashInfer: 0.0960 ms
+Humming: 0.0802 ms
+Humming / FlashInfer: 0.836x"></circle><circle class="pt humming" cx="94.8" cy="223.4" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=16
+FlashInfer: 0.0960 ms
+Humming: 0.0802 ms
+Humming / FlashInfer: 0.836x"></circle><circle class="pt flash" cx="135.6" cy="213.7" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=32
+FlashInfer: 0.1375 ms
+Humming: 0.0945 ms
+Humming / FlashInfer: 0.688x"></circle><circle class="pt humming" cx="135.6" cy="221.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=32
+FlashInfer: 0.1375 ms
+Humming: 0.0945 ms
+Humming / FlashInfer: 0.688x"></circle><circle class="pt flash" cx="176.4" cy="204.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=64
+FlashInfer: 0.1901 ms
+Humming: 0.1149 ms
+Humming / FlashInfer: 0.604x"></circle><circle class="pt humming" cx="176.4" cy="217.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=64
+FlashInfer: 0.1901 ms
+Humming: 0.1149 ms
+Humming / FlashInfer: 0.604x"></circle><circle class="pt flash" cx="217.2" cy="198.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=128
+FlashInfer: 0.2307 ms
+Humming: 0.1249 ms
+Humming / FlashInfer: 0.541x"></circle><circle class="pt humming" cx="217.2" cy="215.9" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=128
+FlashInfer: 0.2307 ms
+Humming: 0.1249 ms
+Humming / FlashInfer: 0.541x"></circle><circle class="pt flash" cx="258.0" cy="195.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=256
+FlashInfer: 0.2454 ms
+Humming: 0.1364 ms
+Humming / FlashInfer: 0.556x"></circle><circle class="pt humming" cx="258.0" cy="213.9" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=256
+FlashInfer: 0.2454 ms
+Humming: 0.1364 ms
+Humming / FlashInfer: 0.556x"></circle><circle class="pt flash" cx="298.8" cy="179.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=512
+FlashInfer: 0.3392 ms
+Humming: 0.1656 ms
+Humming / FlashInfer: 0.488x"></circle><circle class="pt humming" cx="298.8" cy="209.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=512
+FlashInfer: 0.3392 ms
+Humming: 0.1656 ms
+Humming / FlashInfer: 0.488x"></circle><circle class="pt flash" cx="339.6" cy="184.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=1024
+FlashInfer: 0.3130 ms
+Humming: 0.1668 ms
+Humming / FlashInfer: 0.533x"></circle><circle class="pt humming" cx="339.6" cy="208.8" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=1024
+FlashInfer: 0.3130 ms
+Humming: 0.1668 ms
+Humming / FlashInfer: 0.533x"></circle><circle class="pt flash" cx="380.4" cy="171.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=2048
+FlashInfer: 0.3872 ms
+Humming: 0.2449 ms
+Humming / FlashInfer: 0.633x"></circle><circle class="pt humming" cx="380.4" cy="195.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=2048
+FlashInfer: 0.3872 ms
+Humming: 0.2449 ms
+Humming / FlashInfer: 0.633x"></circle><circle class="pt flash" cx="421.2" cy="145.6" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=4096
+FlashInfer: 0.5404 ms
+Humming: 0.3885 ms
+Humming / FlashInfer: 0.719x"></circle><circle class="pt humming" cx="421.2" cy="171.3" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=4096
+FlashInfer: 0.5404 ms
+Humming: 0.3885 ms
+Humming / FlashInfer: 0.719x"></circle><circle class="pt flash" cx="462.0" cy="68.5" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=8192
+FlashInfer: 0.9961 ms
+Humming: 0.6204 ms
+Humming / FlashInfer: 0.623x"></circle><circle class="pt humming" cx="462.0" cy="132.0" r="4.2" data-tip="w2/GEMM2 | dsv4-flash TP8/EP1 batch=8192
+FlashInfer: 0.9961 ms
+Humming: 0.6204 ms
+Humming / FlashInfer: 0.623x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP1/EP8</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP1/EP8 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">4.550</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">9.100</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,235.7 94.8,235.2 135.6,234.4 176.4,233.1 217.2,232.2 258.0,231.5 298.8,229.2 339.6,230.2 380.4,227.2 421.2,220.8 462.0,207.7"></polyline><polyline class="line humming" points="54.0,232.2 94.8,231.5 135.6,231.1 176.4,230.8 217.2,229.7 258.0,227.4 298.8,219.2 339.6,209.4 380.4,187.3 421.2,143.4 462.0,56.7"></polyline><circle class="pt flash" cx="54.0" cy="235.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=8
+FlashInfer: 0.0569 ms
+Humming: 0.2148 ms
+Humming / FlashInfer: 3.773x"></circle><circle class="pt humming" cx="54.0" cy="232.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=8
+FlashInfer: 0.0569 ms
+Humming: 0.2148 ms
+Humming / FlashInfer: 3.773x"></circle><circle class="pt flash" cx="94.8" cy="235.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=16
+FlashInfer: 0.0796 ms
+Humming: 0.2484 ms
+Humming / FlashInfer: 3.122x"></circle><circle class="pt humming" cx="94.8" cy="231.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=16
+FlashInfer: 0.0796 ms
+Humming: 0.2484 ms
+Humming / FlashInfer: 3.122x"></circle><circle class="pt flash" cx="135.6" cy="234.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=32
+FlashInfer: 0.1166 ms
+Humming: 0.2655 ms
+Humming / FlashInfer: 2.277x"></circle><circle class="pt humming" cx="135.6" cy="231.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=32
+FlashInfer: 0.1166 ms
+Humming: 0.2655 ms
+Humming / FlashInfer: 2.277x"></circle><circle class="pt flash" cx="176.4" cy="233.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=64
+FlashInfer: 0.1751 ms
+Humming: 0.2785 ms
+Humming / FlashInfer: 1.590x"></circle><circle class="pt humming" cx="176.4" cy="230.8" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=64
+FlashInfer: 0.1751 ms
+Humming: 0.2785 ms
+Humming / FlashInfer: 1.590x"></circle><circle class="pt flash" cx="217.2" cy="232.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=128
+FlashInfer: 0.2167 ms
+Humming: 0.3278 ms
+Humming / FlashInfer: 1.513x"></circle><circle class="pt humming" cx="217.2" cy="229.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=128
+FlashInfer: 0.2167 ms
+Humming: 0.3278 ms
+Humming / FlashInfer: 1.513x"></circle><circle class="pt flash" cx="258.0" cy="231.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=256
+FlashInfer: 0.2445 ms
+Humming: 0.4321 ms
+Humming / FlashInfer: 1.767x"></circle><circle class="pt humming" cx="258.0" cy="227.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=256
+FlashInfer: 0.2445 ms
+Humming: 0.4321 ms
+Humming / FlashInfer: 1.767x"></circle><circle class="pt flash" cx="298.8" cy="229.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=512
+FlashInfer: 0.3479 ms
+Humming: 0.7975 ms
+Humming / FlashInfer: 2.293x"></circle><circle class="pt humming" cx="298.8" cy="219.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=512
+FlashInfer: 0.3479 ms
+Humming: 0.7975 ms
+Humming / FlashInfer: 2.293x"></circle><circle class="pt flash" cx="339.6" cy="230.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=1024
+FlashInfer: 0.3039 ms
+Humming: 1.237 ms
+Humming / FlashInfer: 4.069x"></circle><circle class="pt humming" cx="339.6" cy="209.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=1024
+FlashInfer: 0.3039 ms
+Humming: 1.237 ms
+Humming / FlashInfer: 4.069x"></circle><circle class="pt flash" cx="380.4" cy="227.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=2048
+FlashInfer: 0.4386 ms
+Humming: 2.229 ms
+Humming / FlashInfer: 5.082x"></circle><circle class="pt humming" cx="380.4" cy="187.3" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=2048
+FlashInfer: 0.4386 ms
+Humming: 2.229 ms
+Humming / FlashInfer: 5.082x"></circle><circle class="pt flash" cx="421.2" cy="220.8" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=4096
+FlashInfer: 0.7267 ms
+Humming: 4.198 ms
+Humming / FlashInfer: 5.777x"></circle><circle class="pt humming" cx="421.2" cy="143.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=4096
+FlashInfer: 0.7267 ms
+Humming: 4.198 ms
+Humming / FlashInfer: 5.777x"></circle><circle class="pt flash" cx="462.0" cy="207.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=8192
+FlashInfer: 1.315 ms
+Humming: 8.082 ms
+Humming / FlashInfer: 6.144x"></circle><circle class="pt humming" cx="462.0" cy="56.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP1/EP8 batch=8192
+FlashInfer: 1.315 ms
+Humming: 8.082 ms
+Humming / FlashInfer: 6.144x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP2/EP4</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP2/EP4 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">2.450</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">4.900</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,234.5 94.8,233.2 135.6,231.7 176.4,229.2 217.2,226.9 258.0,225.8 298.8,225.4 339.6,223.6 380.4,217.5 421.2,200.0 462.0,175.0"></polyline><polyline class="line humming" points="54.0,230.6 94.8,229.0 135.6,226.4 176.4,225.3 217.2,225.0 258.0,222.9 298.8,218.5 339.6,203.0 380.4,182.7 421.2,141.9 462.0,58.4"></polyline><circle class="pt flash" cx="54.0" cy="234.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=8
+FlashInfer: 0.0602 ms
+Humming: 0.1549 ms
+Humming / FlashInfer: 2.573x"></circle><circle class="pt humming" cx="54.0" cy="230.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=8
+FlashInfer: 0.0602 ms
+Humming: 0.1549 ms
+Humming / FlashInfer: 2.573x"></circle><circle class="pt flash" cx="94.8" cy="233.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=16
+FlashInfer: 0.0925 ms
+Humming: 0.1926 ms
+Humming / FlashInfer: 2.083x"></circle><circle class="pt humming" cx="94.8" cy="229.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=16
+FlashInfer: 0.0925 ms
+Humming: 0.1926 ms
+Humming / FlashInfer: 2.083x"></circle><circle class="pt flash" cx="135.6" cy="231.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=32
+FlashInfer: 0.1280 ms
+Humming: 0.2554 ms
+Humming / FlashInfer: 1.995x"></circle><circle class="pt humming" cx="135.6" cy="226.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=32
+FlashInfer: 0.1280 ms
+Humming: 0.2554 ms
+Humming / FlashInfer: 1.995x"></circle><circle class="pt flash" cx="176.4" cy="229.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=64
+FlashInfer: 0.1891 ms
+Humming: 0.2834 ms
+Humming / FlashInfer: 1.499x"></circle><circle class="pt humming" cx="176.4" cy="225.3" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=64
+FlashInfer: 0.1891 ms
+Humming: 0.2834 ms
+Humming / FlashInfer: 1.499x"></circle><circle class="pt flash" cx="217.2" cy="226.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=128
+FlashInfer: 0.2440 ms
+Humming: 0.2904 ms
+Humming / FlashInfer: 1.190x"></circle><circle class="pt humming" cx="217.2" cy="225.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=128
+FlashInfer: 0.2440 ms
+Humming: 0.2904 ms
+Humming / FlashInfer: 1.190x"></circle><circle class="pt flash" cx="258.0" cy="225.8" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=256
+FlashInfer: 0.2704 ms
+Humming: 0.3402 ms
+Humming / FlashInfer: 1.258x"></circle><circle class="pt humming" cx="258.0" cy="222.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=256
+FlashInfer: 0.2704 ms
+Humming: 0.3402 ms
+Humming / FlashInfer: 1.258x"></circle><circle class="pt flash" cx="298.8" cy="225.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=512
+FlashInfer: 0.2810 ms
+Humming: 0.4454 ms
+Humming / FlashInfer: 1.585x"></circle><circle class="pt humming" cx="298.8" cy="218.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=512
+FlashInfer: 0.2810 ms
+Humming: 0.4454 ms
+Humming / FlashInfer: 1.585x"></circle><circle class="pt flash" cx="339.6" cy="223.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=1024
+FlashInfer: 0.3242 ms
+Humming: 0.8196 ms
+Humming / FlashInfer: 2.528x"></circle><circle class="pt humming" cx="339.6" cy="203.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=1024
+FlashInfer: 0.3242 ms
+Humming: 0.8196 ms
+Humming / FlashInfer: 2.528x"></circle><circle class="pt flash" cx="380.4" cy="217.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=2048
+FlashInfer: 0.4709 ms
+Humming: 1.310 ms
+Humming / FlashInfer: 2.783x"></circle><circle class="pt humming" cx="380.4" cy="182.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=2048
+FlashInfer: 0.4709 ms
+Humming: 1.310 ms
+Humming / FlashInfer: 2.783x"></circle><circle class="pt flash" cx="421.2" cy="200.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=4096
+FlashInfer: 0.8922 ms
+Humming: 2.295 ms
+Humming / FlashInfer: 2.572x"></circle><circle class="pt humming" cx="421.2" cy="141.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=4096
+FlashInfer: 0.8922 ms
+Humming: 2.295 ms
+Humming / FlashInfer: 2.572x"></circle><circle class="pt flash" cx="462.0" cy="175.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=8192
+FlashInfer: 1.497 ms
+Humming: 4.312 ms
+Humming / FlashInfer: 2.880x"></circle><circle class="pt humming" cx="462.0" cy="58.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP2/EP4 batch=8192
+FlashInfer: 1.497 ms
+Humming: 4.312 ms
+Humming / FlashInfer: 2.880x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP4/EP2</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP4/EP2 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.350</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">2.700</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,231.3 94.8,228.4 135.6,223.6 176.4,217.1 217.2,204.9 258.0,206.6 298.8,205.1 339.6,201.8 380.4,190.8 421.2,167.7 462.0,119.0"></polyline><polyline class="line humming" points="54.0,228.9 94.8,226.0 135.6,222.1 176.4,218.0 217.2,215.1 258.0,213.1 298.8,209.6 339.6,201.7 380.4,173.2 421.2,137.1 462.0,58.1"></polyline><circle class="pt flash" cx="54.0" cy="231.3" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=8
+FlashInfer: 0.0764 ms
+Humming: 0.1078 ms
+Humming / FlashInfer: 1.412x"></circle><circle class="pt humming" cx="54.0" cy="228.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=8
+FlashInfer: 0.0764 ms
+Humming: 0.1078 ms
+Humming / FlashInfer: 1.412x"></circle><circle class="pt flash" cx="94.8" cy="228.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=16
+FlashInfer: 0.1144 ms
+Humming: 0.1459 ms
+Humming / FlashInfer: 1.275x"></circle><circle class="pt humming" cx="94.8" cy="226.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=16
+FlashInfer: 0.1144 ms
+Humming: 0.1459 ms
+Humming / FlashInfer: 1.275x"></circle><circle class="pt flash" cx="135.6" cy="223.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=32
+FlashInfer: 0.1779 ms
+Humming: 0.1977 ms
+Humming / FlashInfer: 1.111x"></circle><circle class="pt humming" cx="135.6" cy="222.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=32
+FlashInfer: 0.1779 ms
+Humming: 0.1977 ms
+Humming / FlashInfer: 1.111x"></circle><circle class="pt flash" cx="176.4" cy="217.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=64
+FlashInfer: 0.2648 ms
+Humming: 0.2522 ms
+Humming / FlashInfer: 0.953x"></circle><circle class="pt humming" cx="176.4" cy="218.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=64
+FlashInfer: 0.2648 ms
+Humming: 0.2522 ms
+Humming / FlashInfer: 0.953x"></circle><circle class="pt flash" cx="217.2" cy="204.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=128
+FlashInfer: 0.4272 ms
+Humming: 0.2918 ms
+Humming / FlashInfer: 0.683x"></circle><circle class="pt humming" cx="217.2" cy="215.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=128
+FlashInfer: 0.4272 ms
+Humming: 0.2918 ms
+Humming / FlashInfer: 0.683x"></circle><circle class="pt flash" cx="258.0" cy="206.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=256
+FlashInfer: 0.4044 ms
+Humming: 0.3182 ms
+Humming / FlashInfer: 0.787x"></circle><circle class="pt humming" cx="258.0" cy="213.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=256
+FlashInfer: 0.4044 ms
+Humming: 0.3182 ms
+Humming / FlashInfer: 0.787x"></circle><circle class="pt flash" cx="298.8" cy="205.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=512
+FlashInfer: 0.4244 ms
+Humming: 0.3644 ms
+Humming / FlashInfer: 0.859x"></circle><circle class="pt humming" cx="298.8" cy="209.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=512
+FlashInfer: 0.4244 ms
+Humming: 0.3644 ms
+Humming / FlashInfer: 0.859x"></circle><circle class="pt flash" cx="339.6" cy="201.8" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=1024
+FlashInfer: 0.4683 ms
+Humming: 0.4699 ms
+Humming / FlashInfer: 1.003x"></circle><circle class="pt humming" cx="339.6" cy="201.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=1024
+FlashInfer: 0.4683 ms
+Humming: 0.4699 ms
+Humming / FlashInfer: 1.003x"></circle><circle class="pt flash" cx="380.4" cy="190.8" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=2048
+FlashInfer: 0.6140 ms
+Humming: 0.8489 ms
+Humming / FlashInfer: 1.382x"></circle><circle class="pt humming" cx="380.4" cy="173.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=2048
+FlashInfer: 0.6140 ms
+Humming: 0.8489 ms
+Humming / FlashInfer: 1.382x"></circle><circle class="pt flash" cx="421.2" cy="167.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=4096
+FlashInfer: 0.9215 ms
+Humming: 1.329 ms
+Humming / FlashInfer: 1.443x"></circle><circle class="pt humming" cx="421.2" cy="137.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=4096
+FlashInfer: 0.9215 ms
+Humming: 1.329 ms
+Humming / FlashInfer: 1.443x"></circle><circle class="pt flash" cx="462.0" cy="119.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=8192
+FlashInfer: 1.569 ms
+Humming: 2.379 ms
+Humming / FlashInfer: 1.516x"></circle><circle class="pt humming" cx="462.0" cy="58.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP4/EP2 batch=8192
+FlashInfer: 1.569 ms
+Humming: 2.379 ms
+Humming / FlashInfer: 1.516x"></circle></svg></figure><figure class="chart"><figcaption>dsv4-pro TP8/EP1</figcaption><svg viewBox="0 0 480 285" role="img" aria-label="dsv4-pro TP8/EP1 latency chart"><line class="grid" x1="54" y1="237.0" x2="462" y2="237.0"></line><text class="axis-label" x="46" y="241.0" text-anchor="end">0.0000</text><line class="grid" x1="54" y1="135.5" x2="462" y2="135.5"></line><text class="axis-label" x="46" y="139.5" text-anchor="end">1.150</text><line class="grid" x1="54" y1="34.0" x2="462" y2="34.0"></line><text class="axis-label" x="46" y="38.0" text-anchor="end">2.300</text><line class="axis" x1="54" y1="237" x2="462" y2="237"></line><line class="axis" x1="54" y1="34" x2="54" y2="237"></line><text class="axis-label" x="54.0" y="265" text-anchor="middle">8</text><text class="axis-label" x="135.6" y="265" text-anchor="middle">32</text><text class="axis-label" x="217.2" y="265" text-anchor="middle">128</text><text class="axis-label" x="298.8" y="265" text-anchor="middle">512</text><text class="axis-label" x="380.4" y="265" text-anchor="middle">2048</text><text class="axis-label" x="462.0" y="265" text-anchor="middle">8192</text><polyline class="line flash" points="54.0,227.7 94.8,222.9 135.6,213.3 176.4,201.5 217.2,188.9 258.0,182.1 298.8,177.4 339.6,168.6 380.4,153.6 421.2,124.0 462.0,62.5"></polyline><polyline class="line humming" points="54.0,229.0 94.8,227.0 135.6,222.8 176.4,217.6 217.2,212.6 258.0,210.1 298.8,206.4 339.6,202.6 380.4,189.5 421.2,155.1 462.0,110.2"></polyline><circle class="pt flash" cx="54.0" cy="227.7" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=8
+FlashInfer: 0.1052 ms
+Humming: 0.0902 ms
+Humming / FlashInfer: 0.857x"></circle><circle class="pt humming" cx="54.0" cy="229.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=8
+FlashInfer: 0.1052 ms
+Humming: 0.0902 ms
+Humming / FlashInfer: 0.857x"></circle><circle class="pt flash" cx="94.8" cy="222.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=16
+FlashInfer: 0.1601 ms
+Humming: 0.1135 ms
+Humming / FlashInfer: 0.709x"></circle><circle class="pt humming" cx="94.8" cy="227.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=16
+FlashInfer: 0.1601 ms
+Humming: 0.1135 ms
+Humming / FlashInfer: 0.709x"></circle><circle class="pt flash" cx="135.6" cy="213.3" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=32
+FlashInfer: 0.2689 ms
+Humming: 0.1613 ms
+Humming / FlashInfer: 0.600x"></circle><circle class="pt humming" cx="135.6" cy="222.8" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=32
+FlashInfer: 0.2689 ms
+Humming: 0.1613 ms
+Humming / FlashInfer: 0.600x"></circle><circle class="pt flash" cx="176.4" cy="201.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=64
+FlashInfer: 0.4022 ms
+Humming: 0.2203 ms
+Humming / FlashInfer: 0.548x"></circle><circle class="pt humming" cx="176.4" cy="217.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=64
+FlashInfer: 0.4022 ms
+Humming: 0.2203 ms
+Humming / FlashInfer: 0.548x"></circle><circle class="pt flash" cx="217.2" cy="188.9" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=128
+FlashInfer: 0.5446 ms
+Humming: 0.2768 ms
+Humming / FlashInfer: 0.508x"></circle><circle class="pt humming" cx="217.2" cy="212.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=128
+FlashInfer: 0.5446 ms
+Humming: 0.2768 ms
+Humming / FlashInfer: 0.508x"></circle><circle class="pt flash" cx="258.0" cy="182.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=256
+FlashInfer: 0.6224 ms
+Humming: 0.3050 ms
+Humming / FlashInfer: 0.490x"></circle><circle class="pt humming" cx="258.0" cy="210.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=256
+FlashInfer: 0.6224 ms
+Humming: 0.3050 ms
+Humming / FlashInfer: 0.490x"></circle><circle class="pt flash" cx="298.8" cy="177.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=512
+FlashInfer: 0.6758 ms
+Humming: 0.3467 ms
+Humming / FlashInfer: 0.513x"></circle><circle class="pt humming" cx="298.8" cy="206.4" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=512
+FlashInfer: 0.6758 ms
+Humming: 0.3467 ms
+Humming / FlashInfer: 0.513x"></circle><circle class="pt flash" cx="339.6" cy="168.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=1024
+FlashInfer: 0.7755 ms
+Humming: 0.3903 ms
+Humming / FlashInfer: 0.503x"></circle><circle class="pt humming" cx="339.6" cy="202.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=1024
+FlashInfer: 0.7755 ms
+Humming: 0.3903 ms
+Humming / FlashInfer: 0.503x"></circle><circle class="pt flash" cx="380.4" cy="153.6" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=2048
+FlashInfer: 0.9452 ms
+Humming: 0.5379 ms
+Humming / FlashInfer: 0.569x"></circle><circle class="pt humming" cx="380.4" cy="189.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=2048
+FlashInfer: 0.9452 ms
+Humming: 0.5379 ms
+Humming / FlashInfer: 0.569x"></circle><circle class="pt flash" cx="421.2" cy="124.0" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=4096
+FlashInfer: 1.280 ms
+Humming: 0.9285 ms
+Humming / FlashInfer: 0.725x"></circle><circle class="pt humming" cx="421.2" cy="155.1" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=4096
+FlashInfer: 1.280 ms
+Humming: 0.9285 ms
+Humming / FlashInfer: 0.725x"></circle><circle class="pt flash" cx="462.0" cy="62.5" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=8192
+FlashInfer: 1.977 ms
+Humming: 1.437 ms
+Humming / FlashInfer: 0.727x"></circle><circle class="pt humming" cx="462.0" cy="110.2" r="4.2" data-tip="w2/GEMM2 | dsv4-pro TP8/EP1 batch=8192
+FlashInfer: 1.977 ms
+Humming: 1.437 ms
+Humming / FlashInfer: 0.727x"></circle></svg></figure></div></section>
+
+  <section>
+    <h2>Detailed Latency Table</h2>
+    <div class="filter-bar" aria-label="Detailed latency table filters">
+      <label class="filter-control">Workload
+        <select id="detail-filter-workload">
+          <option value="">All workloads</option>
+        </select>
+      </label>
+      <label class="filter-control">Topology
+        <select id="detail-filter-topology">
+          <option value="">All topologies</option>
+        </select>
+      </label>
+      <span class="filter-status" id="detail-filter-status"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead><tr><th>Workload</th><th>Topology</th><th>Batch/rank</th><th>FlashInfer w13 ms</th><th>Humming w13 ms</th><th>w13 speedup</th><th>FlashInfer w2 ms</th><th>Humming w2 ms</th><th>w2 speedup</th><th>FlashInfer total ms</th><th>Humming total ms</th><th>Total speedup</th><th>Total %</th></tr></thead>
+        <tbody><tr><td>dsv4-flash</td><td>TP1/EP8</td><td>8</td><td>0.0464</td><td>0.1438</td><td>3.096x</td><td>0.1598</td><td>0.1005</td><td>0.629x</td><td>0.2062</td><td>0.2443</td><td>1.185x</td><td>+18.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>16</td><td>0.0614</td><td>0.1521</td><td>2.477x</td><td>0.0450</td><td>0.1026</td><td>2.281x</td><td>0.1064</td><td>0.2546</td><td>2.394x</td><td>+139.4%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>32</td><td>0.0816</td><td>0.1672</td><td>2.048x</td><td>0.0580</td><td>0.1127</td><td>1.942x</td><td>0.1397</td><td>0.2800</td><td>2.004x</td><td>+100.4%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>64</td><td>0.1141</td><td>0.1803</td><td>1.581x</td><td>0.0764</td><td>0.1179</td><td>1.544x</td><td>0.1905</td><td>0.2983</td><td>1.566x</td><td>+56.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>128</td><td>0.1286</td><td>0.1924</td><td>1.496x</td><td>0.0842</td><td>0.1272</td><td>1.510x</td><td>0.2128</td><td>0.3195</td><td>1.501x</td><td>+50.1%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>256</td><td>0.1370</td><td>0.3096</td><td>2.260x</td><td>0.0879</td><td>0.3970</td><td>4.516x</td><td>0.2249</td><td>0.7066</td><td>3.142x</td><td>+214.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>512</td><td>0.1480</td><td>0.5569</td><td>3.763x</td><td>0.0941</td><td>0.3131</td><td>3.328x</td><td>0.2421</td><td>0.8700</td><td>3.594x</td><td>+259.4%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>1024</td><td>0.1720</td><td>0.9311</td><td>5.413x</td><td>0.1070</td><td>0.5045</td><td>4.714x</td><td>0.2790</td><td>1.436</td><td>5.145x</td><td>+414.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>2048</td><td>0.2953</td><td>1.655</td><td>5.605x</td><td>0.1737</td><td>0.8708</td><td>5.013x</td><td>0.4690</td><td>2.526</td><td>5.386x</td><td>+438.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>4096</td><td>0.5952</td><td>3.130</td><td>5.259x</td><td>0.2966</td><td>1.627</td><td>5.487x</td><td>0.8918</td><td>4.757</td><td>5.335x</td><td>+433.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP1/EP8</td><td>8192</td><td>0.9244</td><td>6.093</td><td>6.591x</td><td>0.5470</td><td>3.138</td><td>5.736x</td><td>1.471</td><td>9.230</td><td>6.273x</td><td>+527.3%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>8</td><td>0.0463</td><td>0.1093</td><td>2.360x</td><td>0.0414</td><td>0.0806</td><td>1.948x</td><td>0.0877</td><td>0.1899</td><td>2.166x</td><td>+116.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>16</td><td>0.0646</td><td>0.1448</td><td>2.243x</td><td>0.1578</td><td>0.0988</td><td>0.626x</td><td>0.2224</td><td>0.2436</td><td>1.095x</td><td>+9.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>32</td><td>0.0852</td><td>0.1557</td><td>1.827x</td><td>0.0720</td><td>0.1063</td><td>1.476x</td><td>0.1572</td><td>0.2620</td><td>1.666x</td><td>+66.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>64</td><td>0.1143</td><td>0.1686</td><td>1.475x</td><td>0.0906</td><td>0.1155</td><td>1.275x</td><td>0.2049</td><td>0.2841</td><td>1.387x</td><td>+38.7%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>128</td><td>0.1330</td><td>0.1744</td><td>1.311x</td><td>0.1061</td><td>0.1179</td><td>1.111x</td><td>0.2391</td><td>0.2923</td><td>1.222x</td><td>+22.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>256</td><td>0.1413</td><td>0.2009</td><td>1.422x</td><td>0.1124</td><td>0.1328</td><td>1.181x</td><td>0.2537</td><td>0.3337</td><td>1.315x</td><td>+31.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>512</td><td>0.1522</td><td>0.3170</td><td>2.083x</td><td>0.1199</td><td>0.1891</td><td>1.578x</td><td>0.2720</td><td>0.5061</td><td>1.860x</td><td>+86.0%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>1024</td><td>0.1746</td><td>0.5572</td><td>3.192x</td><td>0.1276</td><td>0.3118</td><td>2.444x</td><td>0.3021</td><td>0.8689</td><td>2.876x</td><td>+187.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>2048</td><td>0.3242</td><td>0.9048</td><td>2.791x</td><td>0.1819</td><td>0.4932</td><td>2.711x</td><td>0.5061</td><td>1.398</td><td>2.762x</td><td>+176.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>4096</td><td>0.5164</td><td>1.663</td><td>3.221x</td><td>0.3283</td><td>0.8879</td><td>2.705x</td><td>0.8447</td><td>2.551</td><td>3.020x</td><td>+202.0%</td></tr>
+<tr><td>dsv4-flash</td><td>TP2/EP4</td><td>8192</td><td>0.9485</td><td>3.120</td><td>3.289x</td><td>0.5862</td><td>1.642</td><td>2.802x</td><td>1.535</td><td>4.762</td><td>3.103x</td><td>+210.3%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>8</td><td>0.0585</td><td>0.0911</td><td>1.558x</td><td>0.0530</td><td>0.0774</td><td>1.461x</td><td>0.1115</td><td>0.1685</td><td>1.512x</td><td>+51.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>16</td><td>0.0624</td><td>0.1146</td><td>1.836x</td><td>0.0652</td><td>0.0902</td><td>1.384x</td><td>0.1276</td><td>0.2048</td><td>1.605x</td><td>+60.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>32</td><td>0.0849</td><td>0.1396</td><td>1.644x</td><td>0.0948</td><td>0.1040</td><td>1.098x</td><td>0.1797</td><td>0.2437</td><td>1.356x</td><td>+35.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>64</td><td>0.1161</td><td>0.1640</td><td>1.413x</td><td>0.1244</td><td>0.1163</td><td>0.934x</td><td>0.2405</td><td>0.2802</td><td>1.165x</td><td>+16.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>128</td><td>0.1349</td><td>0.1692</td><td>1.255x</td><td>0.1478</td><td>0.1218</td><td>0.824x</td><td>0.2827</td><td>0.2910</td><td>1.030x</td><td>+3.0%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>256</td><td>0.1435</td><td>0.1802</td><td>1.256x</td><td>0.1532</td><td>0.1277</td><td>0.833x</td><td>0.2967</td><td>0.3080</td><td>1.038x</td><td>+3.8%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>512</td><td>0.1564</td><td>0.1998</td><td>1.278x</td><td>0.1757</td><td>0.1457</td><td>0.829x</td><td>0.3320</td><td>0.3454</td><td>1.040x</td><td>+4.0%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>1024</td><td>0.1831</td><td>0.3143</td><td>1.717x</td><td>0.2028</td><td>0.2189</td><td>1.079x</td><td>0.3859</td><td>0.5332</td><td>1.382x</td><td>+38.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>2048</td><td>0.3139</td><td>0.5556</td><td>1.770x</td><td>0.2315</td><td>0.3506</td><td>1.515x</td><td>0.5454</td><td>0.9062</td><td>1.662x</td><td>+66.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>4096</td><td>0.5477</td><td>0.9210</td><td>1.682x</td><td>0.3591</td><td>0.5369</td><td>1.495x</td><td>0.9068</td><td>1.458</td><td>1.608x</td><td>+60.8%</td></tr>
+<tr><td>dsv4-flash</td><td>TP4/EP2</td><td>8192</td><td>1.006</td><td>1.656</td><td>1.647x</td><td>0.6895</td><td>0.9230</td><td>1.339x</td><td>1.695</td><td>2.579</td><td>1.522x</td><td>+52.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>8</td><td>0.0465</td><td>0.0775</td><td>1.665x</td><td>0.0808</td><td>0.0700</td><td>0.867x</td><td>0.1273</td><td>0.1475</td><td>1.159x</td><td>+15.9%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>16</td><td>0.0634</td><td>0.0939</td><td>1.480x</td><td>0.0960</td><td>0.0802</td><td>0.836x</td><td>0.1594</td><td>0.1741</td><td>1.092x</td><td>+9.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>32</td><td>0.0844</td><td>0.1143</td><td>1.354x</td><td>0.1375</td><td>0.0945</td><td>0.688x</td><td>0.2219</td><td>0.2088</td><td>0.941x</td><td>-5.9%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>64</td><td>0.1143</td><td>0.1419</td><td>1.242x</td><td>0.1901</td><td>0.1149</td><td>0.604x</td><td>0.3044</td><td>0.2568</td><td>0.844x</td><td>-15.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>128</td><td>0.2153</td><td>0.1584</td><td>0.736x</td><td>0.2307</td><td>0.1249</td><td>0.541x</td><td>0.4460</td><td>0.2833</td><td>0.635x</td><td>-36.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>256</td><td>0.2410</td><td>0.1725</td><td>0.716x</td><td>0.2454</td><td>0.1364</td><td>0.556x</td><td>0.4864</td><td>0.3089</td><td>0.635x</td><td>-36.5%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>512</td><td>0.1650</td><td>0.1983</td><td>1.201x</td><td>0.3392</td><td>0.1656</td><td>0.488x</td><td>0.5042</td><td>0.3639</td><td>0.722x</td><td>-27.8%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>1024</td><td>0.1995</td><td>0.2043</td><td>1.024x</td><td>0.3130</td><td>0.1668</td><td>0.533x</td><td>0.5125</td><td>0.3711</td><td>0.724x</td><td>-27.6%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>2048</td><td>0.3450</td><td>0.3173</td><td>0.920x</td><td>0.3872</td><td>0.2449</td><td>0.633x</td><td>0.7321</td><td>0.5623</td><td>0.768x</td><td>-23.2%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>4096</td><td>0.6123</td><td>0.5592</td><td>0.913x</td><td>0.5404</td><td>0.3885</td><td>0.719x</td><td>1.153</td><td>0.9478</td><td>0.822x</td><td>-17.8%</td></tr>
+<tr><td>dsv4-flash</td><td>TP8/EP1</td><td>8192</td><td>1.140</td><td>0.9252</td><td>0.812x</td><td>0.9961</td><td>0.6204</td><td>0.623x</td><td>2.136</td><td>1.546</td><td>0.724x</td><td>-27.6%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>8</td><td>0.0757</td><td>0.3591</td><td>4.741x</td><td>0.0569</td><td>0.2148</td><td>3.773x</td><td>0.1327</td><td>0.5739</td><td>4.326x</td><td>+332.6%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>16</td><td>0.1160</td><td>0.4243</td><td>3.659x</td><td>0.0796</td><td>0.2484</td><td>3.122x</td><td>0.1955</td><td>0.6727</td><td>3.440x</td><td>+244.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>32</td><td>0.1768</td><td>0.4582</td><td>2.591x</td><td>0.1166</td><td>0.2655</td><td>2.277x</td><td>0.2934</td><td>0.7236</td><td>2.466x</td><td>+146.6%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>64</td><td>0.2796</td><td>0.4827</td><td>1.727x</td><td>0.1751</td><td>0.2785</td><td>1.590x</td><td>0.4547</td><td>0.7612</td><td>1.674x</td><td>+67.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>128</td><td>0.3445</td><td>0.5822</td><td>1.690x</td><td>0.2167</td><td>0.3278</td><td>1.513x</td><td>0.5611</td><td>0.9100</td><td>1.622x</td><td>+62.2%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>256</td><td>0.3912</td><td>0.7975</td><td>2.038x</td><td>0.2445</td><td>0.4321</td><td>1.767x</td><td>0.6357</td><td>1.230</td><td>1.934x</td><td>+93.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>512</td><td>0.4164</td><td>1.519</td><td>3.647x</td><td>0.3479</td><td>0.7975</td><td>2.293x</td><td>0.7643</td><td>2.316</td><td>3.031x</td><td>+203.1%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>1024</td><td>0.5868</td><td>2.392</td><td>4.076x</td><td>0.3039</td><td>1.237</td><td>4.069x</td><td>0.8907</td><td>3.628</td><td>4.074x</td><td>+307.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>2048</td><td>0.8115</td><td>4.352</td><td>5.364x</td><td>0.4386</td><td>2.229</td><td>5.082x</td><td>1.250</td><td>6.581</td><td>5.265x</td><td>+426.5%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>4096</td><td>1.306</td><td>8.185</td><td>6.268x</td><td>0.7267</td><td>4.198</td><td>5.777x</td><td>2.033</td><td>12.38</td><td>6.092x</td><td>+509.2%</td></tr>
+<tr><td>dsv4-pro</td><td>TP1/EP8</td><td>8192</td><td>2.422</td><td>15.85</td><td>6.547x</td><td>1.315</td><td>8.082</td><td>6.144x</td><td>3.737</td><td>23.94</td><td>6.405x</td><td>+540.5%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>8</td><td>0.0829</td><td>0.2344</td><td>2.827x</td><td>0.0602</td><td>0.1549</td><td>2.573x</td><td>0.1431</td><td>0.3893</td><td>2.720x</td><td>+172.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>16</td><td>0.3113</td><td>0.3055</td><td>0.981x</td><td>0.0925</td><td>0.1926</td><td>2.083x</td><td>0.4038</td><td>0.4981</td><td>1.234x</td><td>+23.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>32</td><td>0.1846</td><td>0.4127</td><td>2.235x</td><td>0.1280</td><td>0.2554</td><td>1.995x</td><td>0.3126</td><td>0.6681</td><td>2.137x</td><td>+113.7%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>64</td><td>0.2734</td><td>0.4627</td><td>1.693x</td><td>0.1891</td><td>0.2834</td><td>1.499x</td><td>0.4625</td><td>0.7461</td><td>1.613x</td><td>+61.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>128</td><td>0.3508</td><td>0.4876</td><td>1.390x</td><td>0.2440</td><td>0.2904</td><td>1.190x</td><td>0.5949</td><td>0.7781</td><td>1.308x</td><td>+30.8%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>256</td><td>0.3965</td><td>0.5758</td><td>1.452x</td><td>0.2704</td><td>0.3402</td><td>1.258x</td><td>0.6668</td><td>0.9160</td><td>1.374x</td><td>+37.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>512</td><td>0.4194</td><td>0.7892</td><td>1.882x</td><td>0.2810</td><td>0.4454</td><td>1.585x</td><td>0.7004</td><td>1.235</td><td>1.763x</td><td>+76.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>1024</td><td>0.5486</td><td>1.501</td><td>2.736x</td><td>0.3242</td><td>0.8196</td><td>2.528x</td><td>0.8728</td><td>2.321</td><td>2.659x</td><td>+165.9%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>2048</td><td>0.8154</td><td>2.440</td><td>2.993x</td><td>0.4709</td><td>1.310</td><td>2.783x</td><td>1.286</td><td>3.751</td><td>2.916x</td><td>+191.6%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>4096</td><td>1.344</td><td>4.333</td><td>3.223x</td><td>0.8922</td><td>2.295</td><td>2.572x</td><td>2.237</td><td>6.628</td><td>2.963x</td><td>+196.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP2/EP4</td><td>8192</td><td>2.395</td><td>8.201</td><td>3.424x</td><td>1.497</td><td>4.312</td><td>2.880x</td><td>3.892</td><td>12.51</td><td>3.215x</td><td>+221.5%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>8</td><td>0.0794</td><td>0.1566</td><td>1.973x</td><td>0.0764</td><td>0.1078</td><td>1.412x</td><td>0.1558</td><td>0.2644</td><td>1.698x</td><td>+69.8%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>16</td><td>0.1168</td><td>0.2206</td><td>1.889x</td><td>0.1144</td><td>0.1459</td><td>1.275x</td><td>0.2312</td><td>0.3664</td><td>1.585x</td><td>+58.5%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>32</td><td>0.1833</td><td>0.3091</td><td>1.686x</td><td>0.1779</td><td>0.1977</td><td>1.111x</td><td>0.3612</td><td>0.5067</td><td>1.403x</td><td>+40.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>64</td><td>0.2761</td><td>0.3960</td><td>1.434x</td><td>0.2648</td><td>0.2522</td><td>0.953x</td><td>0.5409</td><td>0.6482</td><td>1.198x</td><td>+19.8%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>128</td><td>0.3674</td><td>0.4633</td><td>1.261x</td><td>0.4272</td><td>0.2918</td><td>0.683x</td><td>0.7946</td><td>0.7551</td><td>0.950x</td><td>-5.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>256</td><td>0.4128</td><td>0.4838</td><td>1.172x</td><td>0.4044</td><td>0.3182</td><td>0.787x</td><td>0.8171</td><td>0.8020</td><td>0.982x</td><td>-1.8%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>512</td><td>0.4217</td><td>0.5857</td><td>1.389x</td><td>0.4244</td><td>0.3644</td><td>0.859x</td><td>0.8462</td><td>0.9501</td><td>1.123x</td><td>+12.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>1024</td><td>0.5551</td><td>0.8028</td><td>1.446x</td><td>0.4683</td><td>0.4699</td><td>1.003x</td><td>1.023</td><td>1.273</td><td>1.244x</td><td>+24.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>2048</td><td>0.8316</td><td>1.724</td><td>2.073x</td><td>0.6140</td><td>0.8489</td><td>1.382x</td><td>1.446</td><td>2.573</td><td>1.780x</td><td>+78.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>4096</td><td>1.345</td><td>2.407</td><td>1.789x</td><td>0.9215</td><td>1.329</td><td>1.443x</td><td>2.267</td><td>3.737</td><td>1.648x</td><td>+64.8%</td></tr>
+<tr><td>dsv4-pro</td><td>TP4/EP2</td><td>8192</td><td>2.497</td><td>4.339</td><td>1.737x</td><td>1.569</td><td>2.379</td><td>1.516x</td><td>4.066</td><td>6.718</td><td>1.652x</td><td>+65.2%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>8</td><td>0.0765</td><td>0.1080</td><td>1.413x</td><td>0.1052</td><td>0.0902</td><td>0.857x</td><td>0.1817</td><td>0.1982</td><td>1.091x</td><td>+9.1%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>16</td><td>0.1172</td><td>0.1500</td><td>1.280x</td><td>0.1601</td><td>0.1135</td><td>0.709x</td><td>0.2773</td><td>0.2635</td><td>0.950x</td><td>-5.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>32</td><td>0.1841</td><td>0.2285</td><td>1.241x</td><td>0.2689</td><td>0.1613</td><td>0.600x</td><td>0.4530</td><td>0.3898</td><td>0.860x</td><td>-14.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>64</td><td>0.2794</td><td>0.3262</td><td>1.167x</td><td>0.4022</td><td>0.2203</td><td>0.548x</td><td>0.6816</td><td>0.5465</td><td>0.802x</td><td>-19.8%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>128</td><td>0.3667</td><td>0.4161</td><td>1.135x</td><td>0.5446</td><td>0.2768</td><td>0.508x</td><td>0.9114</td><td>0.6929</td><td>0.760x</td><td>-24.0%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>256</td><td>0.4226</td><td>0.4656</td><td>1.102x</td><td>0.6224</td><td>0.3050</td><td>0.490x</td><td>1.045</td><td>0.7705</td><td>0.737x</td><td>-26.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>512</td><td>0.4457</td><td>0.4897</td><td>1.099x</td><td>0.6758</td><td>0.3467</td><td>0.513x</td><td>1.122</td><td>0.8364</td><td>0.746x</td><td>-25.4%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>1024</td><td>0.5646</td><td>0.5854</td><td>1.037x</td><td>0.7755</td><td>0.3903</td><td>0.503x</td><td>1.340</td><td>0.9757</td><td>0.728x</td><td>-27.2%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>2048</td><td>0.8386</td><td>0.8046</td><td>0.959x</td><td>0.9452</td><td>0.5379</td><td>0.569x</td><td>1.784</td><td>1.342</td><td>0.753x</td><td>-24.7%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>4096</td><td>1.425</td><td>1.526</td><td>1.071x</td><td>1.280</td><td>0.9285</td><td>0.725x</td><td>2.705</td><td>2.454</td><td>0.907x</td><td>-9.3%</td></tr>
+<tr><td>dsv4-pro</td><td>TP8/EP1</td><td>8192</td><td>2.562</td><td>2.536</td><td>0.990x</td><td>1.977</td><td>1.437</td><td>0.727x</td><td>4.539</td><td>3.973</td><td>0.875x</td><td>-12.5%</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="footer">Generated from sanitized benchmark artifacts at 2026-06-29 07:51:43 UTC. Environment ownership identifiers and filesystem paths are not embedded in this report.</p>
+</main>
+<div id="tooltip" class="tooltip"></div>
+<script>
+const tooltip = document.getElementById('tooltip');
+function showTip(event) {
+  const tip = event.currentTarget.getAttribute('data-tip');
+  if (!tip) return;
+  tooltip.textContent = tip;
+  tooltip.style.left = event.clientX + 'px';
+  tooltip.style.top = event.clientY + 'px';
+  tooltip.style.opacity = '1';
+}
+function hideTip() {
+  tooltip.style.opacity = '0';
+}
+document.querySelectorAll('[data-tip]').forEach((el) => {
+  el.addEventListener('mousemove', showTip);
+  el.addEventListener('mouseenter', showTip);
+  el.addEventListener('mouseleave', hideTip);
+});
+document.querySelectorAll('td').forEach((cell) => {
+  const text = cell.textContent.trim();
+  const speedup = text.match(/^([0-9]+(?:\.[0-9]+)?)x$/);
+  if (speedup) {
+    const value = Number(speedup[1]);
+    cell.classList.add('speedup-cell');
+    if (value > 1.0005) cell.classList.add('speedup-good');
+    else if (value < 0.9995) cell.classList.add('speedup-bad');
+    else cell.classList.add('speedup-neutral');
+    return;
+  }
+  const percent = text.match(/^([+-]?[0-9]+(?:\.[0-9]+)?)%$/);
+  if (percent) {
+    const value = Number(percent[1]);
+    cell.classList.add('percent-cell');
+    if (value > 0.05) cell.classList.add('percent-good');
+    else if (value < -0.05) cell.classList.add('percent-bad');
+    else cell.classList.add('percent-neutral');
+  }
+});
+document.querySelectorAll('table').forEach((table) => {
+  const headers = [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+  const totalLatencyColumns = headers
+    .map((header, index) => ({ header, index }))
+    .filter(({ header }) => header === 'FlashInfer total ms' || header === 'Humming total ms')
+    .map(({ index }) => index);
+  if (!totalLatencyColumns.length) return;
+  table.querySelectorAll('tbody tr').forEach((row) => {
+    totalLatencyColumns.forEach((index) => {
+      row.children[index]?.classList.add('total-ms-cell');
+    });
+  });
+});
+const detailTable = document.getElementById('detail-table');
+const workloadFilter = document.getElementById('detail-filter-workload');
+const topologyFilter = document.getElementById('detail-filter-topology');
+const filterStatus = document.getElementById('detail-filter-status');
+if (detailTable && workloadFilter && topologyFilter && filterStatus) {
+  const detailRows = [...detailTable.querySelectorAll('tbody tr')];
+  const fillSelect = (select, values) => {
+    values.forEach((value) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    });
+  };
+  fillSelect(workloadFilter, [...new Set(detailRows.map((row) => row.children[0]?.textContent.trim()).filter(Boolean))].sort());
+  fillSelect(topologyFilter, [...new Set(detailRows.map((row) => row.children[1]?.textContent.trim()).filter(Boolean))].sort((a, b) => {
+    const parse = (value) => Number((value.match(/^TP(\d+)\/EP/) || [])[1] || 0);
+    return parse(a) - parse(b);
+  }));
+  const applyDetailFilters = () => {
+    const workload = workloadFilter.value;
+    const topology = topologyFilter.value;
+    let visible = 0;
+    detailRows.forEach((row) => {
+      const rowWorkload = row.children[0]?.textContent.trim();
+      const rowTopology = row.children[1]?.textContent.trim();
+      const show = (!workload || rowWorkload === workload) && (!topology || rowTopology === topology);
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    filterStatus.textContent = `${visible}/${detailRows.length} rows`;
+  };
+  workloadFilter.addEventListener('change', applyDetailFilters);
+  topologyFilter.addEventListener('change', applyDetailFilters);
+  applyDetailFilters();
+}
+document.querySelectorAll('section > .legend').forEach((legend) => {
+  if (legend.nextElementSibling?.classList.contains('axis-guide')) return;
+  const guide = document.createElement('div');
+  guide.className = 'axis-guide';
+  guide.innerHTML = '<span>X axis: Batch per rank</span><span>Y axis: Median GEMM latency (ms)</span>';
+  legend.insertAdjacentElement('afterend', guide);
+});
+</script>
+</body>
+</html>
