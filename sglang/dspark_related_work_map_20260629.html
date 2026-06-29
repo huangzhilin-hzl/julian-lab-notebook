@@ -120,7 +120,7 @@
         <div class="meta"><b>主线三</b>Parallel generation / NAT</div>
         <div class="meta"><b>用途</b>DSpark Related Work 速查表</div>
       </div>
-      <nav class="nav"><a href="#section-1">一句话结论</a><a href="#speculative-decoding-algorithms">Speculative Decoding Algorithms</a><a href="#system-aware-scheduling-for-speculative-decoding">System-Aware Scheduling For Speculative Decoding</a><a href="#parallel-generation-nat-background">Parallel Generation / NAT Background</a><a href="#dspark">DSpark 在这张图谱里的位置</a><a href="#section-6">推荐阅读顺序</a></nav>
+      <nav class="nav"><a href="#section-1">一句话结论</a><a href="#framework-integration-status">当前框架集成进展</a><a href="#speculative-decoding-algorithms">Speculative Decoding Algorithms</a><a href="#system-aware-scheduling-for-speculative-decoding">System-Aware Scheduling For Speculative Decoding</a><a href="#parallel-generation-nat-background">Parallel Generation / NAT Background</a><a href="#dspark">DSpark 在这张图谱里的位置</a><a href="#section-6">推荐阅读顺序</a></nav>
     </section>
     <section class="section" id="section-1">
   <h2>一句话结论</h2>
@@ -132,6 +132,40 @@
         <tr><td>Speculative decoding algorithms</td><td>从小模型 drafter、多头/MTP、self-speculation，发展到 DFlash/DART/PARD 这类 block-parallel drafter。DSpark 属于 parallel drafter 的增强版。</td></tr>
         <tr><td>System-aware scheduling</td><td>研究重点从“能 draft 几个 token”转向“当前负载下应该生成/验证几个 token”。DSpark 的 hardware-aware prefix scheduler 属于这一线。</td></tr>
         <tr><td>Parallel generation / NAT</td><td>并行生成容易出现 multi-modal mixing / cross-mode collision。DSpark 的 sequential head 是用轻量局部修正解决这个问题，同时保留 per-token softmax 概率。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section" id="framework-integration-status">
+  <h2>当前训练和推理框架集成进展（2026-06-29）</h2>
+  <p>这里的口径区分三件事：DeepSpec/DSpark 官方训练代码、DFlash/MTP 基础设施、以及完整 DSpark 推理路径。当前训练侧进展更快；推理侧 SGLang 和 vLLM 都已有主线 PR，但还没有合入稳定主线。</p>
+  <h2 style="font-size:16px; margin-top:18px;">训练框架</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>框架</th><th>当前状态</th><th>对应 PR / 链接</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr><td>DeepSpec</td><td>已发布</td><td><a href="https://github.com/deepseek-ai/DeepSpec">deepseek-ai/DeepSpec</a></td><td>官方训练 / evaluation 代码，README 明确支持 DSpark、DFlash、Eagle3，并发布 Qwen3 / Gemma4 DSpark checkpoints。</td></tr>
+        <tr><td>DeepSpec NPU</td><td>进行中</td><td><a href="https://github.com/deepseek-ai/DeepSpec/pull/9">DeepSpec #9</a>, <a href="https://github.com/deepseek-ai/DeepSpec/pull/8">DeepSpec #8</a></td><td>Ascend NPU 支持；#9 是完整 NPU backend PR，#8 是 WIP draft。</td></tr>
+        <tr><td>DeepSpec 训练内存优化</td><td>进行中</td><td><a href="https://github.com/deepseek-ai/DeepSpec/pull/11">DeepSpec #11</a></td><td>只加载 target embedding / LM head，避免训练启动时构建完整 target model。</td></tr>
+        <tr><td>SpecForge</td><td>进行中</td><td><a href="https://github.com/sgl-project/SpecForge/pull/613">SpecForge #613</a></td><td>DSpark trainer：DFlash + Markov/confidence heads + L1 distillation；当前 draft/open。</td></tr>
+        <tr><td>SpecForge NPU</td><td>进行中</td><td><a href="https://github.com/sgl-project/SpecForge/pull/617">SpecForge #617</a></td><td>Qwen3.5-4B DSpark training 的 Ascend NPU 支持，依赖 #613 的基础实现。</td></tr>
+        <tr><td>vLLM speculators</td><td>进行中</td><td><a href="https://github.com/vllm-project/speculators/pull/677">speculators #677</a>, <a href="https://github.com/vllm-project/speculators/pull/678">speculators #678</a></td><td>#677 加 DSpark speculator 模型和 loss；#678 继续补完整训练逻辑。</td></tr>
+        <tr><td>NVIDIA NeMo Automodel</td><td>已合入早期训练支持</td><td><a href="https://github.com/NVIDIA-NeMo/Automodel/pull/2810">Automodel #2810</a>, <a href="https://github.com/NVIDIA-NeMo/Automodel/pull/2828">Automodel #2828</a></td><td>#2810 merged，加入 DSpark draft model / training objective；#2828 是文档更新。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h2 style="font-size:16px; margin-top:18px;">推理框架</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>框架</th><th>当前状态</th><th>对应 PR / 链接</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr><td>SGLang</td><td>进行中，未合入</td><td><a href="https://github.com/sgl-project/sglang/pull/29538">SGLang #29538</a></td><td>DeepSeek-V4 DSpark speculative decoding 主 PR，支持 <code>--speculative-algorithm DSPARK</code>、block size、confidence threshold；当前 open，review required。</td></tr>
+        <tr><td>SGLang DFlash 基础</td><td>部分已合入</td><td><a href="https://github.com/sgl-project/sglang/pull/29228">SGLang #29228</a>, <a href="https://github.com/sgl-project/sglang/pull/29556">SGLang #29556</a></td><td>DFlash runtime / 调度优化，属于 DSpark 可复用基础设施，但不等于完整 DSpark。</td></tr>
+        <tr><td>vLLM</td><td>进行中，未合入</td><td><a href="https://github.com/vllm-project/vllm/pull/46995">vLLM #46995</a>, <a href="https://github.com/vllm-project/vllm/pull/46965">vLLM #46965</a></td><td>#46995 支持 DeepSeek-V4 DSpark 和 Qwen3 DSpark；PR 自述里说明 probabilistic drafting 仍有 correctness issue，dynamic drafting / confidence scheduling 不在 scope。</td></tr>
+        <tr><td>vLLM DFlash 基础</td><td>已有合入项</td><td><a href="https://github.com/vllm-project/vllm/pull/46435">vLLM #46435</a>, <a href="https://github.com/vllm-project/vllm/pull/46770">vLLM #46770</a></td><td>修 DFlash LM head sharing、attention backend 选择；是 DFlash 支持，不是完整 DSpark。</td></tr>
+        <tr><td>vLLM-Ascend</td><td>进行中，未合入</td><td><a href="https://github.com/vllm-project/vllm-ascend/pull/11066">vllm-ascend #11066</a></td><td>DeepSeek DSpark speculative decoding on Ascend；draft PR，hardware-aware scheduler 是 follow-up。</td></tr>
+        <tr><td>TensorRT-LLM</td><td>暂无 DSpark 主 PR</td><td><a href="https://github.com/NVIDIA/TensorRT-LLM/pull/15666">TensorRT-LLM #15666</a></td><td>当前看到的是 Laguna DFlash drafter support，不是 DSpark。</td></tr>
+        <tr><td>NVIDIA Model Optimizer</td><td>很早期</td><td><a href="https://github.com/NVIDIA/Model-Optimizer/pull/1849">Model-Optimizer #1849</a></td><td>标题为 Support Dspark，但仍是 draft 且描述未完整填写，暂不算可用集成。</td></tr>
       </tbody>
     </table>
   </div>
