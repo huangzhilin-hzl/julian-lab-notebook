@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kimi Blackwell Serving 优化调研 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #637083;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #a13a3a;
+      --violet: #6f42c1;
+      --gray: #687386;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.56 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .side-index {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .side-index h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .side-index ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .side-index a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .side-index a:hover {
+      background: #f1f4f8;
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .toc-note {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      max-width: 1000px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--orange);
+      background: #fff8eb;
+      border-radius: 6px;
+    }
+
+    .callout.green {
+      border-left-color: var(--green);
+      background: #f0faf5;
+    }
+
+    .callout.red {
+      border-left-color: var(--red);
+      background: #fff4f4;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.model {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.kernel {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.system {
+      color: var(--blue);
+      border-color: #b9c9ee;
+      background: #f2f6ff;
+    }
+
+    .chip.risk {
+      color: var(--red);
+      border-color: #e8c5c5;
+      background: #fff4f4;
+    }
+
+    .table-wrap {
+      width: 100%;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1120px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--head);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #374151;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td:first-child {
+      font-weight: 700;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      white-space: nowrap;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .status.good {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .status.partial {
+      color: var(--orange);
+      border-color: #efd49b;
+      background: #fff8eb;
+    }
+
+    .status.watch {
+      color: var(--red);
+      border-color: #e8c5c5;
+      background: #fff4f4;
+    }
+
+    .flow {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    .step b {
+      display: block;
+      margin-bottom: 5px;
+      color: #263247;
+    }
+
+    .refs {
+      columns: 2;
+      column-gap: 28px;
+      margin: 12px 0 0;
+      padding-left: 18px;
+    }
+
+    .refs li {
+      break-inside: avoid;
+      margin-bottom: 7px;
+    }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 19px;
+    }
+
+    li + li {
+      margin-top: 5px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        padding: 18px;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .side-index {
+        position: static;
+        max-height: none;
+        margin-bottom: 18px;
+      }
+
+      .side-index a {
+        display: inline-flex;
+        margin: 2px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+
+      .meta-grid,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .refs {
+        columns: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="layout">
+      <aside class="side-index" aria-label="目录">
+        <h2>目录</h2>
+        <ul>
+          <li><a href="#summary">1. 快速结论</a></li>
+          <li><a href="#k2-serving">2. Kimi K2 Blackwell Serving</a></li>
+          <li><a href="#sources">3. 来源索引</a></li>
+        </ul>
+        <div class="toc-note">Julian Lab<br>记录：2026-06-30<br>范围：SGLang / vLLM / TensorRT-LLM / Kimi K2 Blackwell serving</div>
+      </aside>
+
+      <article class="content">
+        <section class="hero" id="summary">
+          <h1>Kimi Blackwell Serving 优化调研</h1>
+          <p class="subtle">整理 SGLang、vLLM、TensorRT-LLM 在 Blackwell 系列 GPU 上服务 Kimi K2.5/K2.6/K2.7 的公开优化，覆盖 MLA backend、NVFP4/FP8 KV、MoE runner、EAGLE/DFlash、工具调用 parser 和部署修复。</p>
+          <div class="chips">
+            <span class="chip model">Kimi K2.5 / K2.6 / K2.7</span>
+            <span class="chip system">B200 / B300 / GB200 / GB300</span>
+            <span class="chip kernel">MLA / NVFP4 / EAGLE / DFlash</span>
+          </div>
+          <div class="meta-grid">
+            <div class="meta"><b>主结论</b> Kimi K2 系列走 MLA/MoE serving 路径。</div>
+            <div class="meta"><b>主线优化</b> MLA decode/prefill、FP8 KV、NVFP4 MoE、EAGLE/DFlash。</div>
+            <div class="meta"><b>状态</b> 部分条目是吞吐数据，部分是部署/正确性修复。</div>
+          </div>
+          <div class="callout">
+            Kimi K2.5/K2.6/K2.7 的优化重点是 MLA decode/prefill、NVFP4/FP8 KV、MoE runner、speculative decoding、DFlash grammar decode。不同框架的公开资料需要区分吞吐提升、acceptance length、部署可用性和正确性修复，不能把这些效果混成同一种指标。
+          </div>
+        </section>
+
+        <section class="section" id="k2-serving">
+          <h2>2. Kimi K2 Blackwell Serving 优化点</h2>
+          <p class="subtle">这里的 Kimi K2 指 K2.5/K2.6/K2.7-Code 这一支 MoE + MLA 架构。表格按框架记录公开优化手段、效果指标和来源链接。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>框架</th>
+                  <th>适用模型 / GPU</th>
+                  <th>优化手段</th>
+                  <th>公开效果</th>
+                  <th>判断</th>
+                  <th>来源</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SGLang</td>
+                  <td>Kimi-K2.6 NVFP4；B200 / B300 / GB300</td>
+                  <td>NVFP4 cookbook、Blackwell 推荐配置、EAGLE3/3.1 MLA draft、FP8 KV、tokenspeed MLA、MoE runner 调整。</td>
+                  <td>8xB200 EAGLE3.1 MLA 验证中，GSM8K acc 0.980，平均 speculative accept length 3.20，质量与 HF reference 接近。</td>
+                  <td><span class="status good">可落地</span></td>
+                  <td><a href="https://github.com/sgl-project/sglang/pull/27714">sglang#27714</a>、<a href="https://github.com/sgl-project/sglang/pull/26506">sglang#26506</a>、<a href="https://github.com/sgl-project/sglang/pull/24441">sglang#24441</a></td>
+                </tr>
+                <tr>
+                  <td>SGLang</td>
+                  <td>Kimi-K2.7-Code；B300 / GB300</td>
+                  <td>K2.7 cookbook、K2.6-compatible deployment、DFLASH grammar constrained decoding、JSON schema/regex decode、FP8 KV 配置修正。</td>
+                  <td>DFLASH PR 在 Kimi-K2.7-Code TP4 B300 上验证 JSON schema/regex 有效，主要是功能/可用性验证，不是完整吞吐 A/B。</td>
+                  <td><span class="status partial">验证中</span></td>
+                  <td><a href="https://github.com/sgl-project/sglang/pull/28064">sglang#28064</a>、<a href="https://github.com/sgl-project/sglang/pull/28201">sglang#28201</a>、<a href="https://github.com/sgl-project/sglang/pull/28943">sglang#28943</a></td>
+                </tr>
+                <tr>
+                  <td>vLLM</td>
+                  <td>Kimi-K2.6 NVFP4；GB200 / B200 / RTX PRO 6000 Blackwell</td>
+                  <td>EAGLE3/3.1、MLA + DCP、TRITON_MLA、FP8 KV、CUDA graph、NCCL graph XML、Blackwell fp8 tuning。</td>
+                  <td>vLLM EAGLE3.1 blog 给出 SPEED-Bench per-user output throughput：并发 1 为 2.03x，并发 4 为 1.71x，并发 16 为 1.66x。</td>
+                  <td><span class="status good">强相关</span></td>
+                  <td><a href="https://vllm.ai/blog/2026-05-26-eagle-3-1">vLLM EAGLE3.1 blog</a>、<a href="https://github.com/vllm-project/vllm/issues/40608">vllm#40608</a>、<a href="https://github.com/vllm-project/vllm/pull/40750">vllm#40750</a></td>
+                </tr>
+                <tr>
+                  <td>vLLM</td>
+                  <td>Kimi-K2.6；8xHGX B200</td>
+                  <td>EAGLE3 draft、FP8 KV、关闭 prefix caching、fuse_allreduce_rms、MoonViT data parallel。</td>
+                  <td>Lambda 公开数据：8192 in / 2048 out、32 concurrency、512 prompts 下 generation throughput 1408 tok/s，total throughput 7046 tok/s。</td>
+                  <td><span class="status good">参考价值高</span></td>
+                  <td><a href="https://lambda.ai/inference-models/moonshotai/kimi-k2.6">Lambda Kimi K2.6 model benchmark</a></td>
+                </tr>
+                <tr>
+                  <td>vLLM</td>
+                  <td>Kimi-K2.7 INT4 / NVFP4；SM120</td>
+                  <td>为 INT4 + FP8 KV / NVFP4 自动路径修复 Triton shared memory OOR，通过保守 <code>num_stages=1</code> fallback 启动。</td>
+                  <td>报告者确认 Kimi K2.7 可正常 load/deploy，但该 PR 不是吞吐优化 A/B。</td>
+                  <td><span class="status partial">可用性修复</span></td>
+                  <td><a href="https://github.com/vllm-project/vllm/pull/46721">vllm#46721</a>、<a href="https://github.com/vllm-project/vllm/pull/46728">vllm#46728</a></td>
+                </tr>
+                <tr>
+                  <td>TensorRT-LLM</td>
+                  <td>Kimi-K2.6 NVFP4 + Eagle3；B200</td>
+                  <td>TensorRT-LLM runtime、Eagle speculative config、draft length 3、TP4 serve。</td>
+                  <td>NVIDIA HF card 给出 draft length 3 时 MT-Bench average acceptance length 2.62，SPEED-Bench qualitative 2.67。</td>
+                  <td><span class="status good">可复现入口清晰</span></td>
+                  <td><a href="https://huggingface.co/nvidia/Kimi-K2.6-Eagle3">nvidia/Kimi-K2.6-Eagle3</a></td>
+                </tr>
+                <tr>
+                  <td>TensorRT-LLM</td>
+                  <td>Kimi-K2.5 / K2.6；GB200 / B300</td>
+                  <td>修复 EAGLE3 draft arch registry、Kimi rejection sampling、post-norm / per-aux <code>fc_norm</code> 架构支持。</td>
+                  <td>GB200 NVL72 4 GPU 上 Kimi-K2.5 NVFP4 + Eagle3 可以 end-to-end 生成；B300 rejection sampling crash 有修复。</td>
+                  <td><span class="status partial">部署修复为主</span></td>
+                  <td><a href="https://github.com/NVIDIA/TensorRT-LLM/pull/15426">TensorRT-LLM#15426</a>、<a href="https://github.com/NVIDIA/TensorRT-LLM/pull/15182">TensorRT-LLM#15182</a>、<a href="https://github.com/NVIDIA/TensorRT-LLM/pull/14988">TensorRT-LLM#14988</a></td>
+                </tr>
+                <tr>
+                  <td>CoreWeave / NVIDIA</td>
+                  <td>Kimi-K2.7-Code；GB300 / GB200</td>
+                  <td>Custom NVFP4 quantization、DFlash speculator、D-PACE calibration、production endpoint 默认 NVFP4 + DFlash。</td>
+                  <td>CoreWeave 博客称 K2.7-Code 在减少约 30% reasoning tokens 的同时针对 GB300/GB200 做了 serving 优化；D-PACE 带来约 8% acceptance length 改善。</td>
+                  <td><span class="status good">生产信号</span></td>
+                  <td><a href="https://www.coreweave.com/blog/kimi-k2-7-code-now-available-on-serverless-inference-with-leading-benchmark-price-performance">CoreWeave Kimi K2.7-Code blog</a>、<a href="https://developer.nvidia.com/blog/accelerating-llm-inference-with-dflash/">NVIDIA DFlash blog</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" id="sources">
+          <h2>3. 来源索引</h2>
+          <ul class="refs">
+            <li><a href="https://github.com/sgl-project/sglang/pull/27714">SGLang PR #27714: Kimi-K2.6 NVFP4 cookbook</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/24441">SGLang PR #24441: Kimi-K2.6 B200/GB200/GB300 support docs</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/26506">SGLang PR #26506: EAGLE3.1 Kimi MLA draft support</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/23563">SGLang PR #23563: Kimi K2.6 speculative decoding attention backend fix</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/28064">SGLang PR #28064: Kimi-K2.7-Code cookbook</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/28201">SGLang PR #28201: Kimi cookbook FP8 KV dtype fix</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/28943">SGLang PR #28943: DFLASH grammar-constrained decoding</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/23803">SGLang PR #23803: Kimi K2.5 / K2.6 Eagle3 MLA</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/27647">SGLang PR #27647: Kimi-K2.5 EAGLE3 MLA multimodal batch fix</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/26726">SGLang PR #26726: K2.5 NVFP4 + Thinking Eagle3 startup fix</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/28116">SGLang PR #28116: tokenspeed_mla bump</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/29706">SGLang PR #29706: EAGLE tree drafting for MLA</a></li>
+            <li><a href="https://vllm.ai/blog/2026-05-26-eagle-3-1">vLLM blog: EAGLE3.1</a></li>
+            <li><a href="https://github.com/vllm-project/vllm/issues/40608">vLLM issue #40608: Kimi K2.5/K2.6 MLA + EAGLE on Blackwell</a></li>
+            <li><a href="https://github.com/vllm-project/vllm/pull/40750">vLLM PR #40750: TRITON_MLA MTP graph/DCP work</a></li>
+            <li><a href="https://github.com/vllm-project/vllm/pull/46721">vLLM PR #46721: Kimi K2.7 INT4/NVFP4 deployment issue</a></li>
+            <li><a href="https://github.com/vllm-project/vllm/pull/46728">vLLM PR #46728: shared memory fallback</a></li>
+            <li><a href="https://github.com/vllm-project/vllm/pull/46610">vLLM PR #46610: Kimi K2.5/K2.6/K2.7 parser support</a></li>
+            <li><a href="https://lambda.ai/inference-models/moonshotai/kimi-k2.6">Lambda Kimi K2.6 model benchmark</a></li>
+            <li><a href="https://huggingface.co/nvidia/Kimi-K2.6-Eagle3">NVIDIA Kimi-K2.6-Eagle3 model card</a></li>
+            <li><a href="https://github.com/NVIDIA/TensorRT-LLM/pull/15182">TensorRT-LLM PR #15182: Kimi K2.6 rejection sampling fix</a></li>
+            <li><a href="https://github.com/NVIDIA/TensorRT-LLM/pull/14988">TensorRT-LLM PR #14988: EAGLE3.1 architecture support</a></li>
+            <li><a href="https://github.com/NVIDIA/TensorRT-LLM/pull/15426">TensorRT-LLM PR #15426: ModelOpt/vLLM EAGLE3 draft arch support</a></li>
+            <li><a href="https://www.coreweave.com/blog/kimi-k2-7-code-now-available-on-serverless-inference-with-leading-benchmark-price-performance">CoreWeave Kimi-K2.7-Code blog</a></li>
+            <li><a href="https://developer.nvidia.com/blog/accelerating-llm-inference-with-dflash/">NVIDIA DFlash blog</a></li>
+          </ul>
+        </section>
+      </article>
+    </div>
+  </main>
+</body>
+</html>
