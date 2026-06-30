@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LongCat-2.0 技术与代码/PR 映射 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #637083;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #a13a3a;
+      --violet: #6f42c1;
+      --gray: #687386;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .side-index {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .side-index h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .side-index ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .side-index a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: var(--ink);
+    }
+
+    .side-index a:hover {
+      background: #f1f4f8;
+      text-decoration: none;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--orange);
+      background: #fff8eb;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.model {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.kernel {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.system {
+      color: var(--blue);
+      border-color: #b9c9ee;
+      background: #f2f6ff;
+    }
+
+    .chip.internal {
+      color: var(--red);
+      border-color: #e8c5c5;
+      background: #fff4f4;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      width: 170px;
+      font-weight: 700;
+    }
+
+    .status {
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    .confidence-high {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .confidence-mid {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
+    .confidence-low {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .source-list {
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    .source-list li {
+      margin: 4px 0;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        padding: 18px;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .side-index {
+        position: static;
+        max-height: none;
+        margin-bottom: 18px;
+      }
+
+      .side-index ul {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .status {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="layout">
+      <nav class="side-index" aria-label="Section index">
+        <h2>目录</h2>
+        <ul>
+          <li><a href="#overview">概览</a></li>
+          <li><a href="#mapping">技术映射</a></li>
+          <li><a href="#pr-status">PR 状态</a></li>
+          <li><a href="#conclusion">检索结论</a></li>
+          <li><a href="#sources">主要来源</a></li>
+        </ul>
+      </nav>
+
+      <div class="content">
+        <section class="hero" id="overview">
+          <h1>LongCat-2.0 技术与代码/PR 映射</h1>
+          <p class="subtle">基于 LongCat-2.0 官方技术博客、官方 GitHub/Hugging Face 仓库，以及 SGLang / vLLM / Transformers 公开 PR 的映射记录。</p>
+          <div class="meta-grid">
+            <div class="meta">
+              <b>来源</b>
+              <a href="https://longcat.chat/blog/longcat-2.0/">Introducing LongCat-2.0</a>
+            </div>
+            <div class="meta">
+              <b>发布日期</b>
+              2026-06-30
+            </div>
+            <div class="meta">
+              <b>模型规模</b>
+              1.6T total / ~48B active
+            </div>
+            <div class="meta">
+              <b>公开状态</b>
+              权重与 2.0 专用实现尚未公开
+            </div>
+          </div>
+          <div class="chips">
+            <span class="chip model">MoE</span>
+            <span class="chip model">N-gram Embedding</span>
+            <span class="chip kernel">LSA / Sparse MLA</span>
+            <span class="chip system">PD disaggregation</span>
+            <span class="chip system">MTP speculative decoding</span>
+            <span class="chip internal">MOPD post-training</span>
+          </div>
+          <div class="callout">
+            关键边界：公开资料中没有发现 SGLang、vLLM 或 Transformers 的 LongCat-2.0 专用模型实现 PR。能直接追溯到代码的是 LongCat-Flash / LongCat-Flash-Lite 继承链，以及官方开源的 SGLang-FluentLLM serving 栈。
+          </div>
+        </section>
+
+        <section class="section" id="mapping">
+          <h2>技术点到代码/PR 映射</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>技术点</th>
+            <th>博客含义</th>
+            <th>代码 / PR</th>
+            <th>状态</th>
+            <th>可信度</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="area" data-label="技术点">LongCat-2.0 1.6T MoE</td>
+            <td data-label="博客含义">总参数 1.6T，每 token 激活约 48B，训练和大规模部署运行在 AI ASIC superpods 上。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/meituan-longcat/LongCat-2.0">meituan-longcat/LongCat-2.0</a>，
+              <a href="https://huggingface.co/meituan-longcat/LongCat-2.0">HF model card</a>
+            </td>
+            <td class="status" data-label="状态">仅 README / license / 图片；model card 标注权重 coming soon。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">LongCat Sparse Attention (LSA)</td>
+            <td data-label="博客含义">从 DeepSeek Sparse Attention 演进；通过 Streaming-aware Indexing、Cross-Layer Indexing、Hierarchical Indexing 降低 indexer 开销，并扩展到 3-step MTP。</td>
+            <td data-label="代码 / PR">
+              未找到 2.0 LSA 专用公开实现；相邻实现包括
+              <a href="https://github.com/meituan-longcat/FlashMLA">FlashMLA sparse kernels</a> 和
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM/tree/main/python/sglang/srt/layers/attention/native_sparse_attention">SGLang-FluentLLM native sparse attention</a>。
+            </td>
+            <td class="status" data-label="状态">相关 serving/kernel 代码公开，但不能等同于 LSA 三项策略完整实现。</td>
+            <td data-label="可信度"><span class="confidence-mid">中</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">N-gram Embedding</td>
+            <td data-label="博客含义">继承 LongCat-Flash-Lite；2.0 使用 n-gram size 5，并包含 135B N-gram Embedding 参数，用 embedding scaling 替代继续堆专家参数。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/sgl-project/sglang/pull/17838">sglang#17838</a>；
+              <a href="https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/layers/n_gram_embedding.py">n_gram_embedding.py</a>；
+              <a href="https://github.com/sgl-project/sglang/blob/main/python/sglang/jit_kernel/ngram_embedding.py">ngram_embedding.py</a>；
+              <a href="https://github.com/sgl-project/sglang/blob/main/python/sglang/jit_kernel/csrc/ngram_embedding.cuh">ngram_embedding.cuh</a>
+            </td>
+            <td class="status" data-label="状态">SGLang PR 已 merge；对应 LongCat-Flash-Lite 部署适配。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">LongCat-Flash / MTP 结构</td>
+            <td data-label="博客含义">2.0 的 MTP 和 speculative decoding 继承 LongCat-Flash 系列设计。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/sgl-project/sglang/pull/9824">sglang#9824</a>；
+              <a href="https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/models/longcat_flash.py">longcat_flash.py</a>；
+              <a href="https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/models/longcat_flash_nextn.py">longcat_flash_nextn.py</a>
+            </td>
+            <td class="status" data-label="状态">SGLang LongCat-Flash / LongCat-Flash-MTP 支持已 merge。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">vLLM LongCat 模型适配</td>
+            <td data-label="博客含义">不是 2.0 专用，但覆盖 LongCat-Flash 模型与 MTP 适配。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/vllm-project/vllm/pull/23991">vllm#23991</a>；
+              <a href="https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/models/longcat_flash.py">longcat_flash.py</a>；
+              <a href="https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/models/longcat_flash_mtp.py">longcat_flash_mtp.py</a>
+            </td>
+            <td class="status" data-label="状态">LongCat-Flash 模型支持已 merge；未发现 2.0 专用 PR。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">Transformers LongCat-Flash</td>
+            <td data-label="博客含义">提供 LongCat-Flash 的 HF Transformers 侧模型实现，可作为架构继承链参考。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/huggingface/transformers/pull/40730">transformers#40730</a>；
+              <a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/longcat_flash/modeling_longcat_flash.py">modeling_longcat_flash.py</a>
+            </td>
+            <td class="status" data-label="状态">已 merge；不是 LongCat-2.0 专用实现。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">PD 分离、KVCache 传输、decode radix tree cache</td>
+            <td data-label="博客含义">面向 1M context 和 1.6T MoE serving 的系统级优化，包含 prefill/decode 分离、KV cache 并行与跨节点传输优化。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM">meituan-longcat/SGLang-FluentLLM</a>；
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM/tree/main/python/sglang/srt/disaggregation">disaggregation</a>；
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM/blob/main/Quick_Start.md">Quick_Start.md</a>
+            </td>
+            <td class="status" data-label="状态">官方开源 serving 分支；README 明确列出 layer-wise KVCache transfer 和 decode radix tree cache。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">Speculative decoding: Eagle / MTP / PLD</td>
+            <td data-label="博客含义">博客提到 3-step MTP 和 CLI 复用索引，serving 侧需要低开销 speculative decoding。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM">SGLang-FluentLLM</a> README；
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM/blob/main/Quick_Start.md">Quick_Start.md speculative 配置</a>
+            </td>
+            <td class="status" data-label="状态">官方 serving 分支支持 Eagle、MTP、PLD，并将 Target + Verify + Draft 合入单 CUDA graph。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">MLA / FP8 KV cache / kernel 优化</td>
+            <td data-label="博客含义">长上下文 prefill/decode 的核心 kernel 栈，服务于 Attention I/O、计算和显存压力优化。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/meituan-longcat/FlashMLA">FlashMLA</a>；
+              <a href="https://github.com/meituan-longcat/DeepGEMM">DeepGEMM</a>；
+              <a href="https://github.com/meituan-longcat/flashinfer">flashinfer</a>；
+              SGLang-FluentLLM submodules
+            </td>
+            <td class="status" data-label="状态">官方 kernel 仓库公开；SGLang-FluentLLM 以 submodule 固定 FlashMLA、DeepGEMM、DeepEP、EPS、FlashInfer。</td>
+            <td data-label="可信度"><span class="confidence-high">高</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">EP / EPLB / zero expert / MoE routing</td>
+            <td data-label="博客含义">decode 侧使用大 EP 度降低权重和专家 I/O，并通过异步 EPLB 解决专家负载不均。</td>
+            <td data-label="代码 / PR">
+              <a href="https://github.com/meituan-longcat/SGLang-FluentLLM/tree/main/python/sglang/srt/layers/moe">SGLang-FluentLLM MoE layers</a>；
+              <a href="https://github.com/sgl-project/sglang/pull/29515">sglang#29515</a>；
+              <a href="https://github.com/meituan-longcat/DeepEP">DeepEP</a>；
+              <a href="https://github.com/meituan-longcat/eps">EPS</a>
+            </td>
+            <td class="status" data-label="状态">MoE/EP 相关代码公开；EPLB 与 2.0 线上放置策略未见完整公开实现。</td>
+            <td data-label="可信度"><span class="confidence-mid">中</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">6D 并行、超节点、ZeRO-1、Muon、1M context CP</td>
+            <td data-label="博客含义">训练系统优化：在 TP/CP/EP/DP/PP 外加入 EMBP，结合超节点、显存优化、长上下文 CP 和计算通信重叠。</td>
+            <td data-label="代码 / PR">未找到公开训练系统代码或 PR。</td>
+            <td class="status" data-label="状态">大概率是内部训练栈。</td>
+            <td data-label="可信度"><span class="confidence-low">低</span></td>
+          </tr>
+          <tr>
+            <td class="area" data-label="技术点">MOPD 多教师后训练</td>
+            <td data-label="博客含义">Agent Experts、Reasoning Experts、Interaction Experts 三类专家组，再通过 MOPD 融合能力。</td>
+            <td data-label="代码 / PR">未找到公开 post-training / MOPD 代码或 PR。</td>
+            <td class="status" data-label="状态">目前仅有技术说明。</td>
+            <td data-label="可信度"><span class="confidence-low">低</span></td>
+          </tr>
+        </tbody>
+      </table>
+        </section>
+
+        <section class="section" id="pr-status">
+          <h2>PR 状态快照</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>项目</th>
+            <th>PR</th>
+            <th>主题</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="项目">SGLang</td>
+            <td data-label="PR"><a href="https://github.com/sgl-project/sglang/pull/9824">#9824</a></td>
+            <td data-label="主题">Support Meituan LongCat-Flash && LongCat-Flash-MTP</td>
+            <td data-label="状态">Merged, 2025-08-31</td>
+          </tr>
+          <tr>
+            <td data-label="项目">SGLang</td>
+            <td data-label="PR"><a href="https://github.com/sgl-project/sglang/pull/17838">#17838</a></td>
+            <td data-label="主题">Support LongCat-Flash-Lite and N-gram Embedding</td>
+            <td data-label="状态">Merged, 2026-03-09</td>
+          </tr>
+          <tr>
+            <td data-label="项目">SGLang</td>
+            <td data-label="PR"><a href="https://github.com/sgl-project/sglang/pull/29515">#29515</a></td>
+            <td data-label="主题">Fix LongCat MLP tensor parallelism</td>
+            <td data-label="状态">Open as of 2026-06-30</td>
+          </tr>
+          <tr>
+            <td data-label="项目">vLLM</td>
+            <td data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/23991">#23991</a></td>
+            <td data-label="主题">Add LongCat-Flash model support</td>
+            <td data-label="状态">Merged, 2025-09-25</td>
+          </tr>
+          <tr>
+            <td data-label="项目">vLLM</td>
+            <td data-label="PR"><a href="https://github.com/vllm-project/vllm/pull/45773">#45773</a>, <a href="https://github.com/vllm-project/vllm/pull/46709">#46709</a></td>
+            <td data-label="主题">LongCat tool parser in Rust frontend</td>
+            <td data-label="状态">Open as of 2026-06-30</td>
+          </tr>
+          <tr>
+            <td data-label="项目">Transformers</td>
+            <td data-label="PR"><a href="https://github.com/huggingface/transformers/pull/40730">#40730</a></td>
+            <td data-label="主题">Add LongCat-Flash</td>
+            <td data-label="状态">Merged, 2025-09-17</td>
+          </tr>
+        </tbody>
+      </table>
+        </section>
+
+        <section class="section" id="conclusion">
+          <h2>检索结论</h2>
+          <p>精确检索 <code>LongCat-2.0</code> / <code>LongCat 2.0</code> 在 SGLang、vLLM、Transformers 的公开 PR，未发现模型实现 PR。公开 PR 多为 provider、pricing、model-list 或工具调用解析集成，不是 2.0 模型 serving 实现。</p>
+          <p>因此本页把 LongCat-2.0 的技术点分成三类：一是官方明确公开的 2.0 规格和技术描述；二是可代码追溯的 LongCat-Flash / Flash-Lite / SGLang-FluentLLM 继承链；三是当前未公开的训练和后训练内部栈。</p>
+        </section>
+
+        <section class="section" id="sources">
+          <h2>主要来源</h2>
+          <ul class="source-list">
+            <li><a href="https://longcat.chat/blog/longcat-2.0/">Introducing LongCat-2.0</a></li>
+            <li><a href="https://github.com/meituan-longcat/LongCat-2.0">meituan-longcat/LongCat-2.0</a></li>
+            <li><a href="https://huggingface.co/meituan-longcat/LongCat-2.0">meituan-longcat/LongCat-2.0 on Hugging Face</a></li>
+            <li><a href="https://huggingface.co/meituan-longcat/LongCat-Flash-Lite">meituan-longcat/LongCat-Flash-Lite on Hugging Face</a></li>
+            <li><a href="https://github.com/meituan-longcat/SGLang-FluentLLM">meituan-longcat/SGLang-FluentLLM</a></li>
+            <li><a href="https://github.com/meituan-longcat/FlashMLA">meituan-longcat/FlashMLA</a></li>
+            <li><a href="https://github.com/sgl-project/sglang/pull/9824">sglang#9824</a>, <a href="https://github.com/sgl-project/sglang/pull/17838">sglang#17838</a>, <a href="https://github.com/vllm-project/vllm/pull/23991">vllm#23991</a>, <a href="https://github.com/huggingface/transformers/pull/40730">transformers#40730</a></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
