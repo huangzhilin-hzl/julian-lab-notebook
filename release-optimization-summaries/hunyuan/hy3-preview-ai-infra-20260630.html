@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hy3 Preview AI Infra 优化与代码/PR 映射 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #637083;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #a13a3a;
+      --violet: #6f42c1;
+      --gray: #687386;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .side-index {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .side-index h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .side-index ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .side-index a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: var(--ink);
+    }
+
+    .side-index a:hover {
+      background: #f1f4f8;
+      text-decoration: none;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--orange);
+      background: #fff8eb;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.kernel {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.system {
+      color: var(--blue);
+      border-color: #b9c9ee;
+      background: #f2f6ff;
+    }
+
+    .chip.quant {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.internal {
+      color: var(--red);
+      border-color: #e8c5c5;
+      background: #fff4f4;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      width: 140px;
+      font-weight: 700;
+    }
+
+    .status {
+      width: 120px;
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    .effect {
+      min-width: 210px;
+    }
+
+    .links {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .links li {
+      margin: 0 0 4px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        padding: 18px;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .side-index {
+        position: static;
+        margin-bottom: 18px;
+        max-height: none;
+      }
+
+      .side-index ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .area,
+      .status,
+      .effect {
+        width: auto;
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="layout">
+      <nav class="side-index" aria-label="Page sections">
+        <h2>Index</h2>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#map">Optimization Map</a></li>
+          <li><a href="#sources">Sources</a></li>
+        </ul>
+      </nav>
+
+      <div class="content">
+        <section class="hero" id="overview">
+          <h1>Hy3 Preview AI Infra 优化与代码/PR 映射</h1>
+          <p class="subtle">基于腾讯混元 AI Infra 文章《腾讯混元AI Infra如何优化Hy3 Preview：一次大模型推理性能提升的技术拆解》整理；公开代码按 2026-06-30 可见的 Tencent/hpc-ops 与 Tencent/AngelSlim 仓库快照映射。</p>
+          <div class="meta-grid">
+            <div class="meta">
+              <b>Source Article</b>
+              <a href="https://mp.weixin.qq.com/s/miAOHTBZLyuDfNle1jrO0w">WeChat article</a>
+            </div>
+            <div class="meta">
+              <b>Kernel Repo</b>
+              <a href="https://github.com/Tencent/hpc-ops/tree/383b07ad43201a2f691e07b0fbc723a4ef63ff34">Tencent/hpc-ops</a>
+            </div>
+            <div class="meta">
+              <b>Quant/Sparse Repo</b>
+              <a href="https://github.com/Tencent/AngelSlim/tree/41f487f8c68985a7853b249f15729e2f7193dbb5">Tencent/AngelSlim</a>
+            </div>
+            <div class="meta">
+              <b>Captured</b>
+              2026-06-30
+            </div>
+          </div>
+          <div class="chips">
+            <span class="chip kernel">operators</span>
+            <span class="chip system">parallelism</span>
+            <span class="chip system">cache/scheduler</span>
+            <span class="chip quant">quantization</span>
+            <span class="chip kernel">sparse attention</span>
+          </div>
+          <div class="callout">
+            结论：文章中算子级优化、Stem 稀疏注意力和 AngelSlim 量化链路基本能在公开仓库对到代码/PR；Prefill TPSP、Decode DP+EP、多级缓存、完整异步调度更像线上 serving runtime 能力，公开仓库只暴露了部分底层 kernel、benchmark 或校准工具。
+          </div>
+        </section>
+
+        <section class="section" id="map">
+          <h2>Optimization Map</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Optimization</th>
+                <th>Mechanism</th>
+                <th>Public code / PR</th>
+                <th>Reported effect</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="area" data-label="Area">Attention</td>
+                <td data-label="Optimization">Dynamic Decode Attention</td>
+                <td data-label="Mechanism">KV 拆成均匀 tile，decode 前生成 <code>task_map</code>，Attention kernel 动态消费任务，Combine kernel 合并 split-k 结果。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/attention.py#L582">attention.py:582</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/attention/decode/assign_task.cu#L42">assign_task.cu:42</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/attention/decode/splitk_combine_kernels.cuh#L22">splitk_combine_kernels.cuh:22</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/46">hpc-ops#46</a>, <a href="https://github.com/Tencent/hpc-ops/pull/56">hpc-ops#56</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">单 batch 长文本算子最高 2.95x；混合 batch 1.59x-1.76x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">GEMM</td>
+                <td data-label="Optimization">Router GEMM BF16 x FP32</td>
+                <td data-label="Mechanism">FP32 router weight 离线拆为 <code>W_high + scale * W_low</code>，运行时两个 BF16 GEMM 融合到一个 kernel，寄存器累加后一次写回。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/gemm.py#L16">gemm.py:16</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/gemm.py#L25">gemm.py:25</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/47">hpc-ops#47</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">N=192, K=4096, M=2..4096 相比 FP32 cuBLAS 约 2.86x-3.22x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">MoE</td>
+                <td data-label="Optimization">FusedMoE + PDL chain</td>
+                <td data-label="Mechanism">routing/index 预处理、Gate-Up GEMM、activation quant、Down GEMM、Top-K 加权聚合串成 no-bubble pipeline。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/fuse_moe/fuse_moe.cu#L30">fuse_moe.cu:30</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/fuse_moe/fuse_moe.cu#L32">fuse_moe.cu:32</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/fuse_moe/fuse_moe.cu#L62">fuse_moe.cu:62</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/49">hpc-ops#49</a>, <a href="https://github.com/Tencent/hpc-ops/pull/53">hpc-ops#53</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">TP=8/EP=1 约 1.5x-1.6x；TP=1/EP=8 约 1.2x-1.5x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">QKV path</td>
+                <td data-label="Optimization">RoPE + Norm + Quant + Store KV</td>
+                <td data-label="Mechanism">QKV projection 后的 RoPE、Q/K RMSNorm、FP8 quant、KV cache store 合并成一个 micro-pipeline kernel。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/rope.py#L7">rope.py:7</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/rope.py#L101">rope.py:101</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/35">hpc-ops#35</a>, <a href="https://github.com/Tencent/hpc-ops/pull/39">hpc-ops#39</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">原文称 elementwise 链路约 5x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Communication</td>
+                <td data-label="Optimization">Fused AllReduce + RMSNorm + Add</td>
+                <td data-label="Mechanism"><code>RMSNorm(AllReduce(x)+residual)</code> 融合，高吞吐 two-shot 和低延迟 P2P/PDL 两条路径。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/allreduce.py#L7">allreduce.py:7</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/allreduce.py#L78">allreduce.py:78</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/allreduce/fuse_allreduce_rmsnorm_low_latency.cu#L16">fuse_allreduce_rmsnorm_low_latency.cu:16</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/48">hpc-ops#48</a>, <a href="https://github.com/Tencent/hpc-ops/pull/57">hpc-ops#57</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">8K-32K tokens 下最高约 1.68x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Sampler</td>
+                <td data-label="Optimization">Fused Sampler</td>
+                <td data-label="Mechanism">temperature、top-k、top-p、penalty、rejection sampling 从十多个 kernel 压到两个 kernel，并提供 temperature-only fast path。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/sampler.py#L42">sampler.py:42</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/sampler/fused_sampler.cu#L1">fused_sampler.cu:1</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/sampler/fused_sampler.cu#L161">fused_sampler.cu:161</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/51">hpc-ops#51</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">相比 vLLM 约 5.5x；相比 FlashInfer 约 2.5x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">GEMM + comm</td>
+                <td data-label="Optimization">GEMM + ReduceScatter fine-grained fusion</td>
+                <td data-label="Mechanism">Prefill TPSP 中 GEMM 与 ReduceScatter tile-level overlap，计算 SM 与通信 SM 分工。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li>未在公开仓库中找到完整 ReduceScatter fusion 实现。</li>
+                    <li>相邻积木：<a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/allreduce.py#L7">allreduce.py:7</a>, <a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/fuse_moe/fuse_moe.cu#L32">fuse_moe.cu:32</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">原文表格约 1.68x-1.81x。</td>
+                <td class="status" data-label="Status">partial</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Parallelism</td>
+                <td data-label="Optimization">Prefill TPSP</td>
+                <td data-label="Mechanism">TP + SP 降低 token-wise 冗余和 AllReduce 压力，并配合通信量化、通信/计算融合和并行模式调整。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li>完整 TPSP serving runtime 未公开。</li>
+                    <li>相关 benchmark/算子入口：<a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/benchmark/fused_moe/README.md#L18">README.md:18</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">TTFT 16K: 764ms -> 536ms；32K: 1885ms -> 1424ms。</td>
+                <td class="status" data-label="Status">partial</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Parallelism</td>
+                <td data-label="Optimization">Decode DP + EP</td>
+                <td data-label="Mechanism">Attention DP + MoE EP 跨节点混合；专家权重分布到多机，跨节点聚合 batch 提升 grouped GEMM 计算密度。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li>完整线上 scheduler / Async EPLB 未公开。</li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/src/fuse_moe/fuse_moe.cu#L23">fuse_moe.cu:23</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/angelslim/utils/vllm_calibration_dp.py#L87">vllm_calibration_dp.py:87</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">吞吐提升约 15.7%-44.7%。</td>
+                <td class="status" data-label="Status">partial</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Cache</td>
+                <td data-label="Optimization">GPU -> CPU -> KVStore 多级缓存</td>
+                <td data-label="Mechanism">Prefix/KV cache 分层，GPU 命中优先，溢出到 CPU 和 KVStore，应对长上下文高复用 workload。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li>公开仓库未看到完整多级 KVStore cache 实现。</li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">原文 workload 理论 cache hit 约 80%。</td>
+                <td class="status" data-label="Status">internal</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Scheduler</td>
+                <td data-label="Optimization">MTP + async scheduling</td>
+                <td data-label="Mechanism">CPU 先按最大 accepted length 准备下一轮，再用 verify 结果 patch 关键字段，减少 decode CPU bubble。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li>完整异步 scheduler 未公开。</li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/attention.py#L424">attention.py:424</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/configs/Hy3/ptq/fp8/Hy3_vllm_ptq_per_tensor.yaml#L34">Hy3_vllm_ptq_per_tensor.yaml:34</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/38">hpc-ops#38</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">CPU bubble 减少 5-10ms；端到端提升约 10%-20%。</td>
+                <td class="status" data-label="Status">partial</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Quantization</td>
+                <td data-label="Optimization">AngelSlim PTQ/GPTQ/QAT</td>
+                <td data-label="Mechanism">GPTQ 权重重构、activation smooth/rotation、轻量 QAT；原文提到 Attn FP8 + W4A8，线上精度损失控制在 1% 内。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/scripts/ptq/run_vllm_quant_for_Hy3.sh#L3">run_vllm_quant_for_Hy3.sh:3</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/configs/Hy3/fp8_static/Hy3_a20b_fp8_static_c8.yaml#L19">Hy3_a20b_fp8_static_c8.yaml:19</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/configs/Hy3/int4_gptq/Hy3_a20b_int4_gptq.yaml#L20">Hy3_a20b_int4_gptq.yaml:20</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/angelslim/engine.py#L766">engine.py:766</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/pull/289">AngelSlim#289</a>, <a href="https://github.com/Tencent/AngelSlim/pull/322">AngelSlim#322</a>, <a href="https://github.com/Tencent/AngelSlim/pull/348">AngelSlim#348</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">精度损失 &lt; 1%；吞吐约 +28%。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Sparse Attn</td>
+                <td data-label="Optimization">Stem Sparse Attention + HPC-BSA</td>
+                <td data-label="Mechanism">OAM 给 attention score 加 value-norm bias，Token Position-Decay 控制预算从首部到尾部递减，再用 block-sparse FP8 prefill attention 计算。</td>
+                <td data-label="Public code / PR">
+                  <ul class="links">
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/stem.py#L16">stem.py:16</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/stem.py#L123">stem.py:123</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/stem.py#L173">stem.py:173</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/blob/383b07ad43201a2f691e07b0fbc723a4ef63ff34/hpc/attention.py#L253">attention.py:253</a></li>
+                    <li><a href="https://github.com/Tencent/AngelSlim/blob/41f487f8c68985a7853b249f15729e2f7193dbb5/angelslim/compressor/sparsity/stem/backends/hpc_impl.py#L397">hpc_impl.py:397</a></li>
+                    <li><a href="https://github.com/Tencent/hpc-ops/pull/45">hpc-ops#45</a>, <a href="https://github.com/Tencent/hpc-ops/pull/50">hpc-ops#50</a>, <a href="https://github.com/Tencent/AngelSlim/pull/286">AngelSlim#286</a>, <a href="https://github.com/Tencent/AngelSlim/pull/328">AngelSlim#328</a></li>
+                  </ul>
+                </td>
+                <td class="effect" data-label="Reported effect">25% attention budget 接近 dense 精度；128K TTFT 约 3.6x。</td>
+                <td class="status" data-label="Status">public</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="sources">
+          <h2>Sources</h2>
+          <ul>
+            <li><a href="https://mp.weixin.qq.com/s/miAOHTBZLyuDfNle1jrO0w">腾讯混元 AI Infra 技术文章</a></li>
+            <li><a href="https://github.com/Tencent/hpc-ops/tree/383b07ad43201a2f691e07b0fbc723a4ef63ff34">Tencent/hpc-ops snapshot 383b07a</a></li>
+            <li><a href="https://github.com/Tencent/AngelSlim/tree/41f487f8c68985a7853b249f15729e2f7193dbb5">Tencent/AngelSlim snapshot 41f487f</a></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
