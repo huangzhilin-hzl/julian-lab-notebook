@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vLLM v0.24.0 优化手段与 PR 映射 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5f6d80;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #9f3535;
+      --violet: #6f42c1;
+      --cyan: #0f6674;
+      --gray: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 22px;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    aside {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    aside h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    aside a {
+      display: block;
+      padding: 6px 0;
+      color: var(--muted);
+    }
+
+    aside a:hover {
+      color: var(--blue);
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--blue);
+      background: #f3f6ff;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.deepseek {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.kernel {
+      color: var(--orange);
+      border-color: #e7cf9f;
+      background: #fff8eb;
+    }
+
+    .chip.distributed {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.quant {
+      color: var(--red);
+      border-color: #e6c0c0;
+      background: #fff4f4;
+    }
+
+    .chip.frontend {
+      color: var(--cyan);
+      border-color: #b9dce2;
+      background: #f0fbfd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      width: 150px;
+      font-weight: 700;
+    }
+
+    .effect {
+      min-width: 270px;
+    }
+
+    .pr-list {
+      min-width: 210px;
+    }
+
+    .pr-list a {
+      white-space: nowrap;
+    }
+
+    .date {
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .card p {
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .source {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+      min-width: 0;
+    }
+
+    .source p {
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        position: static;
+      }
+
+      aside nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+      }
+
+      .meta-grid,
+      .cards,
+      .source-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .layout {
+        padding: 18px;
+      }
+
+      .meta-grid,
+      .cards,
+      .source-list {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .area,
+      .effect,
+      .pr-list {
+        width: auto;
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside aria-label="page navigation">
+      <h2>目录</h2>
+      <nav>
+        <a href="#overview">概览</a>
+        <a href="#mapping">优化点与 PR</a>
+        <a href="#themes">主线拆解</a>
+        <a href="#followup">后续跟踪</a>
+        <a href="#sources">Sources</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero" id="overview">
+        <p><a href="../index.html">Release Optimization Summaries</a> / vLLM</p>
+        <h1>vLLM v0.24.0 优化手段与 PR 映射</h1>
+        <p class="subtle">整理自 vLLM 2026-07-01 X 发布帖和 v0.24.0 release notes。重点覆盖 DeepSeek-V4、MiniMax-M3、MRv2、硬件 kernel、WideEP / PD 分离、KV offloading 与量化优化。</p>
+        <div class="meta-grid">
+          <div class="meta">
+            <b>Release</b>
+            v0.24.0
+          </div>
+          <div class="meta">
+            <b>X thread date</b>
+            2026-07-01
+          </div>
+          <div class="meta">
+            <b>Scale</b>
+            571 commits / 256 contributors
+          </div>
+          <div class="meta">
+            <b>Primary source</b>
+            <a href="https://github.com/vllm-project/vllm/releases/tag/v0.24.0">GitHub release notes</a>
+          </div>
+        </div>
+        <div class="chips" aria-label="focus areas">
+          <span class="chip deepseek">DeepSeek-V4</span>
+          <span class="chip kernel">Kernel / Hardware</span>
+          <span class="chip distributed">WideEP / PD</span>
+          <span class="chip quant">Quantization</span>
+          <span class="chip frontend">MRv2 / Frontend</span>
+        </div>
+        <div class="callout">
+          一句话概括：v0.24.0 的核心优化不是单点功能，而是把 DSv4/MiniMax-M3 等新模型的高性能路径、MoE/EP 的宽并行能力、硬件专用 kernel、KV 传输/分层缓存和量化后端同时往生产化推进。
+        </div>
+      </section>
+
+      <section class="section" id="mapping">
+        <h2>优化点与 PR 映射</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>方向</th>
+              <th>优化点</th>
+              <th>作用</th>
+              <th>PR / 合并时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="area" data-label="方向">DeepSeek-V4</td>
+              <td data-label="优化点">FlashInfer sparse index cache</td>
+              <td class="effect" data-label="作用">缓存 sparse index metadata，减少 TTFT 阶段重复构造/查询开销；release notes 标注 TTFT 提升 2%-4%。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45863">#45863</a> <span class="date">2026-06-17</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">DeepSeek-V4</td>
+              <td data-label="优化点">Prefill chunk-planning optimization</td>
+              <td class="effect" data-label="作用">优化 prefill 分块规划，降低 chunk 调度和切分带来的额外成本；release notes 标注 E2E throughput 提升 4%。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45061">#45061</a> <span class="date">2026-06-15</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">DeepSeek-V4</td>
+              <td data-label="优化点">Cluster-cooperative topK kernel</td>
+              <td class="effect" data-label="作用">面向低延迟场景把 topK 路径改成 cluster-cooperative kernel，降低 MoE routing 的尾部延迟压力。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/43008">#43008</a> <span class="date">2026-06-23</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">DeepSeek-V4</td>
+              <td data-label="优化点">Contiguous per-block KV allocation</td>
+              <td class="effect" data-label="作用">把 KV cache 打包成连续的 per-block 分配，减少 DSv4 KV 访问/管理中的碎片化和不连续访存成本。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44577">#44577</a> <span class="date">2026-06-19</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">DeepSeek-V4</td>
+              <td data-label="优化点">Block-FP8 shared expert 支持 TEP=16</td>
+              <td class="effect" data-label="作用">扩大 block-FP8 shared expert 在 tensor/expert 并行组合下的可用配置空间，服务更大规模 MoE 部署。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/46001">#46001</a> <span class="date">2026-06-19</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">DeepSeek-V4 / SM100</td>
+              <td data-label="优化点">Native DSA indexer decode for <code>next_n &gt; 2</code></td>
+              <td class="effect" data-label="作用">在 SM100 上走原生 DSA indexer decode 路径，优化多 token decode / MTP 风格场景。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45322">#45322</a> <span class="date">2026-06-12</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">MiniMax-M3</td>
+              <td data-label="优化点">FP8 / MXFP4 / sparse GQA / ROCm tuning</td>
+              <td class="effect" data-label="作用">新增 MiniMax-M3 后快速补齐低精度 indexer、MXFP4、FP8 sparse GQA 和 AMD/ROCm 性能路径。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45381">#45381</a> <span class="date">2026-06-15</span>, <a href="https://github.com/vllm-project/vllm/pull/45892">#45892</a> <span class="date">2026-06-23</span>, <a href="https://github.com/vllm-project/vllm/pull/45896">#45896</a> <span class="date">2026-06-17</span>, <a href="https://github.com/vllm-project/vllm/pull/45744">#45744</a> <span class="date">2026-06-17</span>, <a href="https://github.com/vllm-project/vllm/pull/45725">#45725</a> <span class="date">2026-06-16</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">MiniMax-M3 / AMD</td>
+              <td data-label="优化点">FP8 per-channel、KV-cache fix、packed-modules mapping</td>
+              <td class="effect" data-label="作用">围绕 AMD 上的 MiniMax-M3 低精度权重、KV cache dtype 和 packed module 映射补齐正确性与性能细节。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45854">#45854</a> <span class="date">2026-06-17</span>, <a href="https://github.com/vllm-project/vllm/pull/45720">#45720</a> <span class="date">2026-06-17</span>, <a href="https://github.com/vllm-project/vllm/pull/45794">#45794</a> <span class="date">2026-06-17</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">Model Runner V2</td>
+              <td data-label="优化点">Quantized models by default</td>
+              <td class="effect" data-label="作用">MRv2 默认支持量化模型，减少 V1/V2 runner 分叉，使低精度 serving 更容易走新执行器路径。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44446">#44446</a> <span class="date">2026-06-18</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">Model Runner V2</td>
+              <td data-label="优化点">GraniteMoE 默认启用、Qwen/DeepSeek-V2 MoE 迁移、DFlash</td>
+              <td class="effect" data-label="作用">继续扩大 MRv2 的默认覆盖面，并把 DFlash speculative decoding 纳入 V2 runner。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45461">#45461</a> <span class="date">2026-06-16</span>, <a href="https://github.com/vllm-project/vllm/pull/42667">#42667</a> <span class="date">2026-06-12</span>, <a href="https://github.com/vllm-project/vllm/pull/44586">#44586</a> <span class="date">2026-06-10</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">NVIDIA kernels</td>
+              <td data-label="优化点">SM90 CUTLASS FP8 odd-M via <code>swap_ab</code></td>
+              <td class="effect" data-label="作用">补齐 odd-M 形状的 FP8 GEMM 高性能路径；release notes 标注 kernel speedup 180%-290%。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44572">#44572</a> <span class="date">2026-06-13</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">NVIDIA kernels</td>
+              <td data-label="优化点">H100 Qwen3-Next-80B FP8 <code>fused_moe</code> tuning</td>
+              <td class="effect" data-label="作用">针对 H100 上 Qwen3-Next-80B 的 FP8 MoE 配置调参；release notes 标注 +25%。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44830">#44830</a> <span class="date">2026-06-09</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">NVIDIA kernels</td>
+              <td data-label="优化点">DeepGEMM PDL、FlashInfer NVFP4 GEMM、cute-dsl MXFP8 linear</td>
+              <td class="effect" data-label="作用">补齐更细粒度低精度 GEMM/linear 后端，把 DeepGEMM、FlashInfer 和 CuTeDSL 路径接到 vLLM kernel 选择中。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/46006">#46006</a> <span class="date">2026-06-18</span>, <a href="https://github.com/vllm-project/vllm/pull/42235">#42235</a> <span class="date">2026-06-22</span>, <a href="https://github.com/vllm-project/vllm/pull/46393">#46393</a> <span class="date">2026-06-23</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">AMD ROCm</td>
+              <td data-label="优化点">Fused AR + RMSNorm + per-group FP8 quant</td>
+              <td class="effect" data-label="作用">把 all-reduce、RMSNorm 和 per-group FP8 quant 融合，减少 ROCm 路径上的 kernel launch 和中间读写。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/42864">#42864</a> <span class="date">2026-06-09</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">AMD ROCm</td>
+              <td data-label="优化点">AITER fused softplus-sqrt-topk MoE router</td>
+              <td class="effect" data-label="作用">把 MoE router 中的 softplus、sqrt、topK 等步骤融合到 AITER fused-MoE 路径，降低 routing 开销。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44945">#44945</a> <span class="date">2026-06-09</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">AMD ROCm / DSv4</td>
+              <td data-label="优化点">Flash-decode split-K 与 inverse-RoPE fusion</td>
+              <td class="effect" data-label="作用">针对 DSv4 decode attention 和 RoPE/投影路径做 ROCm 专用优化，提升 AMD 上的 DSv4 attention/MoE 可用性。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44899">#44899</a> <span class="date">2026-06-12</span>, <a href="https://github.com/vllm-project/vllm/pull/45103">#45103</a> <span class="date">2026-06-12</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">Intel XPU</td>
+              <td data-label="优化点">Sequence parallel、W4A16 int4 MoE、DeepSeek-V4 attention/MoE paths</td>
+              <td class="effect" data-label="作用">让 XPU 路径具备序列并行、int4 MoE 和 DSv4 attention/MoE 支持，扩大非 NVIDIA 平台覆盖。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/38608">#38608</a> <span class="date">2026-06-15</span>, <a href="https://github.com/vllm-project/vllm/pull/45136">#45136</a> <span class="date">2026-06-14</span>, <a href="https://github.com/vllm-project/vllm/pull/44144">#44144</a> <span class="date">2026-06-09</span>, <a href="https://github.com/vllm-project/vllm/pull/44517">#44517</a> <span class="date">2026-06-22</span>, <a href="https://github.com/vllm-project/vllm/pull/45240">#45240</a> <span class="date">2026-06-12</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">CPU / RISC-V</td>
+              <td data-label="优化点">ASR CPU preprocessing、CPU W4A16 INT4 MoE、cgroup-aware KV sizing、RISC-V kernels</td>
+              <td class="effect" data-label="作用">CPU 侧覆盖预处理加速、MoE 低精度、容器内存感知 KV sizing，以及 RISC-V oneDNN/RVV 内核。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44612">#44612</a> <span class="date">2026-06-12</span>, <a href="https://github.com/vllm-project/vllm/pull/43409">#43409</a> <span class="date">2026-06-12</span>, <a href="https://github.com/vllm-project/vllm/pull/45086">#45086</a> <span class="date">2026-06-15</span>, <a href="https://github.com/vllm-project/vllm/pull/44478">#44478</a> <span class="date">2026-06-11</span>, <a href="https://github.com/vllm-project/vllm/pull/44324">#44324</a> <span class="date">2026-06-22</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">WideEP</td>
+              <td data-label="优化点">DeepEP v2 expert parallelism integration</td>
+              <td class="effect" data-label="作用">把 DeepEP v2 接入 vLLM wide expert parallelism 路径，服务更宽 EP 的 MoE 部署。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/41183">#41183</a> <span class="date">2026-06-09</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">PD disaggregation</td>
+              <td data-label="优化点">NIXL prefill-to-decode KV push 与 Mooncake PP-PD support</td>
+              <td class="effect" data-label="作用">让 prefill 节点可以向 decode 节点推送 KV，并让 Mooncake connector 支持 pipeline-parallel 的 PD 分离服务。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/35264">#35264</a> <span class="date">2026-06-12</span>, <a href="https://github.com/vllm-project/vllm/pull/44528">#44528</a> <span class="date">2026-06-16</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">Mooncake connector</td>
+              <td data-label="优化点">Async lookup、compact chunk-hash、SWA-block skipping</td>
+              <td class="effect" data-label="作用">减少 scheduler lookup 开销、压缩 chunk-hash wire format，并跳过不可达 SWA blocks 的 KV lookup。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/45659">#45659</a> <span class="date">2026-06-18</span>, <a href="https://github.com/vllm-project/vllm/pull/45969">#45969</a> <span class="date">2026-06-20</span>, <a href="https://github.com/vllm-project/vllm/pull/45444">#45444</a> <span class="date">2026-06-18</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">KV offloading</td>
+              <td data-label="优化点">Multi-tier async lookup、packed HMA layout、fs-tier cache、non-blocking idle flush</td>
+              <td class="effect" data-label="作用">KV offloading 从功能路径走向低阻塞、分层、并行无关的缓存管理，降低长上下文 serving 的尾部干扰。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44193">#44193</a> <span class="date">2026-06-10</span>, <a href="https://github.com/vllm-project/vllm/pull/46205">#46205</a> <span class="date">2026-06-20</span>, <a href="https://github.com/vllm-project/vllm/pull/44733">#44733</a> <span class="date">2026-06-11</span>, <a href="https://github.com/vllm-project/vllm/pull/45595">#45595</a> <span class="date">2026-06-17</span></td>
+            </tr>
+            <tr>
+              <td class="area" data-label="方向">Quantization</td>
+              <td data-label="优化点">Online FP8 PTPC、modelopt_mixed 扩展、Thor FP8 MoE re-enable</td>
+              <td class="effect" data-label="作用">补齐在线 FP8 per-token-per-channel 量化，把 modelopt_mixed 扩展到 Ampere/Turing，并恢复 NVIDIA Thor 上的 FP8 MoE。</td>
+              <td class="pr-list" data-label="PR / 合并时间"><a href="https://github.com/vllm-project/vllm/pull/44132">#44132</a> <span class="date">2026-06-08</span>, <a href="https://github.com/vllm-project/vllm/pull/45306">#45306</a> <span class="date">2026-06-16</span>, <a href="https://github.com/vllm-project/vllm/pull/45375">#45375</a> <span class="date">2026-06-23</span>, <a href="https://github.com/vllm-project/vllm/pull/46339">#46339</a> <span class="date">2026-06-24</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="themes">
+        <h2>按主线理解</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>模型专用路径</h3>
+            <p>DeepSeek-V4 和 MiniMax-M3 是这次最明显的模型主线：sparse index、chunk planning、topK、KV allocation、FP8/MXFP4 和 AMD/XPU/SM100 路径都在围绕大 MoE serving 落地。</p>
+          </article>
+          <article class="card">
+            <h3>硬件专用 kernel</h3>
+            <p>NVIDIA、ROCm、XPU、CPU/RISC-V 都有各自优化。vLLM 在同一 release 里把 kernel backend、低精度 GEMM、MoE router 和 attention decode 都继续硬件化。</p>
+          </article>
+          <article class="card">
+            <h3>分布式 serving</h3>
+            <p>DeepEP v2、NIXL KV push、Mooncake PP-PD、async lookup 和 compact chunk-hash 说明重点不只是单卡吞吐，而是宽 EP 与 PD 分离的生产服务效率。</p>
+          </article>
+          <article class="card">
+            <h3>执行器与量化</h3>
+            <p>MRv2 默认支持量化模型，DFlash 进入 MRv2；量化侧补齐 PTPC、modelopt_mixed 和 Thor FP8 MoE，使低精度 serving 覆盖更多设备代际。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="followup">
+        <h2>后续跟踪建议</h2>
+        <ul>
+          <li>对 DSv4：优先复测 <code>#45863</code>、<code>#45061</code>、<code>#43008</code> 三个 PR 在本地 workload 的 TTFT、E2E throughput 和 low-latency TPOT 上是否能复现 release notes 收益。</li>
+          <li>对 WideEP / PD：跟踪 <code>#41183</code>、<code>#35264</code>、<code>#44528</code> 与 Mooncake 后续 PR 的稳定性，尤其是跨节点 KV transfer 和 scheduler lookup 开销。</li>
+          <li>对硬件后端：把 NVIDIA FP8 odd-M、H100 fused_moe、ROCm fused router 和 XPU W4A16 MoE 分开评估，避免把不同硬件的优化收益混到一个结论里。</li>
+          <li>对量化：关注 PTPC、modelopt_mixed、NVFP4/MXFP8 kernel 与模型权重格式之间的兼容边界。</li>
+        </ul>
+      </section>
+
+      <section class="section" id="sources">
+        <h2>Sources</h2>
+        <div class="source-list">
+          <div class="source">
+            <b>vLLM X thread</b>
+            <p><a href="https://x.com/vllm_project/status/2072159562992619991">https://x.com/vllm_project/status/2072159562992619991</a></p>
+          </div>
+          <div class="source">
+            <b>vLLM v0.24.0 Release Notes</b>
+            <p><a href="https://github.com/vllm-project/vllm/releases/tag/v0.24.0">https://github.com/vllm-project/vllm/releases/tag/v0.24.0</a></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
