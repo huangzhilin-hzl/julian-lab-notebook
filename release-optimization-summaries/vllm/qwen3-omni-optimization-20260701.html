@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qwen3-Omni vLLM-Omni Serving 优化总结 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5f6d80;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #9f3535;
+      --violet: #6f42c1;
+      --cyan: #0f6674;
+      --gray: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    pre {
+      margin: 12px 0 0;
+      padding: 12px 14px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #273449;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 22px;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    aside {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    aside h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    aside a {
+      display: block;
+      padding: 6px 0;
+      color: var(--muted);
+    }
+
+    aside a:hover {
+      color: var(--blue);
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--blue);
+      background: #f3f6ff;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.pipeline {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.graph {
+      color: var(--orange);
+      border-color: #e7cf9f;
+      background: #fff8eb;
+    }
+
+    .chip.async {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.audio {
+      color: var(--red);
+      border-color: #e6c0c0;
+      background: #fff4f4;
+    }
+
+    .chip.runtime {
+      color: var(--cyan);
+      border-color: #b9dce2;
+      background: #f0fbfd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .metric {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .effect {
+      min-width: 250px;
+    }
+
+    .pr-refs {
+      min-width: 190px;
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .source-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .source-item b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+        padding: 18px;
+      }
+
+      aside {
+        position: static;
+      }
+
+      .meta-grid,
+      .source-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <h2>目录</h2>
+      <a href="#summary">核心结论</a>
+      <a href="#model">服务模型</a>
+      <a href="#stack">优化栈</a>
+      <a href="#metrics">效果数据</a>
+      <a href="#prs">PR / 代码锚点</a>
+      <a href="#takeaways">工程启示</a>
+      <a href="#sources">来源</a>
+    </aside>
+
+    <main>
+      <section class="hero" id="summary">
+        <h1>Qwen3-Omni vLLM-Omni Serving 优化总结</h1>
+        <p class="subtle">基于 vLLM Blog 2026-07-01 文章：Experience and Lessons Learned from Serving Multi-Stage Qwen3-Omni in vLLM-Omni。</p>
+        <div class="meta-grid">
+          <div class="meta">
+            <b>主题</b>
+            多阶段 omni 模型在线服务
+          </div>
+          <div class="meta">
+            <b>模型</b>
+            Qwen/Qwen3-Omni-30B-A3B-Instruct
+          </div>
+          <div class="meta">
+            <b>端点</b>
+            <code>/v1/chat/completions</code>
+          </div>
+          <div class="meta">
+            <b>发布日期</b>
+            2026-07-01
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip pipeline">Thinker / Talker / Code2Wav</span>
+          <span class="chip graph">CUDA Graph</span>
+          <span class="chip async">Async chunk / output</span>
+          <span class="chip audio">Audio TTFP / RTF</span>
+          <span class="chip runtime">Stage replicas</span>
+        </div>
+        <div class="callout">
+          核心判断：这篇文章的重点不是单个模型算子快多少，而是把 Qwen3-Omni 拆成三个服务阶段后，分别优化每个阶段的 batching、CUDA Graph、跨阶段 handoff、输出构造和副本扩展。它给出的经验更接近一个多模态语音流水线 serving 方案，而不是普通 text-only LLM decode 调优。
+        </div>
+      </section>
+
+      <section class="section" id="model">
+        <h2>服务模型</h2>
+        <p>普通 LLM serving 大致是一条 prefill/decode/detokenize 循环；Qwen3-Omni 在文本/多模态理解后，还要把隐藏状态转换成语音 codec，再把 codec 还原成 waveform。因此 vLLM-Omni 把请求拆成三个阶段。</p>
+        <table>
+          <thead>
+            <tr>
+              <th>阶段</th>
+              <th>职责</th>
+              <th>主要瓶颈</th>
+              <th>适合的优化</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="阶段"><b>Thinker</b></td>
+              <td data-label="职责">多模态理解和文本生成，产生文本、hidden states、embeddings。</td>
+              <td data-label="主要瓶颈">AR decode 中重复 kernel launch，以及 chunk 边界上的 connector payload 构造。</td>
+              <td data-label="适合的优化">vLLM 外层 CUDA Graph、async omni output、decode-only connector payload。</td>
+            </tr>
+            <tr>
+              <td data-label="阶段"><b>Talker</b></td>
+              <td data-label="职责">把 hidden states / embeddings 转成 RVQ codec codes。</td>
+              <td data-label="主要瓶颈">每个 utterance 有大量短小 codec predictor step，单请求微小 kernel 容易让 GPU occupancy 不足。</td>
+              <td data-label="适合的优化">per-stage batching、外层 CUDA Graph、内层 <code>torch.compile</code>、stage replica。</td>
+            </tr>
+            <tr>
+              <td data-label="阶段"><b>Code2Wav</b></td>
+              <td data-label="职责">把 codec codes 解码成 waveform audio。</td>
+              <td data-label="主要瓶颈">小 chunk vocoder forward 多且碎，full payload barrier 会推高 first audio latency。</td>
+              <td data-label="适合的优化">async chunk、inner <code>CUDAGraphDecoderWrapper</code>、stage replica。</td>
+            </tr>
+          </tbody>
+        </table>
+        <pre>Thinker  -> multimodal understanding + text generation
+Talker   -> hidden states / embeddings -> RVQ codec codes
+Code2Wav -> codec codes -> waveform audio</pre>
+      </section>
+
+      <section class="section" id="stack">
+        <h2>优化栈</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>优化</th>
+              <th>目标路径</th>
+              <th>解决的问题</th>
+              <th class="pr-refs">对应 PR / 代码</th>
+              <th class="effect">收益</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="优化"><b>Stage decomposition</b></td>
+              <td data-label="目标路径">Thinker -> Talker -> Code2Wav</td>
+              <td data-label="解决的问题">三段 workload 性质不同，如果共享一个 batching/graph/device policy，就会被最慢子路径绑定。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/models/qwen3_omni/pipeline.py">pipeline.py</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/models/qwen3_omni/qwen3_omni.py">qwen3_omni.py</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/deploy/qwen3_omni_moe.yaml">qwen3_omni_moe.yaml</a>
+              </td>
+              <td data-label="收益">把 stage boundary 变成一等调度对象，每个阶段可独立配置 <code>max_num_seqs</code>、graph/eager、connector 和 replica。</td>
+            </tr>
+            <tr>
+              <td data-label="优化"><b>Per-stage batching</b></td>
+              <td data-label="目标路径">Talker MTP path、Code2Wav chunk path</td>
+              <td data-label="解决的问题">Talker 和 Code2Wav 的单请求 micro-work 太碎，固定 launch 成本占比高。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/tests/dfx/perf/tests/test_qwen3_omni_async_chunk.json">async-chunk perf config</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/tests/dfx/perf/tests/test_qwen3_omni_multi_replicas.json">multi-replica perf config</a>
+              </td>
+              <td data-label="收益">跨请求合批摊销短 step 成本，提高 GPU occupancy 和 req/s。</td>
+            </tr>
+            <tr>
+              <td data-label="优化"><b>CUDA Graph</b></td>
+              <td data-label="目标路径">Thinker / Talker / Code2Wav decode paths</td>
+              <td data-label="解决的问题">每个 decode step 重复 CPU-side kernel dispatch，Talker 这类大量短 step 尤其明显。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/523">vllm-omni#523</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/669">vllm-omni#669</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/2376">vllm-omni#2376</a>
+              </td>
+              <td data-label="收益">并发 64 sweep 中，req/s 从 2.2 到 8.6，audio RTF 从 1.15 到 0.59。</td>
+            </tr>
+            <tr>
+              <td data-label="优化"><b>Async chunk</b></td>
+              <td data-label="目标路径">Thinker -> Talker、Talker -> Code2Wav</td>
+              <td data-label="解决的问题">full-payload barrier 让 Code2Wav 必须等 Talker 完整 payload，first audio latency 被完整上游阶段拖住。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/727">vllm-omni#727</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/951">vllm-omni#951</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/1656">vllm-omni#1656</a>
+              </td>
+              <td data-label="收益">按 codec chunk 增量交付，下游能边等边算；mean audio TTFP 从 2790 ms 降到 655 ms。</td>
+            </tr>
+            <tr>
+              <td data-label="优化"><b>Async omni output</b></td>
+              <td data-label="目标路径">Thinker connector payloads</td>
+              <td data-label="解决的问题">同步构造 hidden states / embeddings payload 会阻塞 decode worker，造成 chunk 间 GPU idle。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/4476">vllm-omni#4476</a>
+              </td>
+              <td data-label="收益">把 payload assembly 移出 hot path；并发 64 下 req/s 从 9.3 到 11.3，同时 TTFP 基本保持在 631 ms。</td>
+            </tr>
+            <tr>
+              <td data-label="优化"><b>Stage replicas</b></td>
+              <td data-label="目标路径">Talker、Code2Wav</td>
+              <td data-label="解决的问题">高并发下语音侧 stage 先饱和，但复制完整 Thinker 会浪费大模型显存。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/2396">vllm-omni#2396</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3855">vllm-omni#3855</a>
+              </td>
+              <td data-label="收益">只复制瓶颈阶段；示例中 Thinker 1 份，Talker 2 份，Code2Wav 2 份，req/s 到 11.7。</td>
+            </tr>
+            <tr>
+              <td data-label="优化"><b>Hot-path cleanup</b></td>
+              <td data-label="目标路径">Talker code predictor、connector payload、decode state</td>
+              <td data-label="解决的问题">每 step 的 Python、<code>torch.cat</code>、CPU serialization、D2H state 读回会随语音长度放大。</td>
+              <td data-label="对应 PR / 代码">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3007">vllm-omni#3007</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3164">vllm-omni#3164</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3878">vllm-omni#3878</a>
+              </td>
+              <td data-label="收益">长上下文单请求中，E2EL 从 21.28 s 到 7.37 s，audio RTF 从 0.71 到 0.28。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="metrics">
+        <h2>效果数据</h2>
+        <p>原文的主要对比是在 Seed-TTS <code>en</code> 上做 controlled benchmark sweep。下表摘取 concurrency 64 下的逐层叠加结果。</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>新增配置</th>
+              <th>Talker / Code2Wav replicas</th>
+              <th>Req/s</th>
+              <th>Mean audio TTFP</th>
+              <th>Mean audio RTF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Step">Baseline</td>
+              <td data-label="新增配置">Batch</td>
+              <td data-label="Replicas">1 / 1</td>
+              <td data-label="Req/s" class="metric">2.2</td>
+              <td data-label="Mean audio TTFP">5884 ms</td>
+              <td data-label="Mean audio RTF">1.15</td>
+            </tr>
+            <tr>
+              <td data-label="Step">+ CUDA Graph</td>
+              <td data-label="新增配置">Thinker、Talker、Code2Wav graph capture</td>
+              <td data-label="Replicas">1 / 1</td>
+              <td data-label="Req/s" class="metric">8.6</td>
+              <td data-label="Mean audio TTFP">2790 ms</td>
+              <td data-label="Mean audio RTF">0.59</td>
+            </tr>
+            <tr>
+              <td data-label="Step">+ Async chunk</td>
+              <td data-label="新增配置">跨阶段 chunked handoff</td>
+              <td data-label="Replicas">1 / 1</td>
+              <td data-label="Req/s" class="metric">9.3</td>
+              <td data-label="Mean audio TTFP">655 ms</td>
+              <td data-label="Mean audio RTF">0.63</td>
+            </tr>
+            <tr>
+              <td data-label="Step">+ Async output</td>
+              <td data-label="新增配置">非阻塞 omni output materialization</td>
+              <td data-label="Replicas">1 / 1</td>
+              <td data-label="Req/s" class="metric">11.3</td>
+              <td data-label="Mean audio TTFP">631 ms</td>
+              <td data-label="Mean audio RTF">0.47</td>
+            </tr>
+            <tr>
+              <td data-label="Step">+ Stage replicas</td>
+              <td data-label="新增配置">2x Talker + 2x Code2Wav</td>
+              <td data-label="Replicas">2 / 2</td>
+              <td data-label="Req/s" class="metric">11.7</td>
+              <td data-label="Mean audio TTFP">632 ms</td>
+              <td data-label="Mean audio RTF">0.47</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          读数方式：CUDA Graph 是吞吐最大的单步跳变；async chunk 是 first audio latency 最大的单步下降；async output 和 stage replicas 主要补高并发吞吐余量。最终并发 64 下吞吐约 5.4x，mean audio TTFP 从约 5.9 s 到约 0.63 s，RTF 从慢于实时的 1.15 到 0.47。
+        </div>
+      </section>
+
+      <section class="section" id="prs">
+        <h2>PR / 代码锚点</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>类别</th>
+              <th>PR / 文件</th>
+              <th>作用</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="类别"><b>拓扑</b></td>
+              <td data-label="PR / 文件">
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/models/qwen3_omni/pipeline.py">pipeline.py</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/models/qwen3_omni/qwen3_omni.py">qwen3_omni.py</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/deploy/qwen3_omni_moe.yaml">qwen3_omni_moe.yaml</a>
+              </td>
+              <td data-label="作用">定义 Thinker / Talker / Code2Wav 三阶段模型包装、pipeline topology 和默认 staged deploy profile。</td>
+            </tr>
+            <tr>
+              <td data-label="类别"><b>CUDA Graph</b></td>
+              <td data-label="PR / 文件">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/523">vllm-omni#523</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/669">vllm-omni#669</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/2376">vllm-omni#2376</a>
+              </td>
+              <td data-label="作用">分别覆盖 Thinker、Talker、Code2Wav 的 graph capture / replay 路径。</td>
+            </tr>
+            <tr>
+              <td data-label="类别"><b>Async chunk</b></td>
+              <td data-label="PR / 文件">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/727">vllm-omni#727</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/951">vllm-omni#951</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/1656">vllm-omni#1656</a>
+              </td>
+              <td data-label="作用">把跨阶段数据交换改成 chunk 生命周期管理、异步调度和 inter-packet latency 优化。</td>
+            </tr>
+            <tr>
+              <td data-label="类别"><b>Async output</b></td>
+              <td data-label="PR / 文件"><a href="https://github.com/vllm-project/vllm-omni/pull/4476">vllm-omni#4476</a></td>
+              <td data-label="作用">支持 async omni output materialization，把 connector payload 构造从 decode critical path 解耦。</td>
+            </tr>
+            <tr>
+              <td data-label="类别"><b>Stage replicas</b></td>
+              <td data-label="PR / 文件">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/2396">vllm-omni#2396</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3855">vllm-omni#3855</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/blob/main/tests/dfx/perf/tests/test_qwen3_omni_multi_replicas.json">multi-replica perf config</a>
+              </td>
+              <td data-label="作用">支持 multi-stage deployment、stage runtime 和分布式 replica control plane，只扩展 Talker / Code2Wav 瓶颈阶段。</td>
+            </tr>
+            <tr>
+              <td data-label="类别"><b>Hot path</b></td>
+              <td data-label="PR / 文件">
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3007">vllm-omni#3007</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3164">vllm-omni#3164</a><br>
+                <a href="https://github.com/vllm-project/vllm-omni/pull/3878">vllm-omni#3878</a>
+              </td>
+              <td data-label="作用">移除默认 mp executor、减少 payload/connector 重复工作、重写 Talker code predictor、保持 decode state 尽量 GPU resident。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="takeaways">
+        <h2>工程启示</h2>
+        <ul>
+          <li><b>多模态语音模型要先按阶段建模。</b> 否则不同阶段的 batching、graph capture 和设备扩展策略互相牵制，最终被最碎或最慢的路径拖住。</li>
+          <li><b>CUDA Graph 只解决 launch tax，不解决 pipeline barrier。</b> 原文中 Graph 带来很大吞吐跳变，但 first audio latency 的关键下降来自 async chunk。</li>
+          <li><b>输出构造也属于 serving hot path。</b> hidden states / embeddings 的拼接、拷贝、序列化如果在 decode worker 上同步发生，会直接转化成 GPU idle。</li>
+          <li><b>副本要扩瓶颈 stage，而不是复制整条 pipeline。</b> Thinker 显存贵且未必饱和，Talker / Code2Wav 更容易在高并发下成为 tail bottleneck。</li>
+          <li><b>模型内部小开销会随语音长度放大。</b> Talker code predictor、<code>torch.cat</code>、D2H state 读回、connector 重复 payload 这类单步成本，在长 utterance 中会变成主延迟来源。</li>
+          <li><b>数值稳定仍然是边界条件。</b> Talker rewrite 中 RMSNorm/RoPE 保持 fp32，并避免跨请求 embedding buffer aliasing，说明性能优化不能破坏音频质量一致性。</li>
+        </ul>
+      </section>
+
+      <section class="section" id="sources">
+        <h2>来源</h2>
+        <div class="source-list">
+          <div class="source-item">
+            <b>原文</b>
+            <a href="https://vllm.ai/blog/2026-07-01-qwen3-omni-optimization">vLLM Blog: Qwen3-Omni optimization</a>
+          </div>
+          <div class="source-item">
+            <b>Markdown source</b>
+            <a href="https://github.com/vllm-project/vllm-project.github.io/blob/main/_posts/2026-07-01-qwen3-omni-optimization.md">vllm-project.github.io/_posts/2026-07-01-qwen3-omni-optimization.md</a>
+          </div>
+          <div class="source-item">
+            <b>vLLM-Omni repo</b>
+            <a href="https://github.com/vllm-project/vllm-omni">github.com/vllm-project/vllm-omni</a>
+          </div>
+          <div class="source-item">
+            <b>模型</b>
+            <a href="https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct">Qwen/Qwen3-Omni-30B-A3B-Instruct</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
