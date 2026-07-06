@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hy3 正式版模型发布摘要 - Julian Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #637083;
+      --line: #dfe4ec;
+      --head: #eef2f7;
+      --blue: #2457c5;
+      --green: #19764a;
+      --orange: #9a5a00;
+      --red: #a13a3a;
+      --violet: #6f42c1;
+      --gray: #687386;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .side-index {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .side-index h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .side-index ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .side-index a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: var(--ink);
+    }
+
+    .side-index a:hover {
+      background: #f1f4f8;
+      text-decoration: none;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfe;
+    }
+
+    .meta b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--orange);
+      background: #fff8eb;
+      border-radius: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfcfe;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.model {
+      color: var(--blue);
+      border-color: #b9c9ee;
+      background: #f2f6ff;
+    }
+
+    .chip.system {
+      color: var(--green);
+      border-color: #b9dacb;
+      background: #f0faf5;
+    }
+
+    .chip.quant {
+      color: var(--violet);
+      border-color: #d6c5ec;
+      background: #f8f3ff;
+    }
+
+    .chip.risk {
+      color: var(--red);
+      border-color: #e8c5c5;
+      background: #fff4f4;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: var(--head);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .area {
+      width: 160px;
+      font-weight: 700;
+    }
+
+    .status {
+      width: 130px;
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    .effect {
+      min-width: 230px;
+    }
+
+    .links {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .links li {
+      margin: 0 0 4px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        padding: 18px;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .side-index {
+        position: static;
+        margin-bottom: 18px;
+        max-height: none;
+      }
+
+      .side-index ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 12px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .area,
+      .status,
+      .effect {
+        width: auto;
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="layout">
+      <nav class="side-index" aria-label="Page sections">
+        <h2>Index</h2>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#specs">Model Specs</a></li>
+          <li><a href="#positioning">Positioning</a></li>
+          <li><a href="#serving">Serving</a></li>
+          <li><a href="#finetune">Finetuning</a></li>
+          <li><a href="#risks">Risks</a></li>
+          <li><a href="#sources">Sources</a></li>
+        </ul>
+      </nav>
+
+      <div class="content">
+        <section class="hero" id="overview">
+          <h1>Hy3 正式版模型发布摘要</h1>
+          <p class="subtle">基于 Tencent 在 Hugging Face 发布的 <a href="https://huggingface.co/tencent/Hy3">tencent/Hy3</a> 模型卡、raw README、config、finetune README 和 Hy3-FP8 仓库元数据整理；采集时间为 2026-07-06。</p>
+          <div class="meta-grid">
+            <div class="meta">
+              <b>Model</b>
+              <a href="https://huggingface.co/tencent/Hy3">tencent/Hy3</a>
+            </div>
+            <div class="meta">
+              <b>HF lastModified</b>
+              2026-07-06 07:24:35 UTC
+            </div>
+            <div class="meta">
+              <b>License</b>
+              Apache-2.0
+            </div>
+            <div class="meta">
+              <b>Sibling Model</b>
+              <a href="https://huggingface.co/tencent/Hy3-FP8">Hy3-FP8</a>
+            </div>
+          </div>
+          <div class="chips">
+            <span class="chip model">295B MoE</span>
+            <span class="chip model">21B active</span>
+            <span class="chip model">256K context</span>
+            <span class="chip system">MTP serving</span>
+            <span class="chip system">tool calling</span>
+            <span class="chip quant">BF16 / FP8</span>
+          </div>
+          <div class="callout">
+            结论：Hy3 是 Hy3 Preview 之后的正式 instruct release，核心变化不是架构规模大改，而是 post-training / RL / 产品反馈闭环加强。模型卡把它定位成面向 coding、agent、长上下文和生产工具调用的 MoE 大模型；真正落地时重点看 vLLM/SGLang 的 Hy3 parser、MTP speculative 路径和 8 卡大显存部署条件。
+          </div>
+        </section>
+
+        <section class="section" id="specs">
+          <h2>Model Specs</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Value</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="area" data-label="Item">Architecture</td>
+                <td data-label="Value">MoE, <code>model_type=hy_v3</code>, <code>HYV3ForCausalLM</code></td>
+                <td data-label="Notes">192 experts, top-8 activated; config also exposes one shared expert and sigmoid router with expert bias.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Item">Scale</td>
+                <td data-label="Value">295B total, 21B active, 3.8B MTP layer parameters</td>
+                <td data-label="Notes">HF side metadata reports about 299B params; the model card uses 295B as the canonical total parameter count.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Item">Transformer shape</td>
+                <td data-label="Value">80 layers, hidden size 4096, intermediate size 13312</td>
+                <td data-label="Notes">GQA with 64 attention heads, 8 KV heads, head dimension 128.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Item">Context</td>
+                <td data-label="Value">256K tokens</td>
+                <td data-label="Notes"><code>config.json</code> uses <code>max_position_embeddings=262144</code>.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Item">Vocabulary</td>
+                <td data-label="Value">120832</td>
+                <td data-label="Notes">Tokenizer/template uses Hy-specific role, think, tool-call and tool-response special tokens.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Item">Precision</td>
+                <td data-label="Value">BF16 main release; FP8 sibling release</td>
+                <td data-label="Notes">Hy3-FP8 exposes <code>quantization_config.quant_method=fp8</code>.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Item">Generation defaults</td>
+                <td data-label="Value"><code>temperature=0.9</code>, <code>top_p=1.0</code></td>
+                <td data-label="Notes">Reasoning mode is controlled by <code>reasoning_effort</code>: <code>no_think</code>, <code>low</code>, or <code>high</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="positioning">
+          <h2>Positioning</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Claim</th>
+                <th>Reported evidence</th>
+                <th>Engineering read</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="area" data-label="Area">Preview -> Hy3</td>
+                <td data-label="Claim">正式版吸收 50+ 产品团队反馈，修复任务执行和交互问题，并扩大 post-training pipeline。</td>
+                <td data-label="Reported evidence">模型卡强调 RL 规模、post-training 数据质量和多样性提升。</td>
+                <td data-label="Engineering read">这说明 Hy3 正式版更像产品化 alignment release，而不是只发布新的 base architecture。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Agent / productivity</td>
+                <td data-label="Claim">在 coding、文档处理、金融分析、游戏开发、前端设计等生产力场景有明显增强。</td>
+                <td data-label="Reported evidence">270 位专家盲测、312 个有效比较中，Hy3 为 2.67/4，GLM-5.1 为 2.51/4；优势集中在前端、CI/CD、数据与存储。</td>
+                <td data-label="Engineering read">官方更重视真实 workflow 体验；公开 benchmark 仍需要和内部盲测分开看。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Tool calling</td>
+                <td data-label="Claim">输出格式、工具调用成功率、错误恢复和跨 scaffold 泛化改善。</td>
+                <td data-label="Reported evidence">SWE-Bench Verified 上 CodeBuddy、Cline、KiloCode 等 scaffold 的准确率波动在 4% 以内。</td>
+                <td data-label="Engineering read">部署时需要使用 Hy3 专用 parser：vLLM 的 <code>hy_v3</code> 或 SGLang 的 <code>hunyuan</code>。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Anti-hallucination</td>
+                <td data-label="Claim">更强调有依据时回答、缺证据时说明、不混淆来源、不编造数据。</td>
+                <td data-label="Reported evidence">内部评测中 hallucination 从 12.5% 降到 5.4%，commonsense error 从 25.4% 降到 12.7%。</td>
+                <td data-label="Engineering read">对企业工具链是好信号，但指标来自内部评测，外部复现需要独立评测集。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Area">Long context / multi-turn</td>
+                <td data-label="Claim">提升指代消解、省略恢复和多轮约束继承。</td>
+                <td data-label="Reported evidence">内部多轮综合测试问题率从 17.4% 降到 7.9%；MRCR 从 42.9% 提升到 75.1%。</td>
+                <td data-label="Engineering read">256K context 只是容量前提，真实效果还取决于 serving KV 管理、prompt 组织和长上下文 eval。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="serving">
+          <h2>Serving</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Stack</th>
+                <th>Official recipe</th>
+                <th>Key switches</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="area" data-label="Stack">vLLM</td>
+                <td data-label="Official recipe">Build from source, serve <code>tencent/Hy3</code> with TP=8 and OpenAI-compatible API.</td>
+                <td data-label="Key switches"><code>--speculative-config.method mtp</code>, <code>--speculative-config.num_speculative_tokens 2</code>, <code>--tool-call-parser hy_v3</code>, <code>--reasoning-parser hy_v3</code>, <code>--enable-auto-tool-choice</code>.</td>
+                <td data-label="Notes">README additionally sets <code>VLLM_FLASHINFER_ALLREDUCE_BACKEND=trtllm</code> as a workaround for an MNNVL workspace-size issue.</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Stack">SGLang</td>
+                <td data-label="Official recipe">Build from source, install <code>transformers&gt;=5.6.0</code>, launch <code>python3 -m sglang.launch_server</code>.</td>
+                <td data-label="Key switches"><code>--tp-size 8</code>, <code>--tool-call-parser hunyuan</code>, <code>--reasoning-parser hunyuan</code>, <code>--speculative-num-steps 2</code>, <code>--speculative-eagle-topk 1</code>, <code>--speculative-num-draft-tokens 3</code>, <code>--speculative-algorithm EAGLE</code>.</td>
+                <td data-label="Notes">这里的 EAGLE 参数是在承载 MTP draft/verify 形态；需要用支持 Hy3 parser 和 speculative 路径的较新 SGLang。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Stack">Hardware</td>
+                <td data-label="Official recipe">官方建议 8 GPUs，使用 H20-3e 或其他更大显存 GPU。</td>
+                <td data-label="Key switches">BF16 权重按 295B 参数粗略估算约 590GB 权重体积，不含 KV cache、workspace 和 runtime overhead。</td>
+                <td data-label="Notes">256K context 下 KV cache 压力会成为部署上限之一；FP8 版本可减轻权重显存，但仍需验证精度、吞吐和框架兼容。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Stack">Client API</td>
+                <td data-label="Official recipe">OpenAI-compatible <code>/v1/chat/completions</code> after starting vLLM/SGLang.</td>
+                <td data-label="Key switches"><code>extra_body={"chat_template_kwargs": {"reasoning_effort": "no_think"}}</code> for direct response; use <code>high</code> for complex math/coding/reasoning.</td>
+                <td data-label="Notes">HF model page currently says it is not deployed by an Inference Provider, so users should assume self-hosted serving unless that status changes.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="finetune">
+          <h2>Finetuning And Quantization</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Track</th>
+                <th>Official content</th>
+                <th>Operational implication</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="area" data-label="Track">Training format</td>
+                <td data-label="Official content">训练数据按 message list 组织；支持 fast thinking 和 slow thinking，依赖 <code>reasoning_effort</code> 与 <code>reasoning_content</code>。</td>
+                <td data-label="Operational implication">SFT 数据需要显式区分是否保留 reasoning；这会影响 chat template 与输出风格。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Track">Checkpoint conversion</td>
+                <td data-label="Official content">原始 checkpoint 中每个 expert 独立存储；官方建议转换成 HF-compatible outer format，把多 expert 权重融合为统一 3D tensor key。</td>
+                <td data-label="Operational implication">大规模训练前应先跑 conversion 和 validation；否则加载速度和跨 shard expert group 处理会成为成本。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Track">Training methods</td>
+                <td data-label="Official content">提供 DeepSpeed native、LLaMA-Factory、ms-swift 三条路径。</td>
+                <td data-label="Operational implication">这比只给推理权重更完整，但生产微调仍要重点验证 optimizer/offload、sequence length 和多机 SSH/共享盘约束。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Track">Hardware</td>
+                <td data-label="Official content">在 <code>max_seq_length=4096</code> 且特定配置下，LoRA 至少单机 8x80GB；full fine-tuning 至少 4 机 32x80GB。</td>
+                <td data-label="Operational implication">这不是轻量微调模型；LoRA 都需要完整 8 卡 80GB 级别机器。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Track">Quantization</td>
+                <td data-label="Official content">官方发布 Hy3-FP8，并推荐 AngelSlim 做大模型压缩，覆盖常见量化、低比特量化和 speculative sampling。</td>
+                <td data-label="Operational implication">FP8 是优先试的部署形态；W4A8/int4 类路径可参考 AngelSlim，但模型卡没有直接给出 Hy3 正式版完整精度/吞吐表。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="risks">
+          <h2>Risks And Follow-ups</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Current answer</th>
+                <th>Follow-up check</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="area" data-label="Question">正式版相对 Preview 的架构差异有多大？</td>
+                <td data-label="Current answer">模型卡参数表与 Preview 很接近，主要叙事集中在 post-training、RL、工具调用和产品反馈修复。</td>
+                <td data-label="Follow-up check">如果要写更强结论，应 diff Hy3 与 Hy3-preview 的 <code>config.json</code>、template 和 generation config。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Question">vLLM/SGLang 哪个更稳？</td>
+                <td data-label="Current answer">官方同时给 recipe；vLLM recipe 显式给 <code>hy_v3</code> parser 和 allreduce backend workaround，SGLang recipe 给 <code>hunyuan</code> parser 和 EAGLE speculative 参数。</td>
+                <td data-label="Follow-up check">需要在目标集群上分别跑 8 卡 smoke，重点看 MTP acceptance、tool-call parser、长上下文 KV cache 和 FP8 path。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Question">公开指标是否足够？</td>
+                <td data-label="Current answer">模型卡给了内部产品指标和 blind test，但公开页面没有完整可下载 benchmark 明细。</td>
+                <td data-label="Follow-up check">对研发采用应补 SWE-Bench/Terminal-Bench/长上下文/工具调用自有 eval，避免只看官方 aggregate。</td>
+              </tr>
+              <tr>
+                <td class="area" data-label="Question">Apache-2.0 是否覆盖所有使用场景？</td>
+                <td data-label="Current answer">Hy3 正式版模型卡标记 Apache-2.0；这比 Preview 的许可约束更宽松。</td>
+                <td data-label="Follow-up check">上线前仍应查 LICENSE 原文、依赖 tokenizer/template 代码和下游分发条款。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="sources">
+          <h2>Sources</h2>
+          <ul>
+            <li><a href="https://huggingface.co/tencent/Hy3">tencent/Hy3 model card</a></li>
+            <li><a href="https://huggingface.co/tencent/Hy3/raw/main/README.md">tencent/Hy3 raw README.md</a></li>
+            <li><a href="https://huggingface.co/tencent/Hy3/raw/main/config.json">tencent/Hy3 raw config.json</a></li>
+            <li><a href="https://huggingface.co/tencent/Hy3/raw/main/finetune/README.md">tencent/Hy3 finetune README.md</a></li>
+            <li><a href="https://huggingface.co/tencent/Hy3-FP8">tencent/Hy3-FP8 model card</a></li>
+            <li><a href="https://github.com/Tencent-Hunyuan/Hy3">Tencent-Hunyuan/Hy3 GitHub repository</a></li>
+            <li><a href="https://github.com/tencent/AngelSlim">Tencent/AngelSlim quantization toolkit</a></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

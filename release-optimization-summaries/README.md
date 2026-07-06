@@ -6,6 +6,7 @@ This directory stores release-by-release optimization summaries for SGLang, vLLM
 
 | Project | Release | Date | Summary |
 | --- | --- | --- | --- |
+| Hunyuan | Hy3 model release | 2026-07-06 | [hunyuan/hy3-model-release-20260706.html](hunyuan/hy3-model-release-20260706.html) |
 | vLLM-Omni | Qwen3-Omni serving optimization | 2026-07-01 | [vllm/qwen3-omni-optimization-20260701.html](vllm/qwen3-omni-optimization-20260701.html) |
 | vLLM | v0.24.0 | 2026-07-01 | [vllm/v0.24.0-performance-20260701.html](vllm/v0.24.0-performance-20260701.html) |
 | Hunyuan | Hy3 Preview AI Infra technical blog | 2026-06-30 | [hunyuan/hy3-preview-ai-infra-20260630.html](hunyuan/hy3-preview-ai-infra-20260630.html) |
