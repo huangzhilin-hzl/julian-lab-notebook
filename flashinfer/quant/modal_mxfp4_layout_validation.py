@@ -108,7 +108,7 @@ image = (
             "MPLBACKEND": "Agg",
         }
     )
-    .run_commands("python -m pip install 'pytest>=8,<9'")
+    .run_commands("python -m pip install 'pytest>=8,<9' 'setuptools>=77' 'wheel>=0.45'")
 )
 
 
@@ -1361,7 +1361,7 @@ def run_acceptance(
                     steps,
                     failures,
                 )
-            if task in {"functional", "all"}:
+            if task in {"functional", "all"} and not failures:
                 _execute_step(
                     "functional",
                     lambda: _run_functional_validation(result_dir, refs),
@@ -1369,7 +1369,7 @@ def run_acceptance(
                     steps,
                     failures,
                 )
-            if task in {"performance", "all"}:
+            if task in {"performance", "all"} and not failures:
                 _execute_step(
                     "performance_ab",
                     lambda: _run_performance_ab(
