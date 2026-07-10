@@ -108,7 +108,9 @@ image = (
             "MPLBACKEND": "Agg",
         }
     )
-    .run_commands("python -m pip install 'pytest>=8,<9' 'setuptools>=77' 'wheel>=0.45'")
+    .run_commands(
+        "python -m pip install 'pytest>=8,<9' 'setuptools>=77,<82' 'wheel>=0.45'"
+    )
 )
 
 
