@@ -1456,8 +1456,8 @@ def main(
         "%Y%m%dT%H%M%SZ"
     )
     run_id = _safe_run_id(run_name or generated_name)
-    remote_path = f"results/{run_id}"
-    local_path = f"modal-results/{run_id}"
+    remote_path = f"/results/{run_id}"
+    local_parent = "modal-results"
     print(
         json.dumps(
             {
@@ -1489,8 +1489,9 @@ def main(
         print(json.dumps(result, indent=2), flush=True)
     finally:
         print("\nDownload artifacts with:", flush=True)
+        print(f"mkdir -p {shlex.quote(local_parent)}", flush=True)
         print(
             f"modal volume get {shlex.quote(VOLUME_NAME)} "
-            f"{shlex.quote(remote_path)} {shlex.quote(local_path)}",
+            f"{shlex.quote(remote_path)} {shlex.quote(local_parent)}",
             flush=True,
         )
