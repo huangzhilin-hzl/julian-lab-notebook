@@ -321,7 +321,18 @@ speedup   = baseline_median_ms / feature_median_ms
 
 | M | K | Dtype | Backend | Baseline median | Feature median | Baseline min/max | Feature min/max | delta_pct | Speedup |
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- | ---: | ---: |
-|  |  |  |  |  |  |  |  |  |  |
+| 128 | 4096 | BF16 | CUDA | 0.035664 ms | 0.034976 ms | 0.035632/0.035872 ms | 0.034848/0.035760 ms | -1.929% | 1.0197x |
+| 128 | 4096 | BF16 | CuTe-DSL | 0.006432 ms | 0.006176 ms | 0.006176/0.006576 ms | 0.006144/0.006464 ms | -3.980% | 1.0415x |
+| 128 | 4096 | FP16 | CUDA | 0.035536 ms | 0.034928 ms | 0.034880/0.035712 ms | 0.034848/0.035712 ms | -1.711% | 1.0174x |
+| 128 | 4096 | FP16 | CuTe-DSL | 0.006432 ms | 0.006176 ms | 0.006176/0.006464 ms | 0.006144/0.006432 ms | -3.980% | 1.0415x |
+| 2048 | 8192 | BF16 | CUDA | 0.123696 ms | 0.123632 ms | 0.123008/0.123744 ms | 0.122992/0.123728 ms | -0.052% | 1.0005x |
+| 2048 | 8192 | BF16 | CuTe-DSL | 0.014304 ms | 0.014336 ms | 0.014272/0.014336 ms | 0.014336/0.014368 ms | +0.224% | 0.9978x |
+| 2048 | 8192 | FP16 | CUDA | 0.123696 ms | 0.122992 ms | 0.123072/0.123712 ms | 0.122944/0.123680 ms | -0.569% | 1.0057x |
+| 2048 | 8192 | FP16 | CuTe-DSL | 0.014336 ms | 0.014336 ms | 0.014256/0.014336 ms | 0.014272/0.014336 ms | 0.000% | 1.0000x |
+| 8192 | 16384 | BF16 | CUDA | 0.829184 ms | 0.829328 ms | 0.828448/0.829408 ms | 0.828496/0.829424 ms | +0.017% | 0.9998x |
+| 8192 | 16384 | BF16 | CuTe-DSL | 0.063488 ms | 0.063520 ms | 0.063456/0.063520 ms | 0.063488/0.063520 ms | +0.050% | 0.9995x |
+| 8192 | 16384 | FP16 | CUDA | 0.822048 ms | 0.822192 ms | 0.821376/0.822288 ms | 0.821376/0.822272 ms | +0.018% | 0.9998x |
+| 8192 | 16384 | FP16 | CuTe-DSL | 0.063520 ms | 0.063520 ms | 0.063488/0.063552 ms | 0.063456/0.063520 ms | 0.000% | 1.0000x |
 
 - `delta_pct > 0`：feature 变慢。
 - `delta_pct < 0`：feature 变快。
@@ -348,3 +359,44 @@ python3 benchmarks/bench_mxfp4_quantize_backend_comparison.py --dtype float16
 9. Backend comparison 中反量化 cosine similarity 不低于 0.9。
 10. Eager、CUDA Graph 和 PDL 路径无异常或输出不一致。
 11. Baseline 与 feature 使用固定 benchmark runner 完成同 workload 性能对比，并记录 median、min、max、`delta_pct` 和 speedup；超出轮次波动范围的性能下降已完成复测和分析。
+
+## 7. Modal B200 实测结果
+
+### 7.1 运行信息
+
+| 项目 | 实测值 |
+| --- | --- |
+| Modal run | [`mxfp4-layout-sm100-all-20260710T153721Z`](https://modal.com/apps/huangzhilin-hzl/main/ap-OKV7vl5CNWKYWzyHp47F9p) |
+| Target SHA | `9d1fb61fdcd95609e49baebaa6c7436b6819fba6` |
+| Feature SHA | `5aeeb57ddfb5bc1f95c8ea9a784dc7fa90ac372e` |
+| Merge base | `9d1fb61fdcd95609e49baebaa6c7436b6819fba6` |
+| Target ancestry | 通过 |
+| GPU | NVIDIA B200，compute capability `(10, 0)`，183359 MiB |
+| Driver / CUDA / PyTorch | `580.95.05` / `13.0` / `2.12.0+cu130` |
+| Base image | `flashinfer/flashinfer-ci-cu130` |
+| 运行时间 | 2026-07-10 23:37 至 2026-07-11 00:13（Asia/Shanghai） |
+| Modal Volume | `flashinfer-mxfp4-layout-validation:/results/mxfp4-layout-sm100-all-20260710T153721Z` |
+
+### 7.2 回归与功能结果
+
+| 检查项 | 结果 |
+| --- | --- |
+| Baseline 完整 FP4 pytest | `10300 passed`，`0 failed`，`0 errors`，`0 skipped`，516.94 s |
+| Feature 完整 FP4 pytest | `10303 passed`，`0 failed`，`0 errors`，`0 skipped`，514.18 s |
+| JUnit 对比 | 既有 case 无缺失、无回退、无新增 skip；新增 3 个 layout case 全部通过 |
+| 公共 API 矩阵 | 18/18 通过；3 shapes、2 dtypes、3 layouts；quant/scale 最低 exact-match 均为 100% |
+| Roundtrip | 最低 cosine similarity 为 `0.99999988`；无 NaN/Inf |
+| CUDA Graph / PDL | 3 layouts x 2 modes，6/6 通过 |
+| Feature layout sweep | 1980/1980 通过；22 M x 15 K x 2 dtypes x 3 layouts；quant/scale 最低 exact-match 均为 100% |
+
+### 7.3 性能结论
+
+- 既有 `128x4` 路径完成 5 轮 baseline/feature A/B，共 12 个聚合对比点。
+- `delta_pct` 范围为 `-3.980%` 至 `+0.224%`。
+- 最大正向变化为 `+0.224%`，绝对差为 `0.000032 ms`。
+- 12 个对比点均不存在不重叠的 min/max 性能回退区间。
+- `8x4` 和 `linear` 完成 feature 绝对性能记录及 CUDA/CuTe-DSL 正确性对比。
+
+### 7.4 结论
+
+本次 B200 验收通过。第 6 节全部准入条件均满足，未发现功能回归、输出不一致或稳定性能回退。
