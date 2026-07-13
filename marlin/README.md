@@ -1,5 +1,11 @@
 # Marlin
 
+## Notes
+
+| Relative Path | Content |
+| --- | --- |
+| [`marlin_machete_swordfish_reference_table_20260713.md`](marlin_machete_swordfish_reference_table_20260713.md) | Marlin、Machete、Swordfish 的架构谱系、参考资料、vLLM/Sonar 关键 PR、Swordfish #1707 源码地图与 benchmark 解读边界。 |
+
 ## Images
 
 | Relative Path | Content |
