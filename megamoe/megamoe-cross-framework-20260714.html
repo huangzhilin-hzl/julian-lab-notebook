@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MegaMoE 跨框架公开讨论与 PR 全景</title>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --panel: #ffffff;
+      --ink: #182018;
+      --muted: #657065;
+      --line: #dce4d7;
+      --green: #76b900;
+      --green-dark: #356600;
+      --blue: #0969da;
+      --purple: #8250df;
+      --orange: #bc6b00;
+      --red: #cf3c2f;
+      --shadow: 0 14px 34px rgba(31, 54, 22, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--bg); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    a { color: var(--blue); }
+    .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
+    aside { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 24px 18px; border-right: 1px solid var(--line); background: #fbfcf9; }
+    .brand { font-size: 22px; font-weight: 850; letter-spacing: -.03em; }
+    .brand span { color: var(--green-dark); }
+    .asof { margin: 8px 0 20px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    nav { display: grid; gap: 4px; }
+    nav a { display: block; padding: 8px 10px; border-radius: 8px; color: #344034; text-decoration: none; font-size: 13px; }
+    nav a:hover { color: var(--green-dark); background: #ecf5e2; }
+    nav .sub { padding-left: 22px; color: var(--muted); }
+    .side-note { margin-top: 22px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: white; font-size: 12px; line-height: 1.55; }
+    main { min-width: 0; }
+    header { padding: 52px clamp(24px, 5vw, 72px) 34px; color: white; background: radial-gradient(circle at 84% 12%, rgba(118,185,0,.44), transparent 27%), linear-gradient(135deg, #12210d, #253d1c 60%, #162814); }
+    .eyebrow { color: #bfe981; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; font-size: 12px; }
+    h1 { max-width: 1000px; margin: 12px 0 16px; font-size: clamp(35px, 5vw, 65px); line-height: 1.03; letter-spacing: -.045em; }
+    .lede { max-width: 950px; margin: 0; color: #dcebd7; font-size: 17px; line-height: 1.7; }
+    .meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+    .meta span, .meta a { padding: 7px 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #f2f8ef; background: rgba(255,255,255,.07); text-decoration: none; font-size: 12px; }
+    .content { padding: 30px clamp(20px, 4vw, 62px) 70px; }
+    section { scroll-margin-top: 22px; margin: 0 0 34px; }
+    h2 { margin: 0 0 16px; font-size: 28px; letter-spacing: -.025em; }
+    h3 { margin: 24px 0 12px; font-size: 19px; }
+    p { line-height: 1.7; }
+    .callout { padding: 18px 20px; border: 1px solid #cadbbd; border-left: 5px solid var(--green); border-radius: 12px; background: #fbfff7; line-height: 1.65; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .card { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+    .card strong { display: block; font-size: 24px; }
+    .card span { color: var(--muted); font-size: 12px; }
+    .flow { display: grid; grid-template-columns: 1fr 54px 1fr 54px 1fr; align-items: stretch; gap: 8px; }
+    .flow-node { display: grid; place-items: center; min-height: 104px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: white; text-align: center; box-shadow: var(--shadow); }
+    .flow-node strong { display: block; margin-bottom: 6px; color: var(--green-dark); }
+    .arrow { display: grid; place-items: center; color: var(--green-dark); font-size: 27px; }
+    .route-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .route { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+    .route code { display: block; margin-top: 10px; padding: 12px; border-radius: 9px; color: #dff7c2; background: #172115; white-space: normal; line-height: 1.65; }
+    .controls { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.96); box-shadow: 0 8px 22px rgba(30,55,24,.08); }
+    .controls input, .controls select { min-height: 38px; padding: 8px 10px; border: 1px solid #cfd8ca; border-radius: 8px; background: white; color: var(--ink); }
+    .controls input { flex: 1 1 260px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: white; box-shadow: var(--shadow); }
+    table { width: 100%; min-width: 930px; border-collapse: collapse; }
+    th, td { padding: 13px 14px; border-bottom: 1px solid #e8ede5; vertical-align: top; text-align: left; }
+    th { position: sticky; top: 0; z-index: 2; color: #273624; background: #edf5e7; font-size: 12px; text-transform: uppercase; letter-spacing: .045em; }
+    td { font-size: 13px; line-height: 1.5; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: #fbfdf9; }
+    .repo { font-weight: 760; white-space: nowrap; }
+    .item-link { font-weight: 720; text-decoration: none; }
+    .item-link:hover { text-decoration: underline; }
+    .tag { display: inline-block; padding: 3px 7px; border-radius: 999px; font-size: 11px; font-weight: 730; white-space: nowrap; }
+    .merged { color: #315f00; background: #e5f5d2; }
+    .open { color: #0759b7; background: #e6f0ff; }
+    .closed { color: #8d3a20; background: #ffebe3; }
+    .discussion { color: #6542a6; background: #f0e8ff; }
+    .scope { color: var(--muted); }
+    .hidden { display: none; }
+    .empty { display: none; padding: 24px; color: var(--muted); text-align: center; }
+    .watch { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .watch a { padding: 13px 15px; border: 1px solid var(--line); border-radius: 10px; background: white; text-decoration: none; font-weight: 700; }
+    footer { padding-top: 20px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; line-height: 1.6; }
+    @media (max-width: 980px) {
+      .layout { display: block; }
+      aside { position: static; width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      nav { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      nav .sub { padding-left: 10px; }
+      .side-note { display: none; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .route-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      nav { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); }
+      .cards, .watch { grid-template-columns: 1fr; }
+      header { padding-top: 38px; }
+      th { top: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">Mega<span>MoE</span> Map</div>
+    <div class="asof">Julian Lab Notebook<br>公开 GitHub 快照：2026-07-14<br>时区：Asia/Shanghai</div>
+    <nav aria-label="页面目录">
+      <a href="#summary">1. 结论</a>
+      <a href="#naming">2. 概念边界</a>
+      <a href="#lineage">3. 演进关系</a>
+      <a href="#catalog">4. PR / 讨论总表</a>
+      <a class="sub" href="#deepgemm">DeepGEMM</a>
+      <a class="sub" href="#vllm">vLLM</a>
+      <a class="sub" href="#sglang">SGLang</a>
+      <a class="sub" href="#flashinfer">FlashInfer</a>
+      <a class="sub" href="#trtllm">TensorRT-LLM</a>
+      <a class="sub" href="#cutlass">CUTLASS / CuTe</a>
+      <a href="#watch">5. 持续跟踪</a>
+      <a href="#method">6. 检索口径</a>
+    </nav>
+    <div class="side-note">核心区分：SGLang #22829 的原始方案是分离式通信/计算流水；DeepGEMM 与后续 CuTeDSL MegaMoE 则把通信和专家计算进一步收进 Mega Kernel。</div>
+  </aside>
+  <main>
+    <header>
+      <div class="eyebrow">Cross-framework public work map</div>
+      <h1>MegaMoE 跨框架公开讨论与 PR 全景</h1>
+      <p class="lede">从 SGLang #22829 出发，追踪 DeepGEMM、vLLM、SGLang、FlashInfer、TensorRT-LLM、CUTLASS / CuTe DSL 中 MegaMoE 的核心实现、框架集成、通信组合、量化扩展、并行支持与修复工作。</p>
+      <div class="meta">
+        <a href="https://github.com/sgl-project/sglang/issues/22829">起点：SGLang #22829</a>
+        <span>103 个公开条目</span>
+        <span>6 个代码生态</span>
+        <span>本地静态 HTML · 无外部运行依赖</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <section id="summary">
+        <h2>1. 结论</h2>
+        <div class="callout"><strong>MegaMoE 目前不是某个统一仓库中的单一实现。</strong>公开生态已经分成 DeepGEMM MegaMoE、CuTeDSL MegaMoE，以及 one-sided A2A + 本地 CuTeDSL MoE 的分离式流水三部分。vLLM、SGLang 和 TensorRT-LLM 最早围绕 DeepSeek-V4 接入 DeepGEMM；TensorRT-LLM 又公开了 CuTeDSL MegaMoE；FlashInfer 在 #3852 中开始用统一 <code>MoEEpLayer</code> 同时承载 DeepGEMM 与 CuTeDSL mega backend。</div>
+        <div class="cards" style="margin-top:14px">
+          <div class="card"><strong>2</strong><span>主要 Mega Kernel 家族：DeepGEMM / CuTeDSL</span></div>
+          <div class="card"><strong>3</strong><span>主要执行形态：单 Mega Kernel / split pipeline / grouped GEMM primitives</span></div>
+          <div class="card"><strong>SM90–SM120</strong><span>公开路线覆盖 Hopper、数据中心 Blackwell 与消费级 Blackwell</span></div>
+          <div class="card"><strong>FP8 / NVFP4 / MXFP4</strong><span>主要激活与权重量化演进方向</span></div>
+        </div>
+      </section>
+
+      <section id="naming">
+        <h2>2. 概念边界</h2>
+        <div class="route-grid">
+          <article class="route">
+            <h3>SGLang #22829 的分离式路线</h3>
+            <p>目标是组合现有最优组件，通信和计算仍有清晰边界，但通过布局复用与 epilogue 融合减少中间步骤。</p>
+            <code>one-sided NVLink All-to-All → CuTeDSL local MoE → FC2/combine overlap</code>
+          </article>
+          <article class="route">
+            <h3>DeepGEMM / CuTeDSL MegaMoE</h3>
+            <p>使用 symmetric memory 和细粒度调度，把跨 rank dispatch/combine 与专家计算纳入一个长期运行的大 kernel。</p>
+            <code>dispatch + FC1 + activation + FC2 + combine → one Mega Kernel</code>
+          </article>
+        </div>
+      </section>
+
+      <section id="lineage">
+        <h2>3. 演进关系</h2>
+        <div class="flow">
+          <div class="flow-node"><div><strong>DeepGEMM</strong>SM100 MegaMoE<br>SM90/Hopper 扩展</div></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><div><strong>Serving frameworks</strong>vLLM · SGLang<br>TensorRT-LLM</div></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><div><strong>Unified layer</strong>FlashInfer moe_ep<br>DeepGEMM + CuTeDSL</div></div>
+        </div>
+        <div class="flow" style="margin-top:12px">
+          <div class="flow-node"><div><strong>CUTLASS / CuTe DSL</strong>Layout · TMA · MMA<br>Grouped GEMM primitives</div></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><div><strong>TensorRT-LLM #14608</strong>公开 MegaMoECuteDsl<br>NVFP4 · SM100/103</div></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><div><strong>FlashInfer #3852</strong>NVFP4 / MXFP8<br>CuTeDSL mega backends</div></div>
+        </div>
+      </section>
+
+      <section id="catalog">
+        <h2>4. PR / 讨论总表</h2>
+        <div class="controls">
+          <input id="search" type="search" placeholder="搜索编号、标题、作用，例如 W4A4、EPLB、SM90">
+          <select id="repoFilter" aria-label="按框架筛选">
+            <option value="all">全部框架</option>
+            <option value="deepgemm">DeepGEMM</option><option value="vllm">vLLM</option><option value="sglang">SGLang</option>
+            <option value="flashinfer">FlashInfer</option><option value="trtllm">TensorRT-LLM</option><option value="cutlass">CUTLASS / CuTe</option>
+          </select>
+          <select id="statusFilter" aria-label="按状态筛选">
+            <option value="all">全部状态</option><option value="merged">已合并</option><option value="open">开放</option>
+            <option value="closed">关闭未合并</option><option value="discussion">Issue / Discussion</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>生态</th><th>公开条目</th><th>状态</th><th>作用</th></tr></thead>
+            <tbody id="catalogBody">
+              <tr id="deepgemm" data-repo="deepgemm" data-status="merged"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/pull/316">PR #316 · Mega MoE optimizations and benchmarks</a></td><td><span class="tag merged">已合并</span></td><td>SM100 EP8 benchmark 与优化；公开展示 DeepSeek-V4 Flash/Pro 相对 legacy 路径的提升。</td></tr>
+              <tr data-repo="deepgemm" data-status="open"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/pull/323">PR #323 · MegaMOE adaptation for SM90</a></td><td><span class="tag open">开放</span></td><td>增加 Hopper FP8 MegaMoE、权重变换、调度与 EP8 测试；是 vLLM/SGLang SM90 路线的上游依赖。</td></tr>
+              <tr data-repo="deepgemm" data-status="closed"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/pull/352">PR #352 · SM90 FP8 MegaMoE split kernel</a></td><td><span class="tag closed">关闭未合并</span></td><td>SM90 split-kernel 方案尝试。</td></tr>
+              <tr data-repo="deepgemm" data-status="open"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/pull/357">PR #357 · green-context split-kernel MegaMoE</a></td><td><span class="tag open">开放</span></td><td>利用 green context 拆分/限制 kernel 资源的实验路线。</td></tr>
+              <tr data-repo="deepgemm" data-status="open"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/pull/360">PR #360 · SM90 MegaMoE by cooperative</a></td><td><span class="tag open">开放</span></td><td>SM90 cooperative kernel 路线。</td></tr>
+              <tr data-repo="deepgemm" data-status="discussion"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/issues/321">Issue #321 · question about MegaMoE</a></td><td><span class="tag discussion">讨论</span></td><td>早期公开问答入口。</td></tr>
+              <tr data-repo="deepgemm" data-status="discussion"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/issues/338">Issue #338 · FP4 activation dispatch</a></td><td><span class="tag discussion">讨论</span></td><td>W4A4 MegaMoE 的关键上游议题：E2M1 activation、buffer sizing 与 dispatch layout。</td></tr>
+              <tr data-repo="deepgemm" data-status="discussion"><td class="repo">DeepGEMM</td><td><a class="item-link" href="https://github.com/deepseek-ai/DeepGEMM/issues/334">Issue #334 · Ascend NPU roadmap</a></td><td><span class="tag discussion">讨论</span></td><td>非 NVIDIA 平台支持询问。</td></tr>
+              <tr data-repo="deepgemm" data-status="closed"><td class="repo">SGL DeepGEMM fork</td><td><a class="item-link" href="https://github.com/sgl-project/DeepGEMM/pull/31">PR #31 · FP4 acts + MXF4 + FP8 combine</a></td><td><span class="tag closed">关闭未合并</span></td><td>SGLang fork 中的 FP4 activation、MXF4 mainloop、FP8 combine 与 TVM-FFI pre-dispatch。</td></tr>
+
+              <tr id="vllm" data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/40860">PR #40860 · DeepSeek V4 Rebased</a></td><td><span class="tag merged">已合并</span></td><td>DeepSeek-V4 与 Blackwell MegaMoE 首次进入主线。</td></tr>
+              <tr data-repo="vllm" data-status="open"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/40833">PR #40833 · DeepGEMM MegaMoE integration</a></td><td><span class="tag open">开放</span></td><td>独立 backend、权重准备和量化生命周期集成。</td></tr>
+              <tr data-repo="vllm" data-status="closed"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/40843">PR #40843 · Integrate DeepGEMM MegaMoE</a></td><td><span class="tag closed">关闭未合并</span></td><td>早期集成尝试。</td></tr>
+              <tr data-repo="vllm" data-status="closed"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/40868">PR #40868 · DeepSeek V4 + MegaMoE</a></td><td><span class="tag closed">关闭未合并</span></td><td>早期模型与 MegaMoE 联合接入尝试。</td></tr>
+              <tr data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/41522">PR #41522 · Guard MegaMoE with Pure TP</a></td><td><span class="tag merged">已合并</span></td><td>限制不兼容的 Pure TP 配置。</td></tr>
+              <tr data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/42209">PR #42209 · NVFP4 MoE for DeepSeek V4</a></td><td><span class="tag merged">已合并</span></td><td>DeepSeek-V4 NVFP4 expert 支持。</td></tr>
+              <tr data-repo="vllm" data-status="open"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/42844">PR #42844 · Experimental W4A4 MegaMoE</a></td><td><span class="tag open">开放</span></td><td>FP4 activation pre-dispatch 与 MXF4 mainloop proof-of-concept。</td></tr>
+              <tr data-repo="vllm" data-status="discussion"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/issues/42845">Issue #42845 · W4A4 MegaMoE</a></td><td><span class="tag discussion">讨论</span></td><td>W4A8 转向 W4A4 的 buffer 和 mainloop 动机。</td></tr>
+              <tr data-repo="vllm" data-status="discussion"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/issues/42284">Issue #42284 · Hopper FP8 MegaMoE RFC</a></td><td><span class="tag discussion">讨论</span></td><td>对接 DeepGEMM #323，在 H100/H20 上增加 FP8 MegaMoE。</td></tr>
+              <tr data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/43339">PR #43339 · EPLB for DeepSeek-V4 MegaMoE</a></td><td><span class="tag merged">已合并</span></td><td>支持 expert parallel load balancing。</td></tr>
+              <tr data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/43632">PR #43632 · Move input prep to nvidia/ops</a></td><td><span class="tag merged">已合并</span></td><td>整理 MegaMoE input staging kernel 的模型与平台边界。</td></tr>
+              <tr data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/43629">PR #43629 · Remove MegaMoE from ROCm path</a></td><td><span class="tag merged">已合并</span></td><td>明确当时 MegaMoE 为 NVIDIA 专用路径。</td></tr>
+              <tr data-repo="vllm" data-status="open"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/43809">PR #43809 · PCP prefill + MegaMoE</a></td><td><span class="tag open">开放</span></td><td>context-parallel prefill 与 MegaMoE 共存。</td></tr>
+              <tr data-repo="vllm" data-status="closed"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/41842">PR #41842 · Overlap MegaMoE and shared experts</a></td><td><span class="tag closed">关闭未合并</span></td><td>shared expert 与 routed expert 重叠执行。</td></tr>
+              <tr data-repo="vllm" data-status="closed"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/44555">PR #44555 · External DP LB</a></td><td><span class="tag closed">关闭未合并</span></td><td>外部 DP load balancer 与 DeepGEMM MegaMoE 兼容。</td></tr>
+              <tr data-repo="vllm" data-status="discussion"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/issues/44556">Issue #44556 · External DP LB bug</a></td><td><span class="tag discussion">讨论</span></td><td>外部 DP LB 与 MegaMoE 的运行问题。</td></tr>
+              <tr data-repo="vllm" data-status="merged"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/41015">PR #41015 · FP32→FP4 cvt PTX</a></td><td><span class="tag merged">已合并</span></td><td>FP4 转换优化，后续被 GB200 吞吐回归讨论指向。</td></tr>
+              <tr data-repo="vllm" data-status="discussion"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/issues/41603">Issue #41603 · MTP2 throughput regression</a></td><td><span class="tag discussion">讨论</span></td><td>GB200 MegaMoE + MTP2 吞吐回归，重点排查 #41015。</td></tr>
+              <tr data-repo="vllm" data-status="closed"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/43467">PR #43467 · NVFP4 early-fail</a></td><td><span class="tag closed">关闭未合并</span></td><td>不兼容 NVFP4 artifact 时尽早报错。</td></tr>
+              <tr data-repo="vllm" data-status="discussion"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/issues/45099">Issue #45099 · DP4 + EP CUDA error</a></td><td><span class="tag discussion">讨论</span></td><td>profile run 中 MegaMoE 与 DP/EP/MTP 组合错误。</td></tr>
+              <tr data-repo="vllm" data-status="open"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/pull/47939">PR #47939 · GLM 5.2 NVFP4 MegaMoE</a></td><td><span class="tag open">开放</span></td><td>MegaMoE 从 DeepSeek-V4 扩展到 GLM 5.2。</td></tr>
+              <tr data-repo="vllm" data-status="discussion"><td class="repo">vLLM</td><td><a class="item-link" href="https://github.com/vllm-project/vllm/issues/40902">Issue #40902 · DeepSeek V4 roadmap</a></td><td><span class="tag discussion">讨论</span></td><td>DeepSeek-V4 集成总路线图。</td></tr>
+
+              <tr id="sglang" data-repo="sglang" data-status="discussion"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/issues/22829">Issue #22829 · Large-EP MoE Redesign</a></td><td><span class="tag discussion">讨论</span></td><td>one-sided A2A + CuTeDSL MoE + FC2/combine overlap 的起点；因 inactive 自动关闭。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/14668">PR #14668 · FlashInfer one-sided A2A</a></td><td><span class="tag merged">已合并</span></td><td>#22829 的通信组件。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/21339">PR #21339 · FlashInferCuteDslMoE</a></td><td><span class="tag merged">已合并</span></td><td>#22829 所称标准 FP4/CuTeDSL local MoE 路径。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/21877">PR #21877 · Fused down-GEMM + combine</a></td><td><span class="tag open">开放</span></td><td>在 GEMM epilogue 中 weighted scatter-reduce，重叠 FC2 和 combine。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/23882">PR #23882 · DeepSeek V4</a></td><td><span class="tag merged">已合并</span></td><td>DeepSeek-V4 与初始 MegaMoE 主线集成。</td></tr>
+              <tr data-repo="sglang" data-status="closed"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/24444">PR #24444 · FP4 pre-dispatch opt-in</a></td><td><span class="tag closed">关闭未合并</span></td><td>W4A4 MegaMoE 的早期实现，后由 #25052 rebase。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25052">PR #25052 · DeepSeek V4 W4A4 MegaMoE</a></td><td><span class="tag merged">已合并</span></td><td>FP4 activation + FP4 weight MegaMoE。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/24884">PR #24884 · Decouple MegaMoE from DeepEP</a></td><td><span class="tag merged">已合并</span></td><td>首次解耦尝试。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25317">PR #25317 · Revert decoupling</a></td><td><span class="tag merged">已合并</span></td><td>回退 #24884。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25406">PR #25406 · Re-land decoupling</a></td><td><span class="tag merged">已合并</span></td><td>修正后重新解耦 MegaMoE 与 DeepEP backend。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25137">PR #25137 · all_tokens=0 crash</a></td><td><span class="tag open">开放</span></td><td>修复空 token batch 下 DeepGEMM MegaMoE 崩溃。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25355">PR #25355 · EPLB + MegaMoE crashes</a></td><td><span class="tag open">开放</span></td><td>EPLB crash 与 dispatch info cache 修复。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25380">PR #25380 · topk_ids dtype mismatch</a></td><td><span class="tag merged">已合并</span></td><td>disaggregated 路径 top-k dtype 修复。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25948">PR #25948 · DeepSeek-V4 EPLB</a></td><td><span class="tag merged">已合并</span></td><td>正式 EPLB 支持。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/26004">PR #26004 · Default W4A8 MegaMoE</a></td><td><span class="tag merged">已合并</span></td><td>最大吞吐 recipe 默认使用 W4A8 MegaMoE。</td></tr>
+              <tr data-repo="sglang" data-status="closed"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/27347">PR #27347 · Waterfill prototype</a></td><td><span class="tag closed">关闭未合并</span></td><td>Waterfill load balancing 早期 PR。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/27350">PR #27350 · Waterfill + MegaMoE</a></td><td><span class="tag merged">已合并</span></td><td>MegaMoE backend 的 Waterfill 支持。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/27349">PR #27349 · Shared-expert fusion</a></td><td><span class="tag merged">已合并</span></td><td>DeepEP 与 MegaMoE 的 shared expert fusion。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25769">PR #25769 · SM90 adaptation</a></td><td><span class="tag open">开放</span></td><td>Hopper MegaMoE 适配尝试。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/29016">PR #29016 · SM90 FP8 MegaMoE</a></td><td><span class="tag open">开放</span></td><td>DeepSeek-V4 Hopper FP8 路径。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/29569">PR #29569 · Context parallelism</a></td><td><span class="tag open">开放</span></td><td>MegaMoE 与 CP 组合。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/29534">PR #29534 · FP4 fallback</a></td><td><span class="tag open">开放</span></td><td>超过 MegaMoE token cap 等条件时的后端回退。</td></tr>
+              <tr data-repo="sglang" data-status="discussion"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/issues/27416">Issue #27416 · FP4 fallback crash</a></td><td><span class="tag discussion">讨论</span></td><td>DeepSeek-V4 FP4 超过 token cap 后 Triton fallback 崩溃。</td></tr>
+              <tr data-repo="sglang" data-status="open"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/30952">PR #30952 · Auto-select FP4 backend</a></td><td><span class="tag open">开放</span></td><td>自动选择 DeepSeek-V4 FP4 MoE backend。</td></tr>
+              <tr data-repo="sglang" data-status="closed"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/28057">PR #28057 · Unflattened next-N layout</a></td><td><span class="tag closed">关闭未合并</span></td><td>SM100 DeepGEMM layout 性能尝试。</td></tr>
+              <tr data-repo="sglang" data-status="closed"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/30592">PR #30592 · Reserve SMs</a></td><td><span class="tag closed">关闭未合并</span></td><td>为 MegaMoE 预留 SM 的资源隔离实验。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/25378">PR #25378 · Usage docs</a></td><td><span class="tag merged">已合并</span></td><td>使用方式更新。</td></tr>
+              <tr data-repo="sglang" data-status="merged"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/pull/27726">PR #27726 · Handling and benchmarks</a></td><td><span class="tag merged">已合并</span></td><td>更新 MegaMoE 配置处理与 benchmark。</td></tr>
+              <tr data-repo="sglang" data-status="discussion"><td class="repo">SGLang</td><td><a class="item-link" href="https://github.com/sgl-project/sglang/issues/23602">Issue #23602 · DeepSeek V4 roadmap</a></td><td><span class="tag discussion">讨论</span></td><td>DeepSeek-V4 整体路线追踪。</td></tr>
+
+              <tr id="flashinfer" data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3704">Issue #3704 · Standard MegaMoE API</a></td><td><span class="tag discussion">讨论</span></td><td>标准化 preprocessing、symm_buffer 和 mega_kernel 接口。</td></tr>
+              <tr data-repo="flashinfer" data-status="merged"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/pull/3852">PR #3852 · MegaMoE integration in moe_ep</a></td><td><span class="tag merged">已合并</span></td><td>统一 MoEEpLayer；接入 deep_gemm_mega、nvfp4_cutedsl、mxfp8_cutedsl。2026-07-14 合并。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3692">Issue #3692 · Add MegaMoE support</a></td><td><span class="tag discussion">讨论</span></td><td>总体支持入口。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3780">Issue #3780 · SM90 MegaMoE</a></td><td><span class="tag discussion">讨论</span></td><td>Hopper backend 路线。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3781">Issue #3781 · SM100 MegaMoE</a></td><td><span class="tag discussion">讨论</span></td><td>Blackwell 数据中心 backend 路线。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3782">Issue #3782 · SM120 MegaMoE</a></td><td><span class="tag discussion">讨论</span></td><td>消费级 Blackwell backend 路线。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3196">Issue #3196 · Hopper/H100 MegaMoE</a></td><td><span class="tag discussion">讨论</span></td><td>较早的 Hopper 支持请求。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3346">Issue #3346 · DeepSeek V4 tracker</a></td><td><span class="tag discussion">讨论</span></td><td>DeepSeek-V4 kernel 支持追踪。</td></tr>
+              <tr data-repo="flashinfer" data-status="closed"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/pull/3139">PR #3139 · NVLink one-sided A2A</a></td><td><span class="tag closed">关闭未合并</span></td><td>SGLang #22829 评论引用，目标是追平 TRT-LLM combine 性能。</td></tr>
+              <tr data-repo="flashinfer" data-status="merged"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/pull/3424">PR #3424 · FP8 MoE megakernel, BS≤8</a></td><td><span class="tag merged">已合并</span></td><td>小 batch FP8 blockwise MoE megakernel。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/orgs/flashinfer-ai/discussions/3956">Discussion #3956 · SM12x MoE EP roadmap</a></td><td><span class="tag discussion">讨论</span></td><td>SM12x b12x MoE/EP roadmap。</td></tr>
+              <tr data-repo="flashinfer" data-status="discussion"><td class="repo">FlashInfer</td><td><a class="item-link" href="https://github.com/flashinfer-ai/flashinfer/issues/3963">Issue #3963 · SM86 mock-test regression</a></td><td><span class="tag discussion">讨论</span></td><td>#3852 后 unit/mock tests 命中真实架构校验。</td></tr>
+
+              <tr id="trtllm" data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/9840">PR #9840 · Reuse A2A workspace</a></td><td><span class="tag merged">已合并</span></td><td>one-sided A2A 输出布局直接供 CuTeDSL MoE 使用。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/12884">PR #12884 · CUTEDSL MoE backend</a></td><td><span class="tag merged">已合并</span></td><td>SGLang #22829 所称 CuteDSLMoE_v2 的主要公开 PR。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/11844">PR #11844 · FP8 combine in MoE A2A</a></td><td><span class="tag merged">已合并</span></td><td>降低 combine 通信量。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/12195">PR #12195 · NVLinkOneSided blog</a></td><td><span class="tag merged">已合并</span></td><td>公开 one-sided All-to-All 设计说明。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/11366">PR #11366 · NCCL LSA barrier</a></td><td><span class="tag closed">关闭未合并</span></td><td>one-sided A2A 同步优化尝试。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/13384">PR #13384 · MegaMoEDeepGemm backend</a></td><td><span class="tag merged">已合并</span></td><td>包装 DeepGEMM fp8_fp4_mega_moe。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/13875">PR #13875 · Add MegaMoE support</a></td><td><span class="tag closed">关闭未合并</span></td><td>早期支持尝试。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/13908">PR #13908 · Scheduler/EPLB/multi-chunk</a></td><td><span class="tag merged">已合并</span></td><td>MoEScheduler 拆分、MegaMoE EPLB 与多 chunk 集成。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14129">PR #14129 · Enable DeepGEMM backend</a></td><td><span class="tag merged">已合并</span></td><td>为 DeepSeek-V4 启用 MEGAMOE_DEEPGEMM。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14213">PR #14213 · SymmBuffer size fix</a></td><td><span class="tag merged">已合并</span></td><td>避免 dp_size × ep_size 重复计数。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14222">PR #14222 · Reject TEP topology</a></td><td><span class="tag merged">已合并</span></td><td>初始化阶段拒绝不支持拓扑。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14608">PR #14608 · MegaMoECuteDsl NVFP4</a></td><td><span class="tag merged">已合并</span></td><td>dispatch + FC1 + activation + FC2 + combine 单 kernel；SM100/103、NVFP4、EP-only。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14658">PR #14658 · Free mmap pages</a></td><td><span class="tag merged">已合并</span></td><td>降低 MegaMoE 权重加载的 host memory。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14817">PR #14817 · Direct SymmBuffer quant</a></td><td><span class="tag closed">关闭未合并</span></td><td>直接量化 activation 到 DeepGEMM symmetric buffer。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14865">PR #14865 · Fuse prepare path</a></td><td><span class="tag merged">已合并</span></td><td>融合 MegaMoE input preparation。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/14880">PR #14880 · Host RAM OOM fix</a></td><td><span class="tag merged">已合并</span></td><td>小 host-memory 节点上的权重加载修复。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15062">PR #15062 · Disable fast-math</a></td><td><span class="tag closed">关闭未合并</span></td><td>稀疏 attention 条件下关闭 DeepGEMM MegaMoE fast-math。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15069">PR #15069 · CuTeDSL backend feature branch</a></td><td><span class="tag merged">已合并</span></td><td>DeepSeek-V4 feature branch 的 MegaMoECuteDsl 集成。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15201">PR #15201 · Remove workspace memset</a></td><td><span class="tag closed">关闭未合并</span></td><td>消除 CuTeDSL MegaMoE 每次 launch 的 workspace memset。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15283">PR #15283 · Kernel/tuning update</a></td><td><span class="tag merged">已合并</span></td><td>导入新版 CuTeDSL MegaMoE kernel 并重做 tuning。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15436">PR #15436 · MXFP4 experiment</a></td><td><span class="tag closed">关闭未合并</span></td><td>MXFP4 MegaMoE 集成实验。</td></tr>
+              <tr data-repo="trtllm" data-status="merged"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15632">PR #15632 · DSv4 follow-up</a></td><td><span class="tag merged">已合并</span></td><td>DeepGEMM 与 MegaMoE 性能跟进。</td></tr>
+              <tr data-repo="trtllm" data-status="closed"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/15906">PR #15906 · Update CuTeDSL kernels</a></td><td><span class="tag closed">关闭未合并</span></td><td>一版未合并的 kernel 更新。</td></tr>
+              <tr data-repo="trtllm" data-status="open"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/pull/16190">PR #16190 · Update CuTeDSL kernels</a></td><td><span class="tag open">开放</span></td><td>当前开放的新一轮 CuTeDSL MegaMoE kernel 更新。</td></tr>
+              <tr data-repo="trtllm" data-status="discussion"><td class="repo">TensorRT-LLM</td><td><a class="item-link" href="https://github.com/NVIDIA/TensorRT-LLM/discussions/16360">Discussion #16360 · SM120 gaps</a></td><td><span class="tag discussion">讨论</span></td><td>SM120 schema 与 EP-capable MegaMoE backend 缺口。</td></tr>
+
+              <tr id="cutlass" data-repo="cutlass" data-status="open"><td class="repo">CUTLASS / CuTe</td><td><a class="item-link" href="https://github.com/NVIDIA/cutlass/pull/3221">PR #3221 · CuTeDSL dispatch+combine</a></td><td><span class="tag open">开放</span></td><td>NVSHMEM MoE dispatch/combine 示例；最接近公共 CuTeDSL MegaMoE 通信构件。</td></tr>
+              <tr data-repo="cutlass" data-status="discussion"><td class="repo">CUTLASS / CuTe</td><td><a class="item-link" href="https://github.com/NVIDIA/cutlass/issues/3040">Issue #3040 · Hopper BF16 MoE GEMM</a></td><td><span class="tag discussion">讨论</span></td><td>CuTeDSL BF16 Hopper MoE/grouped GEMM example 请求。</td></tr>
+              <tr data-repo="cutlass" data-status="merged"><td class="repo">CUTLASS / CuTe</td><td><a class="item-link" href="https://github.com/NVIDIA/cutlass/pull/2790">PR #2790 · Ragged grouped GEMM</a></td><td><span class="tag merged">已合并</span></td><td>MoE blockscaled ragged contiguous grouped GEMM 基础原语。</td></tr>
+              <tr data-repo="cutlass" data-status="closed"><td class="repo">CUTLASS / CuTe</td><td><a class="item-link" href="https://github.com/NVIDIA/cutlass/pull/3059">PR #3059 · SM90 BF16 grouped GEMM</a></td><td><span class="tag closed">关闭未合并</span></td><td>Hopper CuTeDSL BF16 grouped GEMM 示例。</td></tr>
+              <tr data-repo="cutlass" data-status="merged"><td class="repo">CUTLASS / CuTe</td><td><a class="item-link" href="https://github.com/NVIDIA/cutlass/pull/3124">PR #3124 · SM103 grouped blockscaled GEMM</a></td><td><span class="tag merged">已合并</span></td><td>GB300/SM103 CuTeDSL MoE 计算原语；2026-07-14 合并。</td></tr>
+              <tr data-repo="cutlass" data-status="open"><td class="repo">CUTLASS / CuTe</td><td><a class="item-link" href="https://github.com/NVIDIA/cutlass/pull/3256">PR #3256 · Aux TMA + Gated-SwiGLU</a></td><td><span class="tag open">开放</span></td><td>SM90 per-group descriptor update 与 gated activation grouped GEMM。</td></tr>
+            </tbody>
+          </table>
+          <div id="empty" class="empty">没有符合当前筛选条件的条目。</div>
+        </div>
+      </section>
+
+      <section id="watch">
+        <h2>5. 持续跟踪入口</h2>
+        <div class="watch">
+          <a href="https://github.com/deepseek-ai/DeepGEMM/pull/323">DeepGEMM #323 · SM90 FP8 MegaMoE</a>
+          <a href="https://github.com/vllm-project/vllm/pull/40833">vLLM #40833 · DeepGEMM integration</a>
+          <a href="https://github.com/vllm-project/vllm/pull/42844">vLLM #42844 · W4A4 MegaMoE</a>
+          <a href="https://github.com/sgl-project/sglang/pull/29016">SGLang #29016 · SM90 FP8 MegaMoE</a>
+          <a href="https://github.com/flashinfer-ai/flashinfer/issues/3704">FlashInfer #3704 · Standard API</a>
+          <a href="https://github.com/flashinfer-ai/flashinfer/issues/3781">FlashInfer #3781 · SM100 backend</a>
+          <a href="https://github.com/NVIDIA/TensorRT-LLM/pull/16190">TensorRT-LLM #16190 · CuTeDSL update</a>
+          <a href="https://github.com/NVIDIA/cutlass/pull/3221">CUTLASS #3221 · NVSHMEM dispatch/combine</a>
+        </div>
+      </section>
+
+      <section id="method">
+        <h2>6. 检索口径</h2>
+        <div class="callout">
+          <p><strong>范围：</strong>公开 GitHub issue、pull request、repository discussion，以及 SGLang #22829 中的明确交叉引用。关键词包括 <code>MegaMoE</code>、<code>Mega MoE</code>、<code>mega_moe</code>、<code>CuTeDSL MoE</code>、one-sided All-to-All、FC2/combine overlap。</p>
+          <p><strong>纳入：</strong>核心 kernel、框架接入、通信组合、量化格式、EPLB/CP/DP、shared expert、fallback、正确性与关键性能修复。</p>
+          <p><strong>排除：</strong>仅在长日志、CI 时间表、无关文档或依赖列表中顺带出现关键词的条目。CUTLASS 中没有以 MegaMoE 命名的完整实现；表内 CUTLASS 条目均明确标记为公共基础构件。</p>
+        </div>
+      </section>
+      <footer>Julian Lab Notebook · MegaMoE cross-framework public work map · Snapshot 2026-07-14. GitHub 状态会继续变化，页面中的状态以快照日期为准。</footer>
+    </div>
+  </main>
+</div>
+<script>
+  const search = document.getElementById('search');
+  const repoFilter = document.getElementById('repoFilter');
+  const statusFilter = document.getElementById('statusFilter');
+  const rows = Array.from(document.querySelectorAll('#catalogBody tr'));
+  const empty = document.getElementById('empty');
+
+  function applyFilters() {
+    const query = search.value.trim().toLowerCase();
+    const repo = repoFilter.value;
+    const status = statusFilter.value;
+    let visible = 0;
+    rows.forEach((row) => {
+      const matchesQuery = !query || row.textContent.toLowerCase().includes(query);
+      const matchesRepo = repo === 'all' || row.dataset.repo === repo;
+      const matchesStatus = status === 'all' || row.dataset.status === status;
+      const show = matchesQuery && matchesRepo && matchesStatus;
+      row.classList.toggle('hidden', !show);
+      if (show) visible += 1;
+    });
+    empty.style.display = visible ? 'none' : 'block';
+  }
+  search.addEventListener('input', applyFilters);
+  repoFilter.addEventListener('change', applyFilters);
+  statusFilter.addEventListener('change', applyFilters);
+</script>
+</body>
+</html>
