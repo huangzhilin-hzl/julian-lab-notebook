@@ -6,6 +6,7 @@ This directory stores release-by-release optimization summaries for SGLang, vLLM
 
 | Project | Release | Date | Summary |
 | --- | --- | --- | --- |
+| vLLM | Kimi K3 MXFP4 MoE PR map | 2026-07-22 | [vllm/kimi-k3-mxfp4-moe-pr-map-20260722.md](vllm/kimi-k3-mxfp4-moe-pr-map-20260722.md) |
 | Hunyuan | Hy3 model release | 2026-07-06 | [hunyuan/hy3-model-release-20260706.html](hunyuan/hy3-model-release-20260706.html) |
 | vLLM-Omni | Qwen3-Omni serving optimization | 2026-07-01 | [vllm/qwen3-omni-optimization-20260701.html](vllm/qwen3-omni-optimization-20260701.html) |
 | vLLM | v0.24.0 | 2026-07-01 | [vllm/v0.24.0-performance-20260701.html](vllm/v0.24.0-performance-20260701.html) |
