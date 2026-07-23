@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/tmp/sglang_fused_moe_compare-07221751/bench_fused_moe.py", line 1505, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/tmp/sglang_fused_moe_compare-07221751/bench_fused_moe.py", line 1501, in main
+    return run_benchmark(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/sglang_fused_moe_compare-07221751/bench_fused_moe.py", line 1335, in run_benchmark
+    provider.validate_device(workload, device, args.backend)
+  File "/tmp/sglang_fused_moe_compare-07221751/bench_fused_moe.py", line 1143, in validate_wint4_device
+    raise RuntimeError(
+RuntimeError: FlashInfer's current SM90 packed-INT4 fused-MoE kernel requires weight_group_size=128; got 32. Run this workload with --backend humming or use a true group-128 workload.

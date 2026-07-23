@@ -1,0 +1,25 @@
+{
+  "name": "mxfp4-fp8-smoke",
+  "quant_mode": "mxfp4_fp8",
+  "quant_params": {
+    "weight_group_size": 32,
+    "weight_scale_dtype": "float8e8m0",
+    "activation_dtype": "float8e4m3",
+    "input_scale_group_size": 0,
+    "input_scale_dtype": "float32"
+  },
+  "hidden_size": 1024,
+  "intermediate_size": 1024,
+  "num_experts": 8,
+  "top_k": 2,
+  "top_k_scope": "local",
+  "tp_size": 1,
+  "tp_rank": 0,
+  "ep_size": 1,
+  "ep_rank": 0,
+  "num_tokens": [1, 8, 32],
+  "routing": "balanced",
+  "weight_seed": 41,
+  "input_seed": 42,
+  "routing_seed": 43
+}

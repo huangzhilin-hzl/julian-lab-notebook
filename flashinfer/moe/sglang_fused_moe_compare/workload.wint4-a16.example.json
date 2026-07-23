@@ -1,0 +1,27 @@
+{
+  "name": "wint4-a16-smoke",
+  "quant_mode": "wint4_a16",
+  "quant_params": {
+    "weight_group_size": 128,
+    "weight_scale_dtype": "bfloat16",
+    "activation_dtype": "bfloat16",
+    "weight_scale_amplitude": 0.005,
+    "symmetric": true,
+    "has_zero_point": false,
+    "act_order": false
+  },
+  "hidden_size": 1024,
+  "intermediate_size": 1024,
+  "num_experts": 8,
+  "top_k": 2,
+  "top_k_scope": "local",
+  "tp_size": 1,
+  "tp_rank": 0,
+  "ep_size": 1,
+  "ep_rank": 0,
+  "num_tokens": [1, 8, 32],
+  "routing": "balanced",
+  "weight_seed": 41,
+  "input_seed": 42,
+  "routing_seed": 43
+}
