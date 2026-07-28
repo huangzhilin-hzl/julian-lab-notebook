@@ -1,0 +1,32 @@
+{
+  "name": "kimi-k3-routed-expert-shape-mxfp4-fp8-tp16-ep16",
+  "quant_mode": "mxfp4_fp8",
+  "quant_params": {
+    "weight_group_size": 32,
+    "weight_scale_dtype": "float8e8m0",
+    "activation_dtype": "float8e4m3",
+    "input_scale_group_size": 0,
+    "input_scale_dtype": "float32"
+  },
+  "model_hidden_size": 7168,
+  "hidden_size": 3584,
+  "intermediate_size": 3072,
+  "num_experts": 896,
+  "global_top_k": 16,
+  "top_k": 1,
+  "top_k_scope": "local",
+  "tp_size": 16,
+  "tp_rank": 0,
+  "moe_tp_size": 1,
+  "moe_tp_rank": 0,
+  "ep_size": 16,
+  "ep_rank": 0,
+  "num_tokens": [1, 8, 32, 128, 512, 1024, 2048, 4096, 8192],
+  "routing": "balanced",
+  "routed_scaling_factor": 1.0,
+  "weight_seed": 41,
+  "input_seed": 42,
+  "routing_seed": 43,
+  "input_amplitude": 0.1,
+  "use_fused_finalize": true
+}

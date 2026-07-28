@@ -36,6 +36,7 @@ torch: Any
 SUPPORTED_ROUTING_MODES = ("balanced", "random", "trace")
 BACKENDS = ("humming", "flashinfer", "sglang_cutlass", "sglang_marlin")
 BENCHMARK_SCOPE = "local_rank_fused_moe_no_router_no_comm"
+MXFP4_FLASHINFER_PREPROCESS_EXPERT_CHUNK_SIZE = 8
 
 
 @dataclasses.dataclass(frozen=True)
@@ -135,8 +136,12 @@ class Workload:
     num_tokens: tuple[int, ...]
     quant_mode: str
     quant_params: dict[str, Any] = dataclasses.field(default_factory=dict)
+    model_hidden_size: int | None = None
+    global_top_k: int | None = None
     tp_size: int = 1
     tp_rank: int = 0
+    moe_tp_size: int | None = None
+    moe_tp_rank: int | None = None
     ep_size: int = 1
     ep_rank: int = 0
     top_k_scope: str = "local"
@@ -158,14 +163,18 @@ class Workload:
             "quant_mode",
             "quant_params",
             "hidden_size",
+            "model_hidden_size",
             "intermediate_size",
             "num_experts",
             "top_k",
+            "global_top_k",
             "num_tokens",
             "tokens",
             "batches",
             "tp_size",
             "tp_rank",
+            "moe_tp_size",
+            "moe_tp_rank",
             "ep_size",
             "ep_rank",
             "top_k_scope",
@@ -245,8 +254,28 @@ class Workload:
             num_tokens=normalized_tokens,
             quant_mode=provider.mode,
             quant_params=quant_params,
+            model_hidden_size=(
+                None
+                if value.get("model_hidden_size") is None
+                else json_integer(value["model_hidden_size"], "model_hidden_size")
+            ),
+            global_top_k=(
+                None
+                if value.get("global_top_k") is None
+                else json_integer(value["global_top_k"], "global_top_k")
+            ),
             tp_size=json_integer(value.get("tp_size", 1), "tp_size"),
             tp_rank=json_integer(value.get("tp_rank", 0), "tp_rank"),
+            moe_tp_size=(
+                None
+                if value.get("moe_tp_size") is None
+                else json_integer(value["moe_tp_size"], "moe_tp_size")
+            ),
+            moe_tp_rank=(
+                None
+                if value.get("moe_tp_rank") is None
+                else json_integer(value["moe_tp_rank"], "moe_tp_rank")
+            ),
             ep_size=ep_size,
             ep_rank=json_integer(value.get("ep_rank", 0), "ep_rank"),
             top_k_scope=str(value.get("top_k_scope", "local")),
@@ -279,8 +308,30 @@ class Workload:
         return workload
 
     @property
+    def effective_model_hidden_size(self) -> int:
+        return (
+            self.hidden_size
+            if self.model_hidden_size is None
+            else self.model_hidden_size
+        )
+
+    @property
+    def effective_global_top_k(self) -> int:
+        return self.top_k if self.global_top_k is None else self.global_top_k
+
+    @property
+    def effective_moe_tp_size(self) -> int:
+        return self.tp_size if self.moe_tp_size is None else self.moe_tp_size
+
+    @property
+    def effective_moe_tp_rank(self) -> int:
+        if self.moe_tp_rank is not None:
+            return self.moe_tp_rank
+        return self.tp_rank % self.effective_moe_tp_size
+
+    @property
     def local_intermediate_size(self) -> int:
-        return self.intermediate_size // self.tp_size
+        return self.intermediate_size // self.effective_moe_tp_size
 
     @property
     def local_num_experts(self) -> int:
@@ -289,10 +340,13 @@ class Workload:
     def validate(self) -> None:
         positive = {
             "hidden_size": self.hidden_size,
+            "model_hidden_size": self.effective_model_hidden_size,
             "intermediate_size": self.intermediate_size,
             "num_experts": self.num_experts,
             "top_k": self.top_k,
+            "global_top_k": self.effective_global_top_k,
             "tp_size": self.tp_size,
+            "moe_tp_size": self.effective_moe_tp_size,
             "ep_size": self.ep_size,
         }
         for name, value in positive.items():
@@ -318,14 +372,49 @@ class Workload:
             raise ValueError(f"{self.name}: only top_k_scope='local' is supported")
         if self.routing == "trace" and not self.routing_file:
             raise ValueError(f"{self.name}: routing=trace requires routing_file")
-        if self.intermediate_size % self.tp_size:
+        if self.effective_model_hidden_size < self.hidden_size:
             raise ValueError(
-                f"{self.name}: intermediate_size must be divisible by tp_size"
+                f"{self.name}: model_hidden_size must be >= routed-expert hidden_size"
+            )
+        if self.effective_global_top_k < self.top_k:
+            raise ValueError(
+                f"{self.name}: global_top_k must be >= local top_k"
+            )
+        if self.effective_global_top_k > self.num_experts:
+            raise ValueError(
+                f"{self.name}: global_top_k must be <= num_experts"
+            )
+        if self.moe_tp_rank is not None and self.moe_tp_size is None:
+            raise ValueError(
+                f"{self.name}: moe_tp_rank requires explicit moe_tp_size"
+            )
+        if self.moe_tp_size is not None:
+            if self.tp_size != self.effective_moe_tp_size * self.ep_size:
+                raise ValueError(
+                    f"{self.name}: explicit MoE-DP=1 topology requires "
+                    "tp_size == moe_tp_size * ep_size"
+                )
+            expected_tp_rank = (
+                self.ep_rank * self.effective_moe_tp_size
+                + self.effective_moe_tp_rank
+            )
+            if self.tp_rank != expected_tp_rank:
+                raise ValueError(
+                    f"{self.name}: explicit MoE-DP=1 topology requires "
+                    "tp_rank == ep_rank * moe_tp_size + moe_tp_rank"
+                )
+        if self.intermediate_size % self.effective_moe_tp_size:
+            raise ValueError(
+                f"{self.name}: intermediate_size must be divisible by moe_tp_size"
             )
         if self.num_experts % self.ep_size:
             raise ValueError(f"{self.name}: num_experts must be divisible by ep_size")
         if not 0 <= self.tp_rank < self.tp_size:
             raise ValueError(f"{self.name}: tp_rank is outside [0, tp_size)")
+        if not 0 <= self.effective_moe_tp_rank < self.effective_moe_tp_size:
+            raise ValueError(
+                f"{self.name}: moe_tp_rank is outside [0, moe_tp_size)"
+            )
         if not 0 <= self.ep_rank < self.ep_size:
             raise ValueError(f"{self.name}: ep_rank is outside [0, ep_size)")
         if self.top_k > self.local_num_experts:
@@ -339,6 +428,10 @@ class Workload:
         value = dataclasses.asdict(self)
         provider = get_quant_provider(self.quant_mode)
         value["num_tokens"] = list(self.num_tokens)
+        value["model_hidden_size"] = self.effective_model_hidden_size
+        value["global_top_k"] = self.effective_global_top_k
+        value["moe_tp_size"] = self.effective_moe_tp_size
+        value["moe_tp_rank"] = self.effective_moe_tp_rank
         value["local_intermediate_size"] = self.local_intermediate_size
         value["local_num_experts"] = self.local_num_experts
         value["quant_contract"] = quant_contract_name(
@@ -1123,14 +1216,49 @@ def make_wint4_sglang_cutlass_call(
     return run
 
 
+def preprocess_mxfp4_weights_in_expert_chunks(
+    preprocess: Callable[..., tuple[Any, Any, Any]],
+    weight: Any,
+    raw_scale: Any,
+):
+    """Bound preprocessing peak memory without changing the interleaved layout."""
+    chunk_size = MXFP4_FLASHINFER_PREPROCESS_EXPERT_CHUNK_SIZE
+    if weight.shape[0] <= chunk_size:
+        return preprocess(weight, raw_scale)
+
+    weight_chunks = []
+    scale_chunks = []
+    residual_chunks = []
+    for start in range(0, weight.shape[0], chunk_size):
+        end = min(start + chunk_size, weight.shape[0])
+        processed_weight, processed_scale, residual = preprocess(
+            weight[start:end],
+            raw_scale[start:end],
+        )
+        weight_chunks.append(processed_weight)
+        scale_chunks.append(processed_scale)
+        residual_chunks.append(residual)
+    return (
+        torch.cat(weight_chunks, dim=0),
+        torch.cat(scale_chunks, dim=0),
+        torch.cat(residual_chunks, dim=0),
+    )
+
+
 def make_mxfp4_flashinfer_state(workload: Workload, device: Any):
     from flashinfer.fused_moe import preprocess_moe_weights_for_sm90_mixed_gemm_humming
 
     w13, s13, w2, s2 = make_raw_mxfp4(workload, "up_gate", device)
-    w13_il, s13_il, residual13 = preprocess_moe_weights_for_sm90_mixed_gemm_humming(
-        w13, s13
+    w13_il, s13_il, residual13 = preprocess_mxfp4_weights_in_expert_chunks(
+        preprocess_moe_weights_for_sm90_mixed_gemm_humming,
+        w13,
+        s13,
     )
-    w2_il, s2_il, residual2 = preprocess_moe_weights_for_sm90_mixed_gemm_humming(w2, s2)
+    w2_il, s2_il, residual2 = preprocess_mxfp4_weights_in_expert_chunks(
+        preprocess_moe_weights_for_sm90_mixed_gemm_humming,
+        w2,
+        s2,
+    )
     del w13, s13, w2, s2
     torch.cuda.empty_cache()
     return {
@@ -1231,8 +1359,8 @@ def make_mxfp4_flashinfer_call(
             quant_scales=quant_scales,
             swiglu_limit=swiglu_limit,
             output=output,
-            tp_size=workload.tp_size,
-            tp_rank=workload.tp_rank,
+            tp_size=workload.effective_moe_tp_size,
+            tp_rank=workload.effective_moe_tp_rank,
             ep_size=workload.ep_size,
             ep_rank=workload.ep_rank,
             use_w4_group_scaling=True,
@@ -1325,8 +1453,8 @@ def make_wint4_flashinfer_call(
             quant_scales=quant_scales,
             swiglu_limit=swiglu_limit,
             output=output,
-            tp_size=workload.tp_size,
-            tp_rank=workload.tp_rank,
+            tp_size=workload.effective_moe_tp_size,
+            tp_rank=workload.effective_moe_tp_rank,
             ep_size=workload.ep_size,
             ep_rank=workload.ep_rank,
             use_w4_group_scaling=True,
@@ -1793,8 +1921,16 @@ def run_benchmark(args: argparse.Namespace) -> int:
                 preflight_output = fn()
                 torch.cuda.synchronize()
                 del preflight_output
+                nvtx_range = None
+                benchmark_fn = fn
+                if args.nvtx:
+                    nvtx_range = (
+                        f"fused_moe|workload={workload.name}|"
+                        f"backend={args.backend}|M={m}"
+                    )
+                    benchmark_fn = torch.cuda.nvtx.range(nvtx_range)(fn)
                 gpu, wall = benchmark_callable(
-                    fn=fn,
+                    fn=benchmark_fn,
                     warmup=args.warmup,
                     repeat=args.repeat,
                     wall_repeat=args.wall_repeat,
@@ -1820,15 +1956,19 @@ def run_benchmark(args: argparse.Namespace) -> int:
                     "quant_mode": workload.quant_mode,
                     **quant_result_metadata(workload),
                     "M": m,
+                    "model_hidden_size": workload.effective_model_hidden_size,
                     "K": workload.hidden_size,
                     "N_global": workload.intermediate_size,
                     "N_local": workload.local_intermediate_size,
                     "E_global": workload.num_experts,
                     "E_local": workload.local_num_experts,
                     "top_k": workload.top_k,
+                    "global_top_k": workload.effective_global_top_k,
                     "top_k_scope": workload.top_k_scope,
                     "tp_size": workload.tp_size,
                     "tp_rank": workload.tp_rank,
+                    "moe_tp_size": workload.effective_moe_tp_size,
+                    "moe_tp_rank": workload.effective_moe_tp_rank,
                     "ep_size": workload.ep_size,
                     "ep_rank": workload.ep_rank,
                     "routing": workload.routing,
@@ -1852,6 +1992,8 @@ def run_benchmark(args: argparse.Namespace) -> int:
                     "wall_repeat": args.wall_repeat,
                     "cold_l2": args.cold_l2,
                     "use_cupti": args.use_cupti,
+                    "nvtx": args.nvtx,
+                    "nvtx_range": nvtx_range,
                     "algorithmic_tflops": flops / (p50_ms * 1.0e9),
                     "tokens_per_second": m * 1000.0 / p50_ms,
                     "token_expert_pairs_per_second": (
@@ -1899,6 +2041,7 @@ def run_benchmark(args: argparse.Namespace) -> int:
             "wall_repeat": args.wall_repeat,
             "cold_l2": args.cold_l2,
             "use_cupti": args.use_cupti,
+            "nvtx": args.nvtx,
             "backend_autotune": autotune_enabled,
             "flashinfer_autotune": (
                 args.backend == "flashinfer" and autotune_enabled
@@ -1935,6 +2078,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wall-repeat", type=int, default=20)
     parser.add_argument("--cold-l2", action="store_true")
     parser.add_argument("--use-cupti", action="store_true")
+    parser.add_argument(
+        "--nvtx",
+        action="store_true",
+        help=(
+            "wrap the fused-MoE callable passed to the benchmark in an NVTX range"
+        ),
+    )
     parser.add_argument("--no-autotune", action="store_true")
     parser.add_argument(
         "--humming-gemm", choices=("indexed", "grouped"), default="indexed"
