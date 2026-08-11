@@ -1,0 +1,5 @@
+4 HCAs found:
+	mlx5_bond_0
+	mlx5_bond_1
+	mlx5_bond_2
+	mlx5_bond_3
