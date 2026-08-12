@@ -1,0 +1,64 @@
+# SM90 Humming MXFP4A8 MegaMoE H20 测试结果
+
+测试 commit：`f45c6003c0fb43e2e909d8062b644c6b2d97760c`
+
+## 精度结果
+
+本次采用 `fast_math=1`。
+
+| 测试范围 | 结果 | 最大 diff |
+|---|---:|---:|
+| MXFP4 preprocess（14 cases） | 14/14 PASS | - |
+| 2 ranks，full | 34/34 PASS | 0.000716 |
+| 8 ranks，smoke | 6/6 PASS | 0.000601 |
+| Compute Sanitizer，routed Flash M=8192，E=32 | 1 launch PASS，0 errors | - |
+| 2 ranks，routed Pro M=256，per-tensor | PASS | 0.000050 |
+| 8 ranks，routed Pro M=256，per-tensor | PASS | 0.000050 |
+| Compute Sanitizer，routed Pro M=256，per-tensor | 1 launch PASS，0 errors | 0.000049 |
+| 8 ranks，routed Flash M=128，per-tensor | PASS | 0.000037 |
+| Compute Sanitizer，routed Flash M=128，per-tensor | 1 launch PASS，0 errors | 0.000037 |
+
+所有测试均通过，最大 diff 为 `0.000716`，低于测试阈值 `0.01`。
+
+## 性能结果
+
+测试条件：H20、8 ranks、`fast_math=1`、activation per-tensor、FC1/FC2 dequant scale 均为 `1.0`、`num_max_tokens_per_rank=8192`、5 次 warmup、每轮 20 次 observation、每次 Kineto 20 tests。指标为所有 rank 最慢耗时的中位数 `max_rank_median_us`；MXFP4 采用 3 轮 run-median，且不显式 flush L2。下表为 routed-only（`num_shared_experts=0`）结果。
+
+| 模型 | M | PR #383 FP8 MegaMoE (µs) | MXFP4 per-tensor (µs) | MXFP4 / FP8 |
+|---|---:|---:|---:|---:|
+| Flash | 64 | 340.7 | 443.350 | 1.301× |
+| Flash | 128 | 414.4 | 467.945 | 1.129× |
+| Flash | 256 | 569.5 | 526.143 | 0.924× |
+| Flash | 8192 | 9749.0 | 10414.000 | 1.068× |
+| Pro | 64 | 1059.9 | 1188.000 | 1.121× |
+| Pro | 128 | 1201.0 | 1201.000 | 1.000× |
+| Pro | 256 | 1639.9 | 1331.500 | 0.812× |
+| Pro | 8192 | 24777.0 | 26799.000 | 1.082× |
+
+FP8 数据来自 [DeepGEMM PR #383](https://github.com/deepseek-ai/DeepGEMM/pull/383)。`MXFP4 / FP8` 仅为两组耗时的数值比值；两者量化格式和测试代码不同，不作为严格 A/B 加速比。
+
+### Flash swap-AB descriptor 增量更新
+
+commit `f45c6003c0fb43e2e909d8062b644c6b2d97760c` 仅在 Flash small-M swap-AB 路径复用 WGMMA base descriptor，并按 K32 增量更新起始地址。Pro 和非 swap-AB 路径保持原机器码。
+
+| 模型 | M | baseline A1（µs） | candidate B（µs） | baseline A2（µs） | baseline 中心（µs） | B 相对中心 |
+|---|---:|---:|---:|---:|---:|---:|
+| Flash | 64 | 436.257 | 432.299 | 452.190 | 444.224 | -2.68% |
+| Flash | 128 | 451.124 | 448.085 | 442.945 | 447.035 | +0.23% |
+
+收窄为 Flash-only 后的独立复测为 M64 `425.092 µs`、M128 `439.814 µs`。M64 在正式 A/B/A 中超过 `0.5%` 接受阈值；M128 正式 A/B/A 差异在噪声范围内，独立复测未观察到回退。候选资源为 Flash `REG=128, STACK=0`，且 Compute Sanitizer memcheck 报告 `0 errors`。
+
+### 共享专家性能
+
+测试条件与上表相同，`num_shared_experts=1`。采用 per-tensor activation scale 和 3 轮 run-median。
+
+| 模型 | M | MXFP4 per-tensor (µs) |
+|---|---:|---:|
+| Flash | 64 | 587.496 |
+| Flash | 128 | 590.326 |
+| Flash | 256 | 604.095 |
+| Flash | 8192 | 13302.500 |
+| Pro | 64 | 1852.500 |
+| Pro | 128 | 1887.000 |
+| Pro | 256 | 1948.500 |
+| Pro | 8192 | 33675.500 |
