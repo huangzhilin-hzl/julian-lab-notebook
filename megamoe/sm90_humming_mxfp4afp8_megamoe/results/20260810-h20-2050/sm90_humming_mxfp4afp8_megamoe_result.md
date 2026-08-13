@@ -1,6 +1,6 @@
 # SM90 Humming MXFP4A8 MegaMoE H20 测试结果
 
-测试 commit：`f45c6003c0fb43e2e909d8062b644c6b2d97760c`
+测试 commit：`dd572d45f27e8f62c8cad66cb9cc680451708b10`
 
 ## 精度结果
 
@@ -47,6 +47,16 @@ commit `f45c6003c0fb43e2e909d8062b644c6b2d97760c` 仅在 Flash small-M swap-AB �
 | Flash | 128 | 451.124 | 448.085 | 442.945 | 447.035 | +0.23% |
 
 收窄为 Flash-only 后的独立复测为 M64 `425.092 µs`、M128 `439.814 µs`。M64 在正式 A/B/A 中超过 `0.5%` 接受阈值；M128 正式 A/B/A 差异在噪声范围内，独立复测未观察到回退。候选资源为 Flash `REG=128, STACK=0`，且 Compute Sanitizer memcheck 报告 `0 errors`。
+
+### Flash M128 合并 swap-AB WGMMA group
+
+commit `dd572d45f27e8f62c8cad66cb9cc680451708b10` 在 Flash M128 small-M swap-AB 路径中，将两个 N64 weight half 的 WGMMA 合并到同一个 group，减少每个 K stage 的 `wgmma.fence` 和 `wgmma.commit_group`。该优化通过 JIT 编译单元宏隔离；未启用的 Flash M64、Pro M256 等路径与 `f45c600` 的同源基线 SASS 完全一致。
+
+| 模型 | M | baseline A1（µs） | candidate B（µs） | baseline A2（µs） | baseline 中心（µs） | B 相对中心 |
+|---|---:|---:|---:|---:|---:|---:|
+| Flash | 128 | 482.623 | 447.647 | 548.622 | 515.623 | -13.18% |
+
+最终作用域下的独立复测为 `463.298 µs`，相对 baseline 中心改善 `10.15%`。候选资源为 `REG=128, STACK=0`；MXFP4 preprocess `14/14`、2 ranks full `34/34`、8 ranks smoke `6/6`、8 ranks Flash M128 精确形状均通过，Compute Sanitizer memcheck 报告 `0 errors`。
 
 ### 共享专家性能
 
