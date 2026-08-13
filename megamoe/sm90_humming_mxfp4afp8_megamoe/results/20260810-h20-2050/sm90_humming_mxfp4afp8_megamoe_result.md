@@ -1,6 +1,6 @@
 # SM90 Humming MXFP4A8 MegaMoE H20 测试结果
 
-测试 commit：`703d01319dbf299ea7630c1daf7895990fca5e91`
+测试 commit：`b3346b97e0fe9b9b8f46647e15d372200570281a`
 
 ## 精度结果
 
@@ -9,7 +9,7 @@
 | 测试范围 | 结果 | 最大 diff |
 |---|---:|---:|
 | MXFP4 preprocess（14 cases） | 14/14 PASS | - |
-| 2 ranks，full | 35/35 PASS | 0.004480 |
+| 2 ranks，full | 35/35 PASS | 0.004278 |
 | 8 ranks，smoke | 6/6 PASS | 0.000601 |
 | Compute Sanitizer，routed Flash M=8192，E=32 | 1 launch PASS，0 errors | - |
 | 2 ranks，routed Pro M=256，per-tensor | PASS | 0.000050 |
@@ -20,7 +20,7 @@
 | 8 ranks，routed Flash M=64，per-tensor，capacity=8192 | PASS | 0.000038 |
 | Compute Sanitizer，routed Flash M=64，per-tensor | 1 launch PASS，0 errors | 0.000042 |
 
-所有测试均通过，最大 diff 为 `0.004480`，低于测试阈值 `0.01`。
+所有测试均通过，最大 diff 为 `0.004278`，低于测试阈值 `0.01`。
 
 ## 性能结果
 
@@ -28,14 +28,14 @@
 
 | 模型 | M | PR #383 FP8 MegaMoE (µs) | MXFP4 per-tensor (µs) | MXFP4 / FP8 |
 |---|---:|---:|---:|---:|
-| Flash | 64 | 340.7 | 433.491 | 1.272× |
-| Flash | 128 | 414.4 | 439.789 | 1.061× |
-| Flash | 256 | 569.5 | 610.577 | 1.072× |
-| Flash | 8192 | 9749.0 | 9641.000 | 0.989× |
-| Pro | 64 | 1059.9 | 1129.000 | 1.065× |
-| Pro | 128 | 1201.0 | 1164.000 | 0.969× |
-| Pro | 256 | 1639.9 | 1254.000 | 0.765× |
-| Pro | 8192 | 24777.0 | 24740.000 | 0.999× |
+| Flash | 64 | 340.7 | 417.887 | 1.227× |
+| Flash | 128 | 414.4 | 460.701 | 1.112× |
+| Flash | 256 | 569.5 | 538.122 | 0.945× |
+| Flash | 8192 | 9749.0 | 9677.000 | 0.993× |
+| Pro | 64 | 1059.9 | 1119.000 | 1.056× |
+| Pro | 128 | 1201.0 | 1147.000 | 0.955× |
+| Pro | 256 | 1639.9 | 1240.000 | 0.756× |
+| Pro | 8192 | 24777.0 | 24742.000 | 0.999× |
 
 FP8 数据来自 [DeepGEMM PR #383](https://github.com/deepseek-ai/DeepGEMM/pull/383)。`MXFP4 / FP8` 仅为两组耗时的数值比值；两者量化格式和测试代码不同，不作为严格 A/B 加速比。
 
@@ -82,19 +82,31 @@ A/B/A 与独立 B2 均使用 8 ranks、capacity 8192、5 次 warmup、每轮 20 
 
 候选资源为 `REG=128, STACK=0, LOCAL=0`；MXFP4 preprocess `14/14`、2 ranks full `35/35`、8 ranks smoke `6/6`、8 ranks Flash M64 精确生产形状均通过，Compute Sanitizer memcheck 报告 `0 errors`。
 
+### Flash M64 优化结果
+
+测试 commit：`b3346b97e0fe9b9b8f46647e15d372200570281a`。
+
+| 模型 | M | baseline A1（µs） | candidate B1（µs） | B1 相对 A1 | baseline A2（µs） | candidate B2（µs） | B2 相对 A2 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Flash | 64 | 481.172 | 450.784 | -6.32% | 439.924 | 414.862 | -5.70% |
+
+A/B/A/B 使用 8 ranks、capacity 8192、5 次 warmup、每轮 20 tests、3 轮 run-median、per-tensor activation scale、`fast_math=1` 且不显式 flush L2。合并各 6 个 observation 后，候选中位数为 `424.135 µs`，相对 baseline 的 `443.830 µs` 改善 `4.44%`；正式 16-case 矩阵中的 Flash M64 为 `417.887 µs`，相对上一接受版本的 `433.491 µs` 改善 `3.60%`。
+
+候选资源为 `REG=128, STACK=0, LOCAL=0`；MXFP4 preprocess `14/14`、2 ranks full `35/35`、8 ranks smoke `6/6`、8 ranks Flash M64 精确生产形状均通过。Flash M64 与 M8192 的 Compute Sanitizer memcheck 均报告 `0 errors`。
+
 ### 共享专家性能
 
 测试条件与上表相同，`num_shared_experts=1`。采用 per-tensor activation scale 和 3 轮 run-median。
 
 | 模型 | M | MXFP4 per-tensor (µs) |
 |---|---:|---:|
-| Flash | 64 | 546.463 |
-| Flash | 128 | 623.212 |
-| Flash | 256 | 589.184 |
-| Flash | 8192 | 12239.000 |
-| Pro | 64 | 1765.000 |
-| Pro | 128 | 1804.000 |
+| Flash | 64 | 549.754 |
+| Flash | 128 | 594.952 |
+| Flash | 256 | 585.063 |
+| Flash | 8192 | 12263.000 |
+| Pro | 64 | 1739.000 |
+| Pro | 128 | 1780.000 |
 | Pro | 256 | 1837.000 |
-| Pro | 8192 | 30829.000 |
+| Pro | 8192 | 30796.000 |
 
 shared-expert 编译单元不会启用本次 routed-only 宏，因此与上一接受版本之间的差异按测试噪声处理，不归因为本次优化。
