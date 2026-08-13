@@ -1,6 +1,6 @@
 # SM90 Humming MXFP4A8 MegaMoE H20 测试结果
 
-测试 commit：`dd572d45f27e8f62c8cad66cb9cc680451708b10`
+测试 commit：`3a1ea396f006fe7c406d6610cd9d7f7e936fba6d`
 
 ## 精度结果
 
@@ -26,14 +26,14 @@
 
 | 模型 | M | PR #383 FP8 MegaMoE (µs) | MXFP4 per-tensor (µs) | MXFP4 / FP8 |
 |---|---:|---:|---:|---:|
-| Flash | 64 | 340.7 | 427.912 | 1.256× |
-| Flash | 128 | 414.4 | 487.612 | 1.177× |
-| Flash | 256 | 569.5 | 559.354 | 0.982× |
-| Flash | 8192 | 9749.0 | 10420.000 | 1.069× |
-| Pro | 64 | 1059.9 | 1191.000 | 1.124× |
-| Pro | 128 | 1201.0 | 1198.000 | 0.998× |
-| Pro | 256 | 1639.9 | 1313.000 | 0.801× |
-| Pro | 8192 | 24777.0 | 26848.000 | 1.084× |
+| Flash | 64 | 340.7 | 415.595 | 1.220× |
+| Flash | 128 | 414.4 | 450.652 | 1.087× |
+| Flash | 256 | 569.5 | 553.712 | 0.972× |
+| Flash | 8192 | 9749.0 | 10417.000 | 1.069× |
+| Pro | 64 | 1059.9 | 1178.000 | 1.111× |
+| Pro | 128 | 1201.0 | 1218.000 | 1.014× |
+| Pro | 256 | 1639.9 | 1314.000 | 0.801× |
+| Pro | 8192 | 24777.0 | 26839.000 | 1.083× |
 
 FP8 数据来自 [DeepGEMM PR #383](https://github.com/deepseek-ai/DeepGEMM/pull/383)。`MXFP4 / FP8` 仅为两组耗时的数值比值；两者量化格式和测试代码不同，不作为严格 A/B 加速比。
 
@@ -58,17 +58,29 @@ commit `dd572d45f27e8f62c8cad66cb9cc680451708b10` 在 Flash M128 small-M swap-AB
 
 最终作用域下的独立复测为 `463.298 µs`，相对 baseline 中心改善 `10.15%`。候选资源为 `REG=128, STACK=0`；MXFP4 preprocess `14/14`、2 ranks full `34/34`、8 ranks smoke `6/6`、8 ranks Flash M128 精确形状均通过，Compute Sanitizer memcheck 报告 `0 errors`。
 
+### Flash M128 swap-AB L2 warp-scatter
+
+commit `3a1ea396f006fe7c406d6610cd9d7f7e936fba6d` 仅在 routed Flash M128 small-M swap-AB 编译单元启用新的 L2 epilogue。每个 warp 先把自己负责的 32 列从寄存器转置到 SMEM，再按连续 16-byte span 直接写入远端 combine buffer，去掉散射前的 128-thread barrier，并把每行元数据读取从 16 次降到 4 次。任务末尾的 128-thread barrier 保留，确保下一任务复用 SMEM 前所有 scatter 已完成。
+
+| 模型 | M | baseline A1（µs） | candidate B（µs） | baseline A2（µs） | baseline 中心（µs） | B 相对中心 |
+|---|---:|---:|---:|---:|---:|---:|
+| Flash | 128 | 484.336 | 418.747 | 491.434 | 487.885 | -14.17% |
+
+独立候选复测为 `438.055 µs`；两次候选中位数的中心为 `428.401 µs`，相对 baseline 中心改善 `12.19%`。最终 16-case 矩阵中的 Flash M128 为 `450.652 µs`，相对上一接受版本 `dd572d4` 的正式矩阵 `487.612 µs` 改善 `7.58%`。候选资源由 `REG=128` 降至 `REG=125`，且 `STACK=0, LOCAL=0`；MXFP4 preprocess `14/14`、2 ranks full `34/34`、8 ranks smoke `6/6`、8 ranks Flash M128 精确形状均通过，Compute Sanitizer memcheck 报告 `0 errors`。
+
 ### 共享专家性能
 
 测试条件与上表相同，`num_shared_experts=1`。采用 per-tensor activation scale 和 3 轮 run-median。
 
 | 模型 | M | MXFP4 per-tensor (µs) |
 |---|---:|---:|
-| Flash | 64 | 546.580 |
-| Flash | 128 | 651.868 |
-| Flash | 256 | 588.242 |
-| Flash | 8192 | 13338.000 |
-| Pro | 64 | 1879.000 |
-| Pro | 128 | 1943.000 |
-| Pro | 256 | 1938.000 |
-| Pro | 8192 | 33686.000 |
+| Flash | 64 | 553.808 |
+| Flash | 128 | 572.975 |
+| Flash | 256 | 611.447 |
+| Flash | 8192 | 13288.000 |
+| Pro | 64 | 1877.000 |
+| Pro | 128 | 1907.000 |
+| Pro | 256 | 1955.000 |
+| Pro | 8192 | 33685.000 |
+
+shared-expert 编译单元不会启用本次 routed-only 宏，因此与上一接受版本之间的差异按测试噪声处理，不归因为本次优化。
