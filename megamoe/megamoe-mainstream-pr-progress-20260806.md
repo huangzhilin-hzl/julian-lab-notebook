@@ -94,6 +94,24 @@ Other hardware:
 
 `sgl-project/DeepGEMM` 是独立维护的 fork。它的 MegaMoE PR 多数目标为 `dev`、阶段分支或 release 分支，而仓库默认分支是 `main`；因此下表中的 `MERGED` 只表示进入所列目标分支，是否进入 SGLang 主线还要继续核对 SGLang 的 wheel/version bump 或集成 PR。
 
+两条代码线的能力侧重点对比如下。这里的 SGL release 指 [sgl-project/DeepGEMM `release/v0.1.5`](https://github.com/sgl-project/DeepGEMM/tree/release/v0.1.5)，DeepGEMM main 指 [deepseek-ai/DeepGEMM `main`](https://github.com/deepseek-ai/DeepGEMM/tree/main)：
+
+| 优化项 | SGL `release/v0.1.5` | DeepGEMM `main` |
+| --- | :---: | :---: |
+| SM90/Hopper MegaMoE | ✅ | ❌ |
+| SM90 小 batch swapAB | ✅ | ❌ |
+| SM90 连续 FP32 activation scale | ✅ | ❌ |
+| FP4 activation + MXF4 双 CTA | ✅ | ❌ |
+| FP8 combine，降低 All-to-All 通信量 | ✅ | ❌ |
+| Kimi-K3 SiTU 激活 | ✅ | ❌ |
+| 独立 fused pre-dispatch | ✅ | ❌ |
+| 新版 persistent scheduler | ❌ | ✅ |
+| L1/L2 block 交错调度 | ❌ | ✅ |
+| shared experts 融合进 MegaMoE | ❌ | ✅ |
+| routed/shared 合并为单 kernel | ❌ | ✅ |
+
+`✅` 只表示对应分支包含该能力，不表示默认启用、已经完成 serving 集成或两边硬件范围等价。尤其是后四项，DeepGEMM `main` 的现有实现主要是 SM100 路线；不能据此推导 upstream `main` 已经具备 SM90 persistent/shared-expert MegaMoE。SGL `release/v0.1.5` 的 SM90 能力更完整，但新版 scheduler 与 shared-expert 单 kernel 融合仍在 fork 的开放 PR [#69](https://github.com/sgl-project/DeepGEMM/pull/69) 中。
+
 已经合入 fork 分支的主要演进如下：
 
 | PR | 目标分支 / 状态 | 定位 |
