@@ -1,6 +1,6 @@
 # MegaMoE
 
-- [MegaMoE 主流实现与接入进展（2026-08-06）](megamoe-mainstream-pr-progress-20260806.md)
+- [MegaMoE 主流实现与接入进展（2026-08-20）](megamoe-mainstream-pr-progress-20260820.md)
 - [FlashInfer × MegaMoE PR 汇总（2026-07-23）](flashinfer-megamoe-pr-summary-20260723.md)
 - [MegaMoE 跨框架公开讨论与 PR 全景（2026-07-14）](megamoe-cross-framework-20260714.html)
 
