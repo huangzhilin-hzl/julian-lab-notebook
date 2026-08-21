@@ -4,13 +4,14 @@
 
 ## 结论
 
-截至 2026-08-21，相比昨天的快照有五项值得立即调整的判断：
+截至 2026-08-21，相比昨天的快照有六项值得立即调整的判断：
 
-1. **DeepGEMM Hopper 出现新的 FP8×MXFP4 候选**：`#411` 复用 SM100 ring-buffer/wave-interleaved 思路，在 SM90 上融合 dispatch、routed/shared L1/L2 和 combine。它当前 `MERGEABLE/CLEAN`，但 review bot 已指出集中路由可能产生错误输出、各 rank token 数不一致时可能死锁，因此不能把“无文本冲突”写成“可生产合入”。
-2. **vLLM shared-expert 融合已经进入主线**：`#53040` 于北京时间 8 月 21 日合入，将 replicated FP8 shared expert 融入 DeepGEMM persistent MegaMoE。vLLM 的 FlashInfer backend `#49636` 也已从 `BLOCKED` 推进到 `APPROVED/MERGEABLE/CLEAN`，但仍未合入。
-3. **FlashInfer SM90 NVFP4 已解决文本冲突**：`#4589` 从 `CONFLICTING` 变为 `MERGEABLE`，但 merge state 仍为 `BLOCKED`，需要 review，aggregate summary 仍失败。
-4. **DeepGEMM `#409` 撤回了旧性能表**：原表混用了 FlashInfer 通信和 CUDA Graph critical-path timing，与 DeepGEMM repository baseline 不对齐。GB300 EP8 的 Kineto/DeepEP 对齐复测尚未补齐，昨天记录的 fusion gain 不应继续引用。
-5. **非 NVIDIA shared-expert 与 Ascend 主线候选增加**：vLLM `#53161` 新增 ROCm heterogeneous shared-expert draft，但明确标记 `DO NOT MERGE` 并依赖 AITER `#4891`；vLLM Ascend `#14658/#14664` 则开始把 MegaMoe 推向 `main` 的 A5/FusedMC2 唯一路径。
+1. **deepseek-ai/DeepGEMM Hopper 出现新的 FP8×MXFP4 候选**：`#411` 复用 SM100 ring-buffer/wave-interleaved 思路，在 SM90 上融合 dispatch、routed/shared L1/L2 和 combine。它当前 `MERGEABLE/CLEAN`，但 review bot 已指出集中路由可能产生错误输出、各 rank token 数不一致时可能死锁，因此不能把“无文本冲突”写成“可生产合入”。
+2. **sgl-project/DeepGEMM 已形成独立的 SGLang 生产推进线**：SM90 FP8 基础 `#36`、decode swap-AB `#48`、连续 FP32 activation scale `#63` 已合入该 fork 的 `dev`，并由 SGLang `#29016` 接入 `main`。当前 `#53/#68/#69/#74` 均对 `dev` 可合并，但没有 recorded approval 或公开 status checks；其中 `#53` 的 SGLang FP4 集成尚未 upstream，`#69` 则在 8 月 20 日继续更新 fused shared-expert/scheduler 优化。
+3. **vLLM shared-expert 融合已经进入主线**：`#53040` 于北京时间 8 月 21 日合入，将 replicated FP8 shared expert 融入 DeepGEMM persistent MegaMoE。vLLM 的 FlashInfer backend `#49636` 也已从 `BLOCKED` 推进到 `APPROVED/MERGEABLE/CLEAN`，但仍未合入。
+4. **FlashInfer SM90 NVFP4 已解决文本冲突**：`#4589` 从 `CONFLICTING` 变为 `MERGEABLE`，但 merge state 仍为 `BLOCKED`，需要 review，aggregate summary 仍失败。
+5. **DeepGEMM `#409` 撤回了旧性能表**：原表混用了 FlashInfer 通信和 CUDA Graph critical-path timing，与 DeepGEMM repository baseline 不对齐。GB300 EP8 的 Kineto/DeepEP 对齐复测尚未补齐，昨天记录的 fusion gain 不应继续引用。
+6. **非 NVIDIA shared-expert 与 Ascend 主线候选增加**：vLLM `#53161` 新增 ROCm heterogeneous shared-expert draft，但明确标记 `DO NOT MERGE` 并依赖 AITER `#4891`；vLLM Ascend `#14658/#14664` 则开始把 MegaMoe 推向 `main` 的 A5/FusedMC2 唯一路径。
 
 当前主链可以简化为：
 
@@ -21,6 +22,11 @@ DeepGEMM SM100:
 DeepGEMM SM90:
   #323 / #360 / #383                                    开放、冲突
   #411 FP8 x MXFP4                                      开放、CLEAN、review 有正确性阻塞
+
+sgl-project/DeepGEMM fork:
+  SM90 FP8: #36 -> #48 -> #63                           已合入 dev
+  SM90 FP4: #53 / correctness: #68 / perf: #69          开放、CLEAN
+  nvcc13 compile fix: #74                               开放、CLEAN
 
 FlashInfer:
   SM100 base: #3686 -> #3852 -> #3980 -> #4079 -> #4101 已合入
@@ -49,6 +55,7 @@ Other hardware:
 | --- | --- | --- | --- |
 | DeepGEMM SM90 MXFP4 | [DeepGEMM#411](https://github.com/deepseek-ai/DeepGEMM/pull/411) | OPEN、MERGEABLE、`CLEAN` | 新增 FP8 activation × MXFP4 weight persistent MegaMoE，目标为 `nv_dev`；review bot 已指出集中路由错误与不等 token 潜在死锁，尚无人工批准。 |
 | DeepGEMM shared expert | [DeepGEMM#409](https://github.com/deepseek-ai/DeepGEMM/pull/409) | OPEN draft、MERGEABLE、`CLEAN` | 旧性能表因 baseline/计时不对齐被作者撤回；GB300 EP8 的 DeepEP/Kineto 对齐复测仍待补。 |
+| SGL DeepGEMM fork | [sgl-DeepGEMM#53](https://github.com/sgl-project/DeepGEMM/pull/53) / [#68](https://github.com/sgl-project/DeepGEMM/pull/68) / [#69](https://github.com/sgl-project/DeepGEMM/pull/69) / [#74](https://github.com/sgl-project/DeepGEMM/pull/74) | 全部 OPEN、MERGEABLE、`CLEAN` | 本次补录 SGLang 自维护 fork：SM90 FP4 集成、pruned-weight 正确性修复、FP8 fused shared-expert/scheduler 优化、nvcc 13 编译修复；四条均目标 `dev`，无 recorded approval/公开 status checks。 |
 | vLLM shared expert | [vllm#53040](https://github.com/vllm-project/vllm/pull/53040) | MERGED，2026-08-21（北京时间） | replicated FP8 shared expert 已融合进 DeepGEMM persistent MegaMoE；PR 报告 batch-size-1 输出吞吐约 +13.7%–15.0%，并发 64 workload 约 +9.4%。 |
 | vLLM FlashInfer | [vllm#49636](https://github.com/vllm-project/vllm/pull/49636) | OPEN、APPROVED、MERGEABLE、`CLEAN` | 相比昨天已解除 `BLOCKED`；当前可见 checks 无失败，但仍未合入。 |
 | FlashInfer SM90 W4A8 | [flashinfer#4589](https://github.com/flashinfer-ai/flashinfer/pull/4589) | OPEN、MERGEABLE、BLOCKED、REVIEW_REQUIRED | 已解决与 `main` 的文本冲突；aggregate `Test Results Summary` 仍失败。 |
@@ -74,14 +81,43 @@ Other hardware:
 - [#404](https://github.com/deepseek-ai/DeepGEMM/pull/404)：OPEN、MERGEABLE、`CLEAN`。它为 `num_tokens <= 512` 的 FP8×FP4 MegaMoE 增加 opt-in `EVICT_FIRST` weight-load hint；默认路径不变。作者在 8×SM100 上报告 8/16/32 token 每 rank 改善 3.2%–5.3%，这仍是 PR 指定环境下的微基准。
 - [#409](https://github.com/deepseek-ai/DeepGEMM/pull/409)：OPEN draft、MERGEABLE、`CLEAN`，目标分支为 `nv_dev`。它将 BF16 shared expert 融合进 SM100 NVFP4 MegaMoE，并在最终 add 前应用 routed scaling。作者已删除原性能表，因为其 FlashInfer 通信 baseline 和 CUDA Graph critical-path timing 与 DeepGEMM repository baseline 不对齐；新的 GB300 EP8 DeepEP/Kineto 对齐复测仍待补。
 
-### SM90 仍未形成统一 upstream
+### deepseek-ai/DeepGEMM：SM90 仍未形成统一 upstream
 
 - [#323](https://github.com/deepseek-ai/DeepGEMM/pull/323)：SM90 FP8 fused path，OPEN、CONFLICTING；8 月 14 日有公开活动，但最后代码提交仍早于本轮。
 - [#360](https://github.com/deepseek-ai/DeepGEMM/pull/360)：cooperative 单 kernel 方案，OPEN、CONFLICTING，8 月 3 日后无更新。
 - [#383](https://github.com/deepseek-ai/DeepGEMM/pull/383)：destination-rank pull、L1/L2 两个大 kernel，OPEN、CONFLICTING，目标仍是 `nv_dev`。8 月 17 日新增了与 `sgl-project/DeepGEMM#36` 的 H20 对比讨论，但没有解决 upstream 冲突。
 - [#411](https://github.com/deepseek-ai/DeepGEMM/pull/411)：FP8 activation × MXFP4 weight persistent kernel，OPEN、MERGEABLE、`CLEAN`，目标为 `nv_dev`。它将 SM100 ring-buffer/wave-interleaved scheduler 适配到 Hopper，并保持 routed weights 为 MXFP4、运行时解码为 FP8 WGMMA 输入。当前 review bot 已指出两个直接 blocker：集中路由可能错误，不等 rank token 数可能死锁；这些契约问题解决前不能按 production-ready 评估。
 
-这意味着 DeepGEMM Hopper 已从“所有候选都冲突”推进到出现一个可 rebase 的新实现，但尚未解决分布式路由正确性；FlashInfer 的两条 FP8 SM90 backend 仍是当前已经进入主线的实现。
+这意味着 deepseek-ai/DeepGEMM 的 Hopper 路线已从“所有候选都冲突”推进到出现一个可 rebase 的新实现，但尚未解决分布式路由正确性；不能据此忽略下方 `sgl-project/DeepGEMM` 已被 SGLang 实际消费的独立 fork 路线。
+
+### sgl-project/DeepGEMM：SGLang 自维护链已经形成
+
+`sgl-project/DeepGEMM` 是独立维护的 fork。它的 MegaMoE PR 多数目标为 `dev`、阶段分支或 release 分支，而仓库默认分支是 `main`；因此下表中的 `MERGED` 只表示进入所列目标分支，是否进入 SGLang 主线还要继续核对 SGLang 的 wheel/version bump 或集成 PR。
+
+已经合入 fork 分支的主要演进如下：
+
+| PR | 目标分支 / 状态 | 定位 |
+| --- | --- | --- |
+| [#27](https://github.com/sgl-project/DeepGEMM/pull/27) / [#28](https://github.com/sgl-project/DeepGEMM/pull/28) | `dev-0426` / MERGED | 增加 FP4 activation + MXF4、fused `mega_moe_pre_dispatch`，以及 second all-to-all 的 FP8 combine；随后由 [#33](https://github.com/sgl-project/DeepGEMM/pull/33) 合入 `release-0426`。 |
+| [#36](https://github.com/sgl-project/DeepGEMM/pull/36) | `dev` / MERGED，2026-06-16（北京时间） | SM90 FP8 MegaMoE 主实现；同作者较早的 [#24](https://github.com/sgl-project/DeepGEMM/pull/24) 未合入关闭，由这条 PR 接续。其消费方 SGLang [#29016](https://github.com/sgl-project/sglang/pull/29016) 已进入 `main`。 |
+| [#45](https://github.com/sgl-project/DeepGEMM/pull/45) / [#46](https://github.com/sgl-project/DeepGEMM/pull/46) | `dev` / MERGED | 将 Hopper MegaMoE 测试迁入 `sgl_deep_gemm`，并加入 pre-release workflow。 |
+| [#48](https://github.com/sgl-project/DeepGEMM/pull/48) / [#57](https://github.com/sgl-project/DeepGEMM/pull/57) | `dev` / MERGED | 优化 SM90 FP8 small-batch decode swap-AB，并将 MegaMoE barrier timeout 提高到 300 秒。 |
+| [#63](https://github.com/sgl-project/DeepGEMM/pull/63) | `dev` / MERGED | 将 SM90 activation scale 从 UE8M0 改为连续 FP32，避免 amax 跨越 2 的幂边界时整行 E4M3 grid 发生 2× 跳变；PR 报告 GPQA `no_answer` 从 6.6% 降至 0.03%。 |
+| [#67](https://github.com/sgl-project/DeepGEMM/pull/67) / [#78](https://github.com/sgl-project/DeepGEMM/pull/78) | `dev` / MERGED | 先加入 Kimi-K3 SiTU activation，再以显式 `activation="situ"` 取代 sentinel 选择；对应 SGLang [#34883](https://github.com/sgl-project/sglang/pull/34883) 已进入 `main`。 |
+
+截至本次查询，开放 PR 的状态为：
+
+| PR | 当前状态 | 进展与阻塞 |
+| --- | --- | --- |
+| [#44](https://github.com/sgl-project/DeepGEMM/pull/44) | OPEN、CONFLICTING | SM100 packed FP4×FP4/W4A4 specialization；配套 SGLang [#28210](https://github.com/sgl-project/sglang/pull/28210) 仍 OPEN。最后代码提交是 6 月 12 日（北京时间），尚无 review 或公开 checks，不能按活跃合入候选评估。 |
+| [#53](https://github.com/sgl-project/DeepGEMM/pull/53) | OPEN、MERGEABLE、`CLEAN` | SM90 FP8 activation × FP4 weight + small-batch swap-AB。作者 8 月 14 日明确说明 SGLang 集成**尚未 upstream**，当前只在外部分支验证，需先合入本 PR；8 月 20 日新增的 PD-disaggregation 适配问题尚未得到答复。无 review/公开 checks。 |
+| [#68](https://github.com/sgl-project/DeepGEMM/pull/68) | OPEN、MERGEABLE、`CLEAN` | 修复 pruned FP8 weight block 保留随机字节、tiny nonzero scale 被 reciprocal 放大后导致错误输出的问题；H20D 最小复现从 `max_abs=1870659584.0` 降到 `0.0`。尚无 review/公开 checks，SGLang workaround 仍需等待合入并发布 wheel 后才能移除。 |
+| [#69](https://github.com/sgl-project/DeepGEMM/pull/69) | OPEN、MERGEABLE、`CLEAN` | SM90 FP8 优化总线：interleaved L1/L2 scheduler、fused shared expert、L2 bank swizzle、4-WG heuristic、decode swap-AB。8 月 20 日仍有代码更新并请求 review；PR 提供 8×H20/EP8 sweep，但尚无 approval 或公开 checks。 |
+| [#74](https://github.com/sgl-project/DeepGEMM/pull/74) | OPEN、MERGEABLE、`CLEAN` | 为 nvcc 13.x 的 SM90 FP8 MegaMoE 补 `.template` dependent-name disambiguation，是纯编译修复；尚无 review/公开 checks。 |
+
+另外，[#75](https://github.com/sgl-project/DeepGEMM/pull/75) 不是新的 MegaMoE kernel，但与部署链直接相关：它为 SM120 MXFP4 scale-factor layout 增加 CUDA tensor 校验和 `(1, 32)` 回归测试，并报告已发布的 `sgl-deep-gemm 0.1.5.post2` wheel 在 tvm-ffi tensor 边界损坏。该 PR 当前 OPEN、MERGEABLE、`CLEAN`，源代码构建可绕开问题，但正式消费仍依赖重新发 wheel。
+
+这条 fork 路线的判断应分三层：SM90 FP8 已由 `#36/#48/#63` 进入 `dev` 且 SGLang 已有主线消费；SM90 FP4 `#53` 仍缺正式 SGLang upstream；`#68/#69/#74` 虽无文本冲突，但仍缺 review/CI 证据。它和 deepseek-ai/DeepGEMM `#323/#360/#383/#411` 不能混成同一条 upstream 队列。
 
 ### 本地性能证据
 
@@ -186,6 +222,8 @@ ROCm 消费方 [#51918](https://github.com/vllm-project/vllm/pull/51918) 是 opt
 - [#34883](https://github.com/sgl-project/sglang/pull/34883)：Kimi-K3 显式使用 SiTU activation，8 月 15 日 MERGED；
 - [#35372](https://github.com/sgl-project/sglang/pull/35372)：扩展 `mega_moe_pre_dispatch` 的 wide-row 支持，8 月 20 日 MERGED。
 
+这些 serving PR 背后的库侧实现主要来自 `sgl-project/DeepGEMM`，不是 `deepseek-ai/DeepGEMM` 的同编号 upstream 队列：SM90 FP8 对应 fork 的 `#36/#48/#63`，SiTU 显式选择对应 `#78`。当前 fork 侧 `#53` 的 SM90 FP4 SGLang 集成仍未 upstream，`#68/#69/#74` 也还没有 review/CI 闭环；详见上方独立小节。
+
 FlashInfer 消费方仍未合入：
 
 - [#31470](https://github.com/sgl-project/sglang/pull/31470)：OPEN、MERGEABLE、BLOCKED、REVIEW_REQUIRED。它在 8 月 14/18/19 日持续合并 `main`，是当前更活跃的候选，但 GitHub aggregate checks 仍有多项失败。
@@ -231,12 +269,13 @@ AMD 当前的关键问题已经从“是否有 kernel”转为“vLLM/SGLang 的
 
 ## 建议跟踪顺序
 
-1. **DeepGEMM `#411` 的分布式正确性**：先修集中路由错误和不等 token 死锁，再讨论 H20 性能与 `#383` 的取舍；`CLEAN` 不能覆盖 review 中的算法/协议 blocker。
-2. **vLLM `#49636` 是否实际合入**：它已 APPROVED、MERGEABLE、`CLEAN`，下一步是确认 merge 时点以及主线消费的 FlashInfer 版本。
-3. **DeepGEMM shared expert 的可信 baseline**：vLLM `#53040` 已合入，但 DeepGEMM `#409` 已撤回旧表；需等待 GB300 EP8 DeepEP/Kineto 对齐复测后再引用 kernel fusion gain。
-4. **SGLang FlashInfer 路线是否收敛**：优先看 `#31470` 能否清理 CI/review，并决定是否吸收 `#33571` 的 int32 router ID + output view 优化。
-5. **SM120/Rubin 依赖链**：`#4387 -> #4632` 需要先解决冲突和净 diff，`#4601` 需要等待可公开消费的 Rubin CuTe DSL 并补性能数据。
-6. **ROCm/Ascend engine 接入**：ROCm 重点看 AITER `#4891`、vLLM `#51918/#53161` 与 SGLang `#35619`；Ascend 重点看 `#14658/#14664` 是否把 RFC/release 分支上的 A5 路线收口到 `main`。
+1. **deepseek-ai/DeepGEMM `#411` 的分布式正确性**：先修集中路由错误和不等 token 死锁，再讨论 H20 性能与 `#383` 的取舍；`CLEAN` 不能覆盖 review 中的算法/协议 blocker。
+2. **sgl-project/DeepGEMM 的合入闭环**：先确认 `#68` 正确性修复和 `#74` 编译修复进入 `dev/release`，再看 `#69` 的 fused shared-expert 优化能否完成 review；`#53` 还需补正式 SGLang upstream 与 PD-disaggregation 验证。
+3. **vLLM `#49636` 是否实际合入**：它已 APPROVED、MERGEABLE、`CLEAN`，下一步是确认 merge 时点以及主线消费的 FlashInfer 版本。
+4. **DeepGEMM shared expert 的可信 baseline**：vLLM `#53040` 已合入，但 deepseek-ai/DeepGEMM `#409` 已撤回旧表；需等待 GB300 EP8 DeepEP/Kineto 对齐复测后再引用 kernel fusion gain。
+5. **SGLang FlashInfer 路线是否收敛**：优先看 `#31470` 能否清理 CI/review，并决定是否吸收 `#33571` 的 int32 router ID + output view 优化。
+6. **SM120/Rubin 依赖链**：`#4387 -> #4632` 需要先解决冲突和净 diff，`#4601` 需要等待可公开消费的 Rubin CuTe DSL 并补性能数据；同时跟踪 sgl-deep-gemm wheel 是否修复 `#75` 报告的 tvm-ffi tensor corruption。
+7. **ROCm/Ascend engine 接入**：ROCm 重点看 AITER `#4891`、vLLM `#51918/#53161` 与 SGLang `#35619`；Ascend 重点看 `#14658/#14664` 是否把 RFC/release 分支上的 A5 路线收口到 `main`。
 
 ## 证据边界
 
