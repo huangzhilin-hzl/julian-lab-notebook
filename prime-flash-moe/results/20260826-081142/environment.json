@@ -1,0 +1,16 @@
+{
+  "base_image": "nvcr.io/nvidia/pytorch:26.07-py3",
+  "command": "python benchmark/benchmark.py --outdir /tmp/prime-flash-moe-20260826-081142",
+  "compute_capability": "10.0",
+  "gpu_count": 1,
+  "gpu_name": "NVIDIA B200",
+  "modal_gpu_request": "B200",
+  "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2026 NVIDIA Corporation\nBuilt on Tue_Jun_09_02:43:40_PM_PDT_2026\nCuda compilation tools, release 13.3, V13.3.73\nBuild cuda_13.3.r13.3/compiler.38244171_0",
+  "nvidia_smi": "NVIDIA B200, 580.95.05, 183359 MiB, 1965 MHz, 3996 MHz",
+  "python": "Python 3.12.3",
+  "repository": "https://github.com/PrimeIntellect-ai/prime-flash-moe.git",
+  "repository_commit": "1820183d63eed79fd166fbf4b81cae2b27b326c2",
+  "run_id_utc": "20260826-081142",
+  "torch": "2.13.0a0+9186a08b2c.nv26.07",
+  "torch_cuda": "13.3"
+}
