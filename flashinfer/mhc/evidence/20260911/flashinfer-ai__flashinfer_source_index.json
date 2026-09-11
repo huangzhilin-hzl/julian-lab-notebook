@@ -1,0 +1,21 @@
+{
+  "repo": "flashinfer-ai/flashinfer",
+  "default_branch": "main",
+  "head_sha": "ac7bce13ea0ff76392fd17aa696b096e191d0825",
+  "head_date": "2026-09-11T09:20:05Z",
+  "tree_truncated": false,
+  "paths": [
+    "benchmarks/bench_mhc_post.py",
+    "benchmarks/bench_mhc_pre_big_fuse.py",
+    "csrc/mhc",
+    "csrc/mhc/mhc_post.cu",
+    "csrc/mhc/mhc_pre_big_fuse.cu",
+    "docs/api/mhc.rst",
+    "flashinfer/jit/mhc.py",
+    "flashinfer/mhc.py",
+    "flashinfer/trace/templates/mhc.py",
+    "tests/mhc",
+    "tests/mhc/test_mhc_post.py",
+    "tests/mhc/test_mhc_pre_big_fuse.py"
+  ]
+}

@@ -10,6 +10,7 @@ This repository stores project notes and generated visual assets.
 | Looped Transformer | [research/loop-transformer.md](research/loop-transformer.md) |
 | Marlin | [marlin/README.md](marlin/README.md) |
 | MegaMoE | [megamoe/README.md](megamoe/README.md) |
+| mHC | [flashinfer/mhc/README.md](flashinfer/mhc/README.md) |
 | MiniMax MSA Modal | [msa-modal/README.md](msa-modal/README.md) |
 | Profile | [profile/README.md](profile/README.md) |
 | SGLang | [sglang/README.md](sglang/README.md) |

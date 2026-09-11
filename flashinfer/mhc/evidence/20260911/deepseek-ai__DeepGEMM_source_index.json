@@ -1,0 +1,23 @@
+{
+  "repo": "deepseek-ai/DeepGEMM",
+  "default_branch": "main",
+  "head_sha": "66081d4c9c7d7c44f13fea402e5b622aa0f409c2",
+  "head_date": "2026-09-10T06:31:04Z",
+  "tree_truncated": false,
+  "paths": [
+    "csrc/apis/hyperconnection.hpp",
+    "csrc/apis/mega_mhc.hpp",
+    "csrc/jit_kernels/impls/sm100_mega_mhc.hpp",
+    "csrc/jit_kernels/impls/sm100_tf32_hc_prenorm_gemm.hpp",
+    "csrc/jit_kernels/impls/sm90_tf32_hc_prenorm_gemm.hpp",
+    "deep_gemm/include/deep_gemm/epilogue/sm100_mega_mhc.cuh",
+    "deep_gemm/include/deep_gemm/impls/sm100_mega_mhc.cuh",
+    "deep_gemm/include/deep_gemm/impls/sm100_tf32_hc_prenorm_gemm.cuh",
+    "deep_gemm/include/deep_gemm/impls/sm90_tf32_hc_prenorm_gemm.cuh",
+    "deep_gemm/include/deep_gemm/layout/mega_mhc.cuh",
+    "deep_gemm/include/deep_gemm/scheduler/mega_mhc.cuh",
+    "tests/test_hyperconnection.py",
+    "tests/test_mega_mhc.py",
+    "third-party/tilelang_ops/ref_mhc.py"
+  ]
+}

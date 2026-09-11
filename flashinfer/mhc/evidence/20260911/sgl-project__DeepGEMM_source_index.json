@@ -1,0 +1,15 @@
+{
+  "repo": "sgl-project/DeepGEMM",
+  "default_branch": "main",
+  "head_sha": "1853080cf74589228fcd5dc333197c2ca6df49cf",
+  "head_date": "2026-08-29T07:15:02Z",
+  "tree_truncated": false,
+  "paths": [
+    "csrc/apis/hyperconnection.hpp",
+    "csrc/jit_kernels/impls/sm100_tf32_hc_prenorm_gemm.hpp",
+    "csrc/jit_kernels/impls/sm90_tf32_hc_prenorm_gemm.hpp",
+    "deep_gemm/include/deep_gemm/impls/sm100_tf32_hc_prenorm_gemm.cuh",
+    "deep_gemm/include/deep_gemm/impls/sm90_tf32_hc_prenorm_gemm.cuh",
+    "tests/test_hyperconnection.py"
+  ]
+}

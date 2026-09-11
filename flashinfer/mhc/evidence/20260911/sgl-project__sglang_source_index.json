@@ -1,0 +1,18 @@
+{
+  "repo": "sgl-project/sglang",
+  "default_branch": "main",
+  "head_sha": "822e73ccddc0297e9901042d4aab7fcccc11f1a6",
+  "head_date": "2026-09-11T08:49:29Z",
+  "tree_truncated": false,
+  "paths": [
+    "python/sglang/kernels/ops/layernorm/mhc.py",
+    "python/sglang/kernels/ops/layernorm/mhc_head.py",
+    "python/sglang/srt/layers/communicator_mhc.py",
+    "python/sglang/srt/layers/hyperconnection.py",
+    "python/sglang/srt/models/deepseek_common/amd/deepseek_v4_fused_mhc.py",
+    "test/registered/kernel/hyperconnection",
+    "test/registered/kernel/hyperconnection/test_hc_mix_triton.py",
+    "test/registered/kernels/ops/layernorm/test_mhc_kernels.py",
+    "test/registered/unit/models/test_deepseek_v4_amd_fused_mhc.py"
+  ]
+}

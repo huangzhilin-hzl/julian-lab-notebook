@@ -1,0 +1,26 @@
+{
+  "repo": "NVIDIA/TensorRT-LLM",
+  "default_branch": "main",
+  "head_sha": "31b47b67ebed549b9784a0791b8fdc8035d789f0",
+  "head_date": "2026-09-11T09:37:50Z",
+  "tree_truncated": false,
+  "paths": [
+    "cpp/kernels/fmha_v2/test/fmha/test_fmhca_exe.py",
+    "cpp/kernels/fmha_v2/test_sm75_fmhca.sh",
+    "cpp/kernels/fmha_v2/test_sm80_fmhca.sh",
+    "cpp/tensorrt_llm/kernels/mhcKernels",
+    "cpp/tensorrt_llm/kernels/mhcKernels/CMakeLists.txt",
+    "cpp/tensorrt_llm/kernels/mhcKernels/fused_tf32_pmap_gemm.cuh",
+    "cpp/tensorrt_llm/kernels/mhcKernels/mhcFusedHcKernel.cu",
+    "cpp/tensorrt_llm/kernels/mhcKernels/mhcKernels.cu",
+    "cpp/tensorrt_llm/kernels/mhcKernels/mhcKernels.h",
+    "cpp/tensorrt_llm/kernels/mhcKernels/mhc_fused_fma.cuh",
+    "cpp/tensorrt_llm/thop/mhcOp.cpp",
+    "docs/source/blogs/media/tech_blog26_deepseek_v4_mhc_moe.png",
+    "tensorrt_llm/_torch/modules/mhc",
+    "tensorrt_llm/_torch/modules/mhc/__init__.py",
+    "tensorrt_llm/_torch/modules/mhc/hyper_connection.py",
+    "tensorrt_llm/_torch/modules/mhc/mhc_cuda.py",
+    "tests/unittest/_torch/modules/test_mhc.py"
+  ]
+}

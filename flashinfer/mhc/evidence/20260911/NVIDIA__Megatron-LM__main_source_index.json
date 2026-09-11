@@ -1,0 +1,16 @@
+{
+  "repo": "NVIDIA/Megatron-LM",
+  "branch": "main",
+  "head_sha": "5bbf72793092223400b684ed95fbd85fa1d48d4c",
+  "head_date": "2026-09-11T04:28:51Z",
+  "paths": [
+    "megatron/core/fusions/fused_mhc_kernels.py",
+    "megatron/core/models/hybrid/layers/hybrid_hyper_connection.py",
+    "megatron/core/transformer/hyper_connection.py",
+    "tests/unit_tests/fusions/test_fused_mhc_kernels.py",
+    "tests/unit_tests/models/test_hybrid_mhc.py",
+    "tests/unit_tests/transformer/test_hyper_connection_recompute.py",
+    "tests/unit_tests/transformer/test_mhc_block_manager.py"
+  ],
+  "tree_truncated": false
+}

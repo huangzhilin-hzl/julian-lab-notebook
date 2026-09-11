@@ -1,0 +1,26 @@
+{
+  "repo": "vllm-project/vllm",
+  "default_branch": "main",
+  "head_sha": "8c1d1c2974ee42757ee2e93cc898932edfd9d265",
+  "head_date": "2026-09-11T09:35:56Z",
+  "tree_truncated": false,
+  "paths": [
+    "csrc/cpu/sgl-kernels/mhc.cpp",
+    "tests/kernels/test_mhc_kernels.py",
+    "tests/kernels/test_mhc_tilelang_jit.py",
+    "vllm/model_executor/kernels/mhc",
+    "vllm/model_executor/kernels/mhc/__init__.py",
+    "vllm/model_executor/kernels/mhc/aiter.py",
+    "vllm/model_executor/kernels/mhc/cpu.py",
+    "vllm/model_executor/kernels/mhc/tilelang.py",
+    "vllm/model_executor/kernels/mhc/tilelang_kernels.py",
+    "vllm/model_executor/kernels/mhc/torch.py",
+    "vllm/model_executor/kernels/mhc/triton.py",
+    "vllm/model_executor/kernels/mhc/warmup.py",
+    "vllm/model_executor/layers/mhc.py",
+    "vllm/model_executor/warmup/deepseek_v4_mhc_warmup.py",
+    "vllm/models/qwen4_exp/amd/hyperconnection.py",
+    "vllm/models/qwen4_exp/common/hyperconnection.py",
+    "vllm/models/qwen4_exp/nvidia/hyperconnection.py"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "repo": "deepseek-ai/DeepGEMM",
+  "branch": "nv_dev",
+  "head_sha": "572557e7ae9ad5331b81a1c250f141fba2c57962",
+  "head_date": "2026-09-08T07:04:07Z",
+  "paths": [
+    "csrc/apis/hyperconnection.hpp",
+    "csrc/jit_kernels/impls/sm100_tf32_hc_prenorm_gemm.hpp",
+    "csrc/jit_kernels/impls/sm120_tf32_hc_prenorm_gemm.hpp",
+    "csrc/jit_kernels/impls/sm90_tf32_hc_prenorm_gemm.hpp",
+    "deep_gemm/include/deep_gemm/impls/sm100_tf32_hc_prenorm_gemm.cuh",
+    "deep_gemm/include/deep_gemm/impls/sm120_tf32_hc_prenorm_gemm.cuh",
+    "deep_gemm/include/deep_gemm/impls/sm90_tf32_hc_prenorm_gemm.cuh",
+    "tests/test_hyperconnection.py"
+  ],
+  "tree_truncated": false
+}
