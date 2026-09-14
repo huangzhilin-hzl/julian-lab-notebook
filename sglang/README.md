@@ -6,6 +6,7 @@ This directory records SGLang optimization data, benchmark summaries, and relate
 
 | Topic | Content |
 | --- | --- |
+| [GLM-5.3 / B300 decode 跨引擎优化详情](glm53_b300_decode_20260914/decode_optimization_research.md) | 基于 1K/BS1 decode trace，对照四引擎的小 M GEMM、NVFP4 MoE 融合、EAGLE/graph、DSA Top-K、DCP 与长上下文策略，附实验顺序及来源快照（2026-09-14）。 |
 | [GLM-5.3 / B300 / 128k prefill 跨引擎优化调查](glm53_b300_prefill128k_20260914/cross_engine_optimization_research.md) | vLLM、TensorRT-LLM、TokenSpeed、SGLang 源码、PR 和博客对照，含瓶颈时间预算、适用限制、实验顺序及 PR 来源记录（2026-09-14）。 |
 | [dsv4](dsv4/) | DeepSeek-V4 optimization notes and benchmark data. |
 | [deepseek_v4_roadmap_pr_summary_20260610.html](dsv4/deepseek_v4_roadmap_pr_summary_20260610.html) | DeepSeek V4 SGLang/vLLM roadmap items mapped to concrete PRs, issues, and tracker gaps. |

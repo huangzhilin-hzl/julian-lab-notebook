@@ -1,0 +1,401 @@
+{
+  "research_date": "2026-09-14",
+  "scope": "PR metadata and pinned source references; upstream benchmark gains were not reproduced.",
+  "local_revisions": {
+    "sgl-project/sglang": {
+      "directory": "sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb"
+    },
+    "vllm-project/vllm": {
+      "directory": "vllm",
+      "commit": "553fcb82d5602c75fb6ab41b6dc3c46f480c1785"
+    },
+    "NVIDIA/TensorRT-LLM": {
+      "directory": "TensorRT-LLM",
+      "commit": "9769ff13788312c17680a2787a5c25581773212f"
+    },
+    "lightseekorg/tokenspeed": {
+      "directory": "tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5"
+    }
+  },
+  "pull_requests": [
+    {
+      "repo": "NVIDIA/TensorRT-LLM",
+      "number": 11844,
+      "html_url": "https://github.com/NVIDIA/TensorRT-LLM/pull/11844",
+      "title": "[TRTLLM-10929][feat] add fp8 combine in moe_a2a",
+      "state": "closed",
+      "merged_at": "2026-03-16T01:20:25Z",
+      "updated_at": "2026-03-16T01:20:25Z",
+      "head_sha": "fb199191085d5fcb74e27cf69192ce7fd712d63f",
+      "base_sha": "8de01ac09fc548dbdd435ce8f6f0272c7517e268"
+    },
+    {
+      "repo": "NVIDIA/TensorRT-LLM",
+      "number": 18446,
+      "html_url": "https://github.com/NVIDIA/TensorRT-LLM/pull/18446",
+      "title": "[None][feat] Two-level GVR decode top-K dispatch; remove the CUDA heuristic and temporal-only prior state",
+      "state": "closed",
+      "merged_at": "2026-09-08T00:56:00Z",
+      "updated_at": "2026-09-08T00:56:00Z",
+      "head_sha": "b3a4fb2b4d3cc300612e528fd67d48dbb9a6d8ad",
+      "base_sha": "4656c4b519fde59f6376bce50633eba1f1bbe8d6"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "number": 634,
+      "html_url": "https://github.com/lightseekorg/tokenspeed/pull/634",
+      "title": "[GLM] perf: Integrate TRT-LLM cutedsl topk",
+      "state": "closed",
+      "merged_at": "2026-07-13T02:17:01Z",
+      "updated_at": "2026-07-13T02:17:03Z",
+      "head_sha": "bab2eb22fed2a60f5b241b25bba6bfa5c52279fe",
+      "base_sha": "28b97ff0bd12a2c855e18bda20a374ee66681445"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 26788,
+      "html_url": "https://github.com/sgl-project/sglang/pull/26788",
+      "title": "[JIT Kernel] DeepSeek-V4 DSA indexer: faster top-k + page-table transform (runtime k <= 2048)",
+      "state": "closed",
+      "merged_at": "2026-07-06T03:23:40Z",
+      "updated_at": "2026-07-06T03:23:40Z",
+      "head_sha": "2653abe81f7ec2ada9ad79685f56c42951ce6cd8",
+      "base_sha": "92b800c531b33009ba7b412087740284eba8a943"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 27705,
+      "html_url": "https://github.com/sgl-project/sglang/pull/27705",
+      "title": "Fuse the DSA (V3.2, GLM-5.x) indexer Q/K paths into single kernels",
+      "state": "closed",
+      "merged_at": "2026-06-27T21:29:57Z",
+      "updated_at": "2026-06-27T21:30:59Z",
+      "head_sha": "cc89baf2ff160c7c8ae88c841f3cf8590cc293c2",
+      "base_sha": "13b5bd962a8b4e4235d52ad133fd0bb8c0b62ece"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 29413,
+      "html_url": "https://github.com/sgl-project/sglang/pull/29413",
+      "title": "[DSA] Enable draft-extend CUDA graph for DeepSeek Sparse Attention",
+      "state": "closed",
+      "merged_at": "2026-06-27T06:53:47Z",
+      "updated_at": "2026-06-27T06:54:31Z",
+      "head_sha": "a84d7934d5cd319d2d6cded2a266584656b5d618",
+      "base_sha": "be1930133a9956165dd113f6fceba7b2e1553f33"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 30117,
+      "html_url": "https://github.com/sgl-project/sglang/pull/30117",
+      "title": "Support Cutedsl BF16 GEMM JIT kernel",
+      "state": "closed",
+      "merged_at": "2026-07-07T02:16:17Z",
+      "updated_at": "2026-07-07T02:16:19Z",
+      "head_sha": "15efe07681b566187f0a108496a36d5c39957335",
+      "base_sha": "1c23954cb9e7073525f4306ca4c59f852f1d5c97"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 30177,
+      "html_url": "https://github.com/sgl-project/sglang/pull/30177",
+      "title": "[Feature] Support return_hidden_states=\"last\"",
+      "state": "closed",
+      "merged_at": "2026-08-02T07:09:33Z",
+      "updated_at": "2026-08-02T07:09:33Z",
+      "head_sha": "7e65dc123b83e3d1af6805ef9362cba665f3fb12",
+      "base_sha": "ae848116662ece923501131ce773a4602223237e"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 30274,
+      "html_url": "https://github.com/sgl-project/sglang/pull/30274",
+      "title": "[DSA] Fold page-table into fused top-k v2 (decode): drop page_size=1 expansion",
+      "state": "closed",
+      "merged_at": "2026-07-07T04:28:06Z",
+      "updated_at": "2026-07-07T04:28:06Z",
+      "head_sha": "ffe0aba198f69d041687c5b5c97c2e8c35ef23b2",
+      "base_sha": "3abdbab9bbb4ef960be30809a62affd6c6d7a38f"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 38563,
+      "html_url": "https://github.com/sgl-project/sglang/pull/38563",
+      "title": "[MegaMoE] Add --megamoe-backend flashinfer_cutedsl (FlashInfer NVFP4 mega kernel, experimental)",
+      "state": "open",
+      "merged_at": null,
+      "updated_at": "2026-09-08T20:40:14Z",
+      "head_sha": "9d66607fdbf9f2ee90a4cc6852e37f1510422f94",
+      "base_sha": "afe90a8bc908002219993794404c7c95dd3ced1d"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "number": 38879,
+      "html_url": "https://github.com/sgl-project/sglang/pull/38879",
+      "title": "[DeepSeek-V4.1] Optimize DSpark verify and MoE kernels on Blackwell",
+      "state": "closed",
+      "merged_at": "2026-09-10T13:58:43Z",
+      "updated_at": "2026-09-10T13:58:43Z",
+      "head_sha": "1b742acd2a49ebd7acd017032875552099d12391",
+      "base_sha": "7bdebdab7db4befb71c64ae0d6f0eb37fe7d8402"
+    },
+    {
+      "repo": "vllm-project/vllm",
+      "number": 44420,
+      "html_url": "https://github.com/vllm-project/vllm/pull/44420",
+      "title": "[feature] add index share feature for DSA MTP",
+      "state": "closed",
+      "merged_at": "2026-06-07T05:04:15Z",
+      "updated_at": "2026-06-16T20:42:01Z",
+      "head_sha": "eb68f323487e1fbd32fe12955451284b1e4ba7bc",
+      "base_sha": "3bb46975bd316bdd87e083758b86e2588cec8934"
+    },
+    {
+      "repo": "vllm-project/vllm",
+      "number": 45237,
+      "html_url": "https://github.com/vllm-project/vllm/pull/45237",
+      "title": "[Core] Avoid mixed batch on spec-dec D-node via padding",
+      "state": "closed",
+      "merged_at": "2026-06-25T15:34:44Z",
+      "updated_at": "2026-06-29T10:48:12Z",
+      "head_sha": "31875e9e13896b1e14e404962ad289ecbb410779",
+      "base_sha": "e7df23228895c32982856051aeb50a89acb5d8c8"
+    },
+    {
+      "repo": "vllm-project/vllm",
+      "number": 45953,
+      "html_url": "https://github.com/vllm-project/vllm/pull/45953",
+      "title": "[MRV2][SD] Make Dynamic SD comatible with Full Cuda Graphs",
+      "state": "closed",
+      "merged_at": "2026-07-04T03:58:27Z",
+      "updated_at": "2026-07-04T04:11:00Z",
+      "head_sha": "a05fcf8895b951ea8371ef0311c883fdd486debb",
+      "base_sha": "3775d5fcabf7bc5d4d92768485d860d132c6e1b6"
+    },
+    {
+      "repo": "vllm-project/vllm",
+      "number": 46448,
+      "html_url": "https://github.com/vllm-project/vllm/pull/46448",
+      "title": "[Model Runner V2][Spec Decode] Reduce TP communication for draft token generation",
+      "state": "closed",
+      "merged_at": "2026-06-26T02:30:08Z",
+      "updated_at": "2026-06-26T02:30:08Z",
+      "head_sha": "f35b438dba80f23097a8e2dfa4b972ace4b4d285",
+      "base_sha": "ad28d605e6db88b7236977517799b5088076f209"
+    },
+    {
+      "repo": "vllm-project/vllm",
+      "number": 47238,
+      "html_url": "https://github.com/vllm-project/vllm/pull/47238",
+      "title": "[BugFix][Spec Decode] Compact shared topk indices buffer after first MTP draft step",
+      "state": "closed",
+      "merged_at": "2026-07-02T04:38:51Z",
+      "updated_at": "2026-07-02T04:45:07Z",
+      "head_sha": "0ed0ebcb3f431e1c75408540b22d8a64804b789c",
+      "base_sha": "93d8f834dd8acf33eb0e2a75b2711b628cb6e226"
+    }
+  ],
+  "source_code": [
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/quantization/unquant.py",
+      "line": 155,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/quantization/unquant.py#L155"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/kernels/ops/gemm/cutedsl_bf16_gemm.py",
+      "line": 1357,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/kernels/ops/gemm/cutedsl_bf16_gemm.py#L1357"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/models/deepseek_v2.py",
+      "line": 2401,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/models/deepseek_v2.py#L2401"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/kernels/ops/gemm/fused_a_gemm.py",
+      "line": 24,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/kernels/ops/gemm/fused_a_gemm.py#L24"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/models/deepseek_v2.py",
+      "line": 636,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/models/deepseek_v2.py#L636"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/models/deepseek_v2.py",
+      "line": 1065,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/models/deepseek_v2.py#L1065"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/quantization/mxfp4_flashinfer_trtllm_moe.py",
+      "line": 569,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/quantization/mxfp4_flashinfer_trtllm_moe.py#L569"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/kernels/ops/communication/all_reduce_fusion.py",
+      "line": 193,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/kernels/ops/communication/all_reduce_fusion.py#L193"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5",
+      "path": "tokenspeed-kernel/python/tokenspeed_kernel/ops/communication/trtllm.py",
+      "line": 868,
+      "url": "https://github.com/lightseekorg/tokenspeed/blob/5354e72ada4644a4ef6ff1adedcd106a85acb8a5/tokenspeed-kernel/python/tokenspeed_kernel/ops/communication/trtllm.py#L868"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/arg_groups/moe_hook.py",
+      "line": 58,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/arg_groups/moe_hook.py#L58"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/arg_groups/moe_hook.py",
+      "line": 263,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/arg_groups/moe_hook.py#L263"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5",
+      "path": "python/tokenspeed/runtime/execution/model_executor.py",
+      "line": 874,
+      "url": "https://github.com/lightseekorg/tokenspeed/blob/5354e72ada4644a4ef6ff1adedcd106a85acb8a5/python/tokenspeed/runtime/execution/model_executor.py#L874"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5",
+      "path": "python/tokenspeed/runtime/execution/forward_step.py",
+      "line": 480,
+      "url": "https://github.com/lightseekorg/tokenspeed/blob/5354e72ada4644a4ef6ff1adedcd106a85acb8a5/python/tokenspeed/runtime/execution/forward_step.py#L480"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/attention/index_topk_share.py",
+      "line": 14,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/attention/index_topk_share.py#L14"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/models/deepseek_common/attention_forward_methods/forward_mla.py",
+      "line": 127,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/models/deepseek_common/attention_forward_methods/forward_mla.py#L127"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5",
+      "path": "python/tokenspeed/runtime/models/glm5.py",
+      "line": 107,
+      "url": "https://github.com/lightseekorg/tokenspeed/blob/5354e72ada4644a4ef6ff1adedcd106a85acb8a5/python/tokenspeed/runtime/models/glm5.py#L107"
+    },
+    {
+      "repo": "vllm-project/vllm",
+      "commit": "553fcb82d5602c75fb6ab41b6dc3c46f480c1785",
+      "path": "vllm/v1/worker/gpu/spec_decode/speculator.py",
+      "line": 271,
+      "url": "https://github.com/vllm-project/vllm/blob/553fcb82d5602c75fb6ab41b6dc3c46f480c1785/vllm/v1/worker/gpu/spec_decode/speculator.py#L271"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/attention/dsa/dsa_indexer.py",
+      "line": 398,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/attention/dsa/dsa_indexer.py#L398"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/attention/dsa/dsa_indexer.py",
+      "line": 1617,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/attention/dsa/dsa_indexer.py#L1617"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/attention/dsa/dsa_topk_backend.py",
+      "line": 109,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/attention/dsa/dsa_topk_backend.py#L109"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5",
+      "path": "tokenspeed-kernel/python/tokenspeed_kernel/ops/attention/deep_gemm/__init__.py",
+      "line": 332,
+      "url": "https://github.com/lightseekorg/tokenspeed/blob/5354e72ada4644a4ef6ff1adedcd106a85acb8a5/tokenspeed-kernel/python/tokenspeed_kernel/ops/attention/deep_gemm/__init__.py#L332"
+    },
+    {
+      "repo": "lightseekorg/tokenspeed",
+      "commit": "5354e72ada4644a4ef6ff1adedcd106a85acb8a5",
+      "path": "tokenspeed-kernel/python/tokenspeed_kernel/ops/attention/flashinfer/__init__.py",
+      "line": 312,
+      "url": "https://github.com/lightseekorg/tokenspeed/blob/5354e72ada4644a4ef6ff1adedcd106a85acb8a5/tokenspeed-kernel/python/tokenspeed_kernel/ops/attention/flashinfer/__init__.py#L312"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/models/deepseek_common/attention_forward_methods/forward_mla.py",
+      "line": 780,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/models/deepseek_common/attention_forward_methods/forward_mla.py#L780"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/dcp/comm.py",
+      "line": 452,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/dcp/comm.py#L452"
+    },
+    {
+      "repo": "sgl-project/sglang",
+      "commit": "8ba15052e93be305b1696b5ce89629789cada6cb",
+      "path": "python/sglang/srt/layers/dcp/layout.py",
+      "line": 23,
+      "url": "https://github.com/sgl-project/sglang/blob/8ba15052e93be305b1696b5ce89629789cada6cb/python/sglang/srt/layers/dcp/layout.py#L23"
+    }
+  ],
+  "web_references": [
+    "https://arxiv.org/abs/2604.22312",
+    "https://github.com/NVIDIA/TensorRT-LLM/pull/11844",
+    "https://github.com/NVIDIA/TensorRT-LLM/pull/18446",
+    "https://github.com/flashinfer-ai/flashinfer/issues/3671",
+    "https://github.com/lightseekorg/tokenspeed/pull/634",
+    "https://github.com/sgl-project/sglang/pull/26788",
+    "https://github.com/sgl-project/sglang/pull/27705",
+    "https://github.com/sgl-project/sglang/pull/29413",
+    "https://github.com/sgl-project/sglang/pull/30117",
+    "https://github.com/sgl-project/sglang/pull/30274",
+    "https://github.com/sgl-project/sglang/pull/38563",
+    "https://github.com/sgl-project/sglang/pull/38879",
+    "https://github.com/vllm-project/vllm/pull/44420",
+    "https://github.com/vllm-project/vllm/pull/45237",
+    "https://github.com/vllm-project/vllm/pull/45953",
+    "https://github.com/vllm-project/vllm/pull/46448",
+    "https://github.com/vllm-project/vllm/pull/47238",
+    "https://lightseek.org/blog/lightseek-tokenspeed.html",
+    "https://vllm.ai/blog/2026-07-23-glm-5.2-nvfp4-b300-pd",
+    "https://vllm.ai/blog/2026-08-07-decode-context-parallelism",
+    "https://vllm.ai/blog/2026-09-07-glm53-part1-hybrid-sparse-offloading",
+    "https://www.lmsys.org/blog/2026-07-13-glm52-optimization"
+  ]
+}
