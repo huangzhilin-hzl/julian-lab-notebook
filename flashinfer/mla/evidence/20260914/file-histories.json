@@ -1,0 +1,174 @@
+{
+  "NVIDIA__TileGym_mla_decoding_split_kv.py_history.json": [
+    {
+      "sha": "65403f50ce751de45d355dbdac98fcb99b4512e1",
+      "date": "2026-05-13T11:53:57Z",
+      "subject": "[NFC] canonicaize section layout for cutile kernels under ops dir",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/65403f50ce751de45d355dbdac98fcb99b4512e1"
+    },
+    {
+      "sha": "afa9317db83c8e3223c76c9d803daeaec2035b9f",
+      "date": "2026-05-07T06:15:27Z",
+      "subject": "Fix per-call replace_hints JIT-cache invalidation in decode loops",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/afa9317db83c8e3223c76c9d803daeaec2035b9f"
+    },
+    {
+      "sha": "f17ec16c6b5927d544c110f228d5f8308a477486",
+      "date": "2026-05-06T15:12:50Z",
+      "subject": "Refine tilegym ops kernel style",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/f17ec16c6b5927d544c110f228d5f8308a477486"
+    },
+    {
+      "sha": "b5ea56ec1adba9c55c3bae14ada3dd2912c761e3",
+      "date": "2026-01-31T15:01:45Z",
+      "subject": "[Fix] fix num_kv_split becomes 0 (#45)",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/b5ea56ec1adba9c55c3bae14ada3dd2912c761e3"
+    },
+    {
+      "sha": "fd5144dcf94e8057f9d25824ba8aa1c7eb4e0d19",
+      "date": "2025-12-24T04:46:39Z",
+      "subject": "[Update] update kernels and reformat codes (#18)",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/fd5144dcf94e8057f9d25824ba8aa1c7eb4e0d19"
+    },
+    {
+      "sha": "b6d39d621a69fb124041fff7eaf5b3c777e73502",
+      "date": "2025-12-17T01:43:37Z",
+      "subject": "Use ruff formatter, introduce helper dev script (#11)",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/b6d39d621a69fb124041fff7eaf5b3c777e73502"
+    },
+    {
+      "sha": "c15b0124eb5091a22ffeffbe49c37732026dd82f",
+      "date": "2025-12-12T14:36:08Z",
+      "subject": "Initialize TileGym CI (#4)",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/c15b0124eb5091a22ffeffbe49c37732026dd82f"
+    },
+    {
+      "sha": "15605ebba5a0cd8799938ee8453a1e81088b5b31",
+      "date": "2025-11-19T03:02:31Z",
+      "subject": "Initial commit",
+      "html_url": "https://github.com/NVIDIA/TileGym/commit/15605ebba5a0cd8799938ee8453a1e81088b5b31"
+    }
+  ],
+  "mla_decode_fp16.py_old_history.json": [
+    {
+      "sha": "cb37157db50d0528c4aea99feb37946ec278e3d9",
+      "date": "2026-05-06T00:55:27Z",
+      "subject": "v4.5 tag update (#3202)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/cb37157db50d0528c4aea99feb37946ec278e3d9"
+    },
+    {
+      "sha": "a221da7ccfe940b2e9b8d9f33b2421dd52ec9351",
+      "date": "2026-04-07T16:16:05Z",
+      "subject": "v4.5 dev update. (#3153)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/a221da7ccfe940b2e9b8d9f33b2421dd52ec9351"
+    },
+    {
+      "sha": "d4bbf728ca52ce23a549a299e229666e734ffb7c",
+      "date": "2026-02-14T04:27:58Z",
+      "subject": "v4.4 tag release update. (#3032)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/d4bbf728ca52ce23a549a299e229666e734ffb7c"
+    }
+  ],
+  "NVIDIA__cutlass_mla_decode_fp16.py_history.json": [
+    {
+      "sha": "971d1ed8b7205e35827c75fbce3b700fe4150003",
+      "date": "2026-05-13T01:06:44Z",
+      "subject": "fix for thor (#3224)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/971d1ed8b7205e35827c75fbce3b700fe4150003"
+    },
+    {
+      "sha": "cb37157db50d0528c4aea99feb37946ec278e3d9",
+      "date": "2026-05-06T00:55:27Z",
+      "subject": "v4.5 tag update (#3202)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/cb37157db50d0528c4aea99feb37946ec278e3d9"
+    }
+  ],
+  "NVIDIA__cutlass_77_blackwell_mla.cu_history.json": [
+    {
+      "sha": "9fba3195f96db261ce802761505cb167f1cee370",
+      "date": "2026-01-24T16:46:17Z",
+      "subject": "v4.4 update. (#2979)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/9fba3195f96db261ce802761505cb167f1cee370"
+    },
+    {
+      "sha": "0d2b201e8c1c4a03efa6e9c468161916e2334725",
+      "date": "2026-01-08T20:02:56Z",
+      "subject": "v4.3.5 update. (#2934)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/0d2b201e8c1c4a03efa6e9c468161916e2334725"
+    },
+    {
+      "sha": "eb61c911471867a5fd2466bfd8f29306cea6ebf8",
+      "date": "2026-01-07T05:20:37Z",
+      "subject": "Fix CUDA version checking in examples (#2894)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/eb61c911471867a5fd2466bfd8f29306cea6ebf8"
+    },
+    {
+      "sha": "0e026982ce2ed10b27ec569c6e42035cb9118f62",
+      "date": "2025-07-24T22:41:11Z",
+      "subject": "Example 77 add blackwell fmha bwd for MLA shape (#2466)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/0e026982ce2ed10b27ec569c6e42035cb9118f62"
+    },
+    {
+      "sha": "889ff20648b06085f450e6c5d5bd22fe001ae95d",
+      "date": "2025-06-25T16:56:25Z",
+      "subject": "v4.0 update v2. (#2420)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/889ff20648b06085f450e6c5d5bd22fe001ae95d"
+    },
+    {
+      "sha": "8bdbfca68287232e5bf5793145f987569ecd312e",
+      "date": "2025-06-06T06:39:20Z",
+      "subject": "v4.0 update. (#2371)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/8bdbfca68287232e5bf5793145f987569ecd312e"
+    },
+    {
+      "sha": "2e2af190bd4e57b26d2be26fec8a6b34bc979ee5",
+      "date": "2025-06-06T03:14:57Z",
+      "subject": "Revert \"[ex77] fix mla split; add fwd lse; add bwd varlen (#2366)\" (#2370)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/2e2af190bd4e57b26d2be26fec8a6b34bc979ee5"
+    },
+    {
+      "sha": "f12b1d75c904c05b10650809af39511080a06ff3",
+      "date": "2025-06-05T22:39:46Z",
+      "subject": "[ex77] fix mla split; add fwd lse; add bwd varlen (#2366)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/f12b1d75c904c05b10650809af39511080a06ff3"
+    },
+    {
+      "sha": "79fc51f4b853d031babb0c7229b4efa99190f14f",
+      "date": "2025-04-03T06:10:16Z",
+      "subject": "v3.9 update (#2213)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/79fc51f4b853d031babb0c7229b4efa99190f14f"
+    }
+  ],
+  "mla.py_old_history.json": [
+    {
+      "sha": "057635de5c493a34e9913e2c5e836bdd98c58861",
+      "date": "2026-02-26T13:10:59Z",
+      "subject": "Remove redundant dsl example. (#3074)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/057635de5c493a34e9913e2c5e836bdd98c58861"
+    },
+    {
+      "sha": "acb45938e9cb3e4db8c1d75155b63d31791e0e5d",
+      "date": "2026-01-27T09:28:29Z",
+      "subject": "Update nvvm API call from nvvm enum to str (#2985)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/acb45938e9cb3e4db8c1d75155b63d31791e0e5d"
+    },
+    {
+      "sha": "0d2b201e8c1c4a03efa6e9c468161916e2334725",
+      "date": "2026-01-08T20:02:56Z",
+      "subject": "v4.3.5 update. (#2934)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/0d2b201e8c1c4a03efa6e9c468161916e2334725"
+    },
+    {
+      "sha": "8cd5bef43a2b0d3f9846b026c271593c6e4a8e8a",
+      "date": "2025-11-21T01:49:44Z",
+      "subject": "v4.3 tag release update. (#2789)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/8cd5bef43a2b0d3f9846b026c271593c6e4a8e8a"
+    },
+    {
+      "sha": "b1d6e2c9b334dfa811e4183dfbd02419249e4b52",
+      "date": "2025-10-21T18:26:30Z",
+      "subject": "v4.3 update.  (#2709)",
+      "html_url": "https://github.com/NVIDIA/cutlass/commit/b1d6e2c9b334dfa811e4183dfbd02419249e4b52"
+    }
+  ]
+}
