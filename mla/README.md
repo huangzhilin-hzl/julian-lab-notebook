@@ -32,7 +32,7 @@ head 数均为 **TP 切分前**；主干层数不包含 MTP。GLM-5.3-Flash 的 
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `num_hidden_layers` | 43 | 61 | 40 | 78 | 45：11 MLA + 34 KDA |
 | `hidden_size` | 4096 | 7168 | 5120 | 6144 | 4096 |
-| `num_attention_heads` | 64 | 128 | 64 | 64 | 64 |
+| `num_heads_q`（=`num_attention_heads`，TP 前） | **64** | **128** | **64** | **64** | **64** |
 | `num_key_value_heads` | 1 | 1 | 1 | 64 | 64 |
 | `q_lora_rank` | 1024 | 1536 | 1280 | 2048 | 1536 |
 | `kv_lora_rank` / 等效共享 KV 宽度 | 512†（含 RoPE） | 512†（含 RoPE） | 512†（含 RoPE） | 512 | 512 |
@@ -53,6 +53,8 @@ head 数均为 **TP 切分前**；主干层数不包含 MTP。GLM-5.3-Flash 的 
 字段读取与解释：
 
 - V4.1-Flash 和 GLM-5.3-Flash 的语言配置位于 `text_config`；其余三个模型的字段在配置根级。
+- `num_heads_q` 是主 attention 的 Q head 数，对应官方配置中的 `num_attention_heads`，与 indexer 的 `index_n_heads` 分开统计；矩阵吸收改变每个 head 的维度，不改变 Q head 数。
+- 按 Q heads 做标准 TP 切分时，kernel 的本地 `num_heads_q = num_attention_heads / attention_tp_size`。例如 attention TP=4 时，上述五个模型依次为 `16 / 32 / 16 / 16 / 16`；应使用实际 attention 并行度，而不是直接套用其他模块的 TP 大小。
 - `†` 表示按官方实现补齐的维度；`—` 表示官方配置没有该字段，且此处未作等效换算，不表示值为零。
 - `head_dim` 在不同架构中含义不同。GLM-5.3 的原始值为 192，GLM-5.3-Flash 为 0；二者都不能直接作为 kernel Q/K 宽度。应使用 `qk_*` 和 `kv_lora_rank`。
 - DeepSeek V4/V4.1 的 Q/K 总宽度为 `head_dim=512`，非 RoPE 宽度为 `512-64=448`；V 使用完整共享 KV，因此 V 宽度也是 `512`。
