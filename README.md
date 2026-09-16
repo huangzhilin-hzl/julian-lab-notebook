@@ -11,6 +11,7 @@ This repository stores project notes and generated visual assets.
 | Marlin | [marlin/README.md](marlin/README.md) |
 | MegaMoE | [megamoe/README.md](megamoe/README.md) |
 | mHC | [flashinfer/mhc/README.md](flashinfer/mhc/README.md) |
+| MLA | [mla/README.md](mla/README.md) |
 | MiniMax MSA Modal | [msa-modal/README.md](msa-modal/README.md) |
 | Profile | [profile/README.md](profile/README.md) |
 | SGLang | [sglang/README.md](sglang/README.md) |
