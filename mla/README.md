@@ -24,9 +24,9 @@ DeepSeek 的 V 使用完整 512 维共享 KV，包含经过 RoPE 的通道；att
 
 依据：[V4 官方 Attention 实现](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash/blob/main/inference/model.py)、[V4.1 官方 Attention 实现](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/inference/model.py)，以及下表链接的 GLM 配置。
 
-## 官方配置字段
+## 配置字段与推导维度
 
-head 数均为 **TP 切分前**；主干层数不包含 MTP。GLM-5.3-Flash 的 MLA 参数仅适用于其稀疏注意力层。
+head 数均为 **TP 切分前**；主干层数不包含 MTP。GLM-5.3-Flash 的 MLA 参数仅适用于其稀疏注意力层。标记 `†` 的值根据官方实现推导或按共享 KV 宽度换算，并非同名的原始配置字段。
 
 | 配置项 | [DS V4 Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash/blob/main/config.json) | [DS V4 Pro](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/blob/main/config.json) | [DS V4.1 Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/config.json) | [GLM-5.3](https://huggingface.co/zai-org/GLM-5.3/blob/main/config.json) | [GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash/blob/main/config.json) |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -35,12 +35,12 @@ head 数均为 **TP 切分前**；主干层数不包含 MTP。GLM-5.3-Flash 的 
 | `num_attention_heads` | 64 | 128 | 64 | 64 | 64 |
 | `num_key_value_heads` | 1 | 1 | 1 | 64 | 64 |
 | `q_lora_rank` | 1024 | 1536 | 1280 | 2048 | 1536 |
-| `kv_lora_rank` | — | — | — | 512 | 512 |
+| `kv_lora_rank` / 等效共享 KV 宽度 | 512†（含 RoPE） | 512†（含 RoPE） | 512†（含 RoPE） | 512 | 512 |
 | `head_dim`，原始字段 | 512 | 512 | 512 | 192 | 0 |
-| `qk_head_dim` | — | — | — | 256 | 256 |
-| `qk_nope_head_dim` | — | — | — | 192 | 256 |
+| `qk_head_dim` | 512† | 512† | 512† | 256 | 256 |
+| `qk_nope_head_dim` | 448† | 448† | 448† | 192 | 256 |
 | `qk_rope_head_dim` | 64 | 64 | 64 | 64 | **0** |
-| `v_head_dim` | — | — | — | 256 | 256 |
+| `v_head_dim` | 512† | 512† | 512† | 256 | 256 |
 | `mla_use_nope` | — | — | — | — | `true` |
 | `o_groups` | 8 | 16 | 8 | — | — |
 | `o_lora_rank` | 1024 | 1024 | 1024 | — | — |
@@ -53,9 +53,10 @@ head 数均为 **TP 切分前**；主干层数不包含 MTP。GLM-5.3-Flash 的 
 字段读取与解释：
 
 - V4.1-Flash 和 GLM-5.3-Flash 的语言配置位于 `text_config`；其余三个模型的字段在配置根级。
-- `—` 表示官方配置没有该字段，不表示值为零。
+- `†` 表示按官方实现补齐的维度；`—` 表示官方配置没有该字段，且此处未作等效换算，不表示值为零。
 - `head_dim` 在不同架构中含义不同。GLM-5.3 的原始值为 192，GLM-5.3-Flash 为 0；二者都不能直接作为 kernel Q/K 宽度。应使用 `qk_*` 和 `kv_lora_rank`。
-- DeepSeek V4/V4.1 的非 RoPE 宽度由 `head_dim - qk_rope_head_dim = 448` 得到；其配置没有单独的 `qk_nope_head_dim` 或 `kv_lora_rank`。
+- DeepSeek V4/V4.1 的 Q/K 总宽度为 `head_dim=512`，非 RoPE 宽度为 `512-64=448`；V 使用完整共享 KV，因此 V 宽度也是 `512`。
+- DeepSeek 行中的等效共享 KV 宽度 `512†` 包含 64 维 RoPE；它不是一个新增的 `kv_lora_rank=512` 配置项，不能再加 64 得到 576。GLM 的 `kv_lora_rank=512` 则不包含额外 RoPE key，因此 GLM-5.3 的吸收后 Q/K 宽度是 `512+64=576`。
 - GLM 的 `num_key_value_heads=64` 不代表吸收路径需要缓存 64 份 latent KV。主 KV 缓存按共享 latent 和额外 RoPE key 表示。
 - V4-Pro 的 `index_topk=1024` 采用根目录 HF `config.json` 的值；不要用旧版示例或推理配置的值覆盖它。
 
