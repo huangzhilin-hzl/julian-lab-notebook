@@ -7,6 +7,7 @@ This repository stores project notes and generated visual assets.
 | Feature | README |
 | --- | --- |
 | Humming | [huming/README.md](huming/README.md) |
+| KDA | [README.md:1](kda/README.md#L1) |
 | Looped Transformer | [research/loop-transformer.md](research/loop-transformer.md) |
 | Marlin | [marlin/README.md](marlin/README.md) |
 | MegaMoE | [megamoe/README.md](megamoe/README.md) |
