@@ -13,15 +13,11 @@ environment:
   type: modal
   kwargs:
     sandbox_timeout_secs: 14400          # serve (<= 3600 s) + bench + margin
-    # TODO(weights): cache the checkpoint on a Modal Volume so reruns skip the download.
-    # Create it once with `modal volume create hf-cache`.
-    # volumes:
-    #   /root/.cache/huggingface: hf-cache
-    # TODO(hf-token): Modal secret holding HF_TOKEN (`modal secret create hf-token HF_TOKEN=...`).
-    # task.toml also sets HF_TOKEN from the host's ${HF_TOKEN:-}; if that resolves to an empty
-    # value it may shadow the secret, so either export HF_TOKEN on the host or check precedence.
-    # secrets:
-    #   - hf-token
+    # Weights cache: Modal Volume mounted at the HF cache so reruns skip the download.
+    # Harbor looks the Volume up by name and does not create it; create it once with
+    # `modal volume create hf-cache`. The model is public, so no HF token secret is needed.
+    volumes:
+      /root/.cache/huggingface: hf-cache
     # region: us-east                    # optional: pin scheduling to a Modal region
 tasks:
   - path: dsv41-flash-h200-fp4-lowlatency

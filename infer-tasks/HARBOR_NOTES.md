@@ -157,8 +157,9 @@ harbor run -c jobs/modal-template.yaml -y
   `environment_build_timeout_multiplier` (2 for the template, 3 for dsv41); on the CLI use
   `--environment-build-timeout-multiplier 2` or more.
 - `environment.kwargs.sandbox_timeout_secs` caps each sandbox's lifetime (Harbor default 24 h).
-- Weights: `modal-dsv41.yaml` has commented-out `volumes` (Modal Volume at
-  `/root/.cache/huggingface`) and `secrets` (HF token) to fill in.
+- Weights: `modal-dsv41.yaml` mounts the Modal Volume `hf-cache` at `/root/.cache/huggingface`
+  so reruns skip the download. Harbor does not create it: run `modal volume create hf-cache` once.
+  The model is public, so no HF token secret is configured.
 - Verified: the server process survives `serve` -> `bench` (same PID, one server start in the log);
   the shared-mode serve verifier reaches `127.0.0.1`; the separate-mode bench verifier receives
   `/app/results` and `check_result.py` passes.
