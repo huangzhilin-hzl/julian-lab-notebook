@@ -1,0 +1,71 @@
+# DeepSeek-V4.1 Flash, 8x H200, FP4, Low-Latency, single node — sglang cookbook recipe.
+# Generated from sglang-bench-template. Every value cites its source; see SOURCES.md for the
+# [C#] keys. TODO(...) = the cookbook does not specify it; never filled by guessing.
+#   [C1] cookbook page .md, line 23 (NVIDIA image)
+#   [C2] Deploy-panel config embedded in the page HTML: dockerImages.h200, modelNames["flash|fp4"]
+#   [C3] Deploy-panel cell {hw:h200, variant:flash, quant:fp4, strategy:low-latency, nodes:single}
+#        (= cell #3 in _sources/cookbook_cells_dsv41.txt), verified:true, nnodes:1, no env
+#   [C4] Deploy-panel placeholders: HOST_IP default 0.0.0.0, PORT default 30000
+schema_version = "1.4"
+artifacts = ["/app/results"]
+
+[task]
+name = "molou/dsv41-flash-h200-fp4-lowlatency"
+description = "DeepSeek-V4.1-Flash on 1 node x 8 H200, sglang cookbook Low-Latency FP4 recipe; one fixed-load bench_serving pass"
+authors = [{ name = "zhilin huang" }]
+keywords = ["sglang", "inference-benchmark", "deepseek-v4.1", "h200", "fp4", "low-latency"]
+
+[metadata]
+source = "https://lmsysorg.mintlify.app/cookbook/autoregressive/DeepSeek/DeepSeek-V4_1#hw=h200&variant=flash&quant=fp4&strategy=low-latency&nodes=single"
+source_fetched_at = "2026-11-02T12:39+08:00"
+cookbook_cell_verified = true          # [C3] verified:true
+category = "inference-benchmark"
+
+[agent]
+timeout_sec = 3600.0                   # TODO(agent-timeout): cookbook gives no load/startup time; template default
+
+[environment]
+docker_image = "lmsysorg/sglang:dev-dsv41"   # [C1][C2] preview build; tag is mutable, TODO(pin digest)
+gpus = 8                               # derived from [C3] --tp 8 with nnodes:1 (one 8-GPU node)
+gpu_types = ["H200"]                   # [C3] hw=h200
+cpus = 16                              # TODO(cpus): not in cookbook; template default
+memory_mb = 65536                      # TODO(memory): not in cookbook; template default
+storage_mb = 204800                    # TODO(storage): not in cookbook; checkpoint size unknown here
+network_mode = "public"                # HF download of MODEL_PATH (cookbook docker run mounts ~/.cache/huggingface + HF_TOKEN, [C1] lines 28-35)
+
+[environment.env]
+HF_TOKEN = "${HF_TOKEN:-}"             # cookbook docker run passes HF_TOKEN ([C1] line 32)
+MODEL_PATH = "deepseek-ai/DeepSeek-V4.1-Flash"   # [C2] modelNames["flash|fp4"]
+SERVER_PORT = "30000"                  # [C4]
+# [C3] flags in panel order; host/port from [C4]; `sglang serve` from the panel command builder / [C1] line 35.
+SGLANG_LAUNCH_CMD = "sglang serve --trust-remote-code --model-path deepseek-ai/DeepSeek-V4.1-Flash --tp 8 --ep-size 8 --mem-fraction-static 0.8 --attention-backend dsv4 --moe-runner-backend flashinfer_mxfp4 --cuda-graph-max-bs-decode 64 --reasoning-parser auto --tool-call-parser auto --host 0.0.0.0 --port 30000"
+SERVER_READY_TIMEOUT_SEC = "2400"      # TODO(startup-timeout): not in cookbook; template default
+BENCH_MODULE = "sglang.bench_serving"  # cookbook benchmark doc uses `python -m sglang.bench_serving` (autoregressive_model_benchmark.md line 16)
+BENCH_DATASET = "TODO_DATASET"         # TODO(load): no benchmark for this cell on the page
+BENCH_INPUT_LEN = "TODO_ISL"           # TODO(load)
+BENCH_OUTPUT_LEN = "TODO_OSL"          # TODO(load)
+BENCH_RANGE_RATIO = "TODO_RANGE_RATIO" # TODO(load)
+BENCH_NUM_PROMPTS = "TODO_NUM_PROMPTS" # TODO(load)
+BENCH_MAX_CONCURRENCY = "TODO_CONC"    # TODO(load): "Low-Latency — fastest reply for a single user" ([C1] line 57) hints conc=1, not stated
+BENCH_REQUEST_RATE = "TODO_REQUEST_RATE" # TODO(load)
+BENCH_SEED = "42"                      # sglang bench_serving default (--seed 42), not cookbook
+BENCH_EXTRA_ARGS = ""
+
+[verifier]
+timeout_sec = 300.0
+environment_mode = "separate"
+
+[verifier.environment]
+gpus = 0
+cpus = 1
+memory_mb = 1024
+network_mode = "no-network"
+
+[verifier.env]
+EXPECTED_NUM_PROMPTS = "TODO_NUM_PROMPTS"
+EXPECTED_INPUT_LEN = "TODO_ISL"
+EXPECTED_OUTPUT_LEN = "TODO_OSL"
+EXPECTED_MAX_CONCURRENCY = "TODO_CONC"
+EXPECTED_SERVER_INFO_JSON = ""         # TODO(server-info): confirm key names (e.g. tp_size) on a real dev-dsv41 run first
+
+[solution.env]
