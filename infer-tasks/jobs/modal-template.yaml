@@ -1,0 +1,19 @@
+# Harbor 0.25.0 JobConfig: run sglang-bench-template on Modal with the oracle agent.
+# Fill the template's TODOs first (gpu_types takes a Modal GPU name, e.g. "L4", "A100-40GB", "H200").
+# Run from infer-tasks/:  harbor run -c jobs/modal-template.yaml -y
+# Auth: MODAL_TOKEN_ID and MODAL_TOKEN_SECRET in the environment (or ~/.modal.toml).
+job_name: modal-sglang-bench-template
+jobs_dir: runs                           # trial outputs; relative to the working directory
+n_attempts: 1
+n_concurrent_trials: 1
+# Default environment start timeout is 600 s (task [environment].build_timeout_sec),
+# too short for GPU queueing plus a ~15 GB image pull.
+environment_build_timeout_multiplier: 2.0
+agents:
+  - name: oracle
+environment:
+  type: modal
+  kwargs:
+    sandbox_timeout_secs: 7200           # hard cap on each sandbox's lifetime
+tasks:
+  - path: sglang-bench-template

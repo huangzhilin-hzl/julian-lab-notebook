@@ -54,8 +54,8 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
 ## 4. Multi-step behavior (`trial/multi_step.py`, `models/task/verifier_mode.py`)
 
 - All steps run in one agent environment; it is not restarted between steps. The docs promise
-  filesystem persistence only. **Process persistence (our server surviving from `serve` into
-  `bench`) is not documented and is unverified until a real GPU run.** Each step's oracle runs
+  filesystem persistence only. Process persistence (our server surviving from `serve` into
+  `bench`) is not documented; it held on Modal 1×L4 (section 9). Each step's oracle runs
   `solve.sh` through `environment.exec`, so the server must be detached (`setsid nohup`, all
   std streams redirected) for that exec to return.
 - Step verifier mode: `[steps.verifier].environment_mode` if set; else `[steps.verifier.environment]`
@@ -136,4 +136,32 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
   load mismatch, two lines, null metric, missing file. After the loop change: the dsv41 env produces 5
   lines and passes; a missing concurrency, wrong order, wrong `completed`, wrong ISL/OSL, ratio, or a
   non-finite p90 all fail.
-- Not run: `harbor run` (no docker/GPU on the box), `harbor check` (needs docker + LLM API key).
+- Not run: `harbor check` (needs docker + LLM API key). `harbor run` on Modal: section 9.
+
+## 9. Running on Modal
+
+Job configs: `jobs/modal-template.yaml`, `jobs/modal-dsv41.yaml` (task paths are relative; run from
+`infer-tasks/`).
+
+```bash
+pip install 'harbor[modal]'   # plain `modal` lacks dockerfile-parse: separate verifier fails with
+                              # ModuleNotFoundError: No module named 'dockerfile_parse'
+export MODAL_TOKEN_ID=ak-... MODAL_TOKEN_SECRET=as-...   # or `modal token set`
+harbor run -c jobs/modal-template.yaml -y
+```
+
+- `gpu_types[0]` is a Modal GPU name; the sandbox requests `<gpu_types[0]>:<gpus>` (e.g. `H200:8`).
+  GPU sandboxes run under gVisor; there is no shm/ipc setting.
+- The default environment start timeout (600 s, `[environment].build_timeout_sec`) is too short for
+  GPU queueing plus the sglang image pull (~15 GB). The job configs set
+  `environment_build_timeout_multiplier` (2 for the template, 3 for dsv41); on the CLI use
+  `--environment-build-timeout-multiplier 2` or more.
+- `environment.kwargs.sandbox_timeout_secs` caps each sandbox's lifetime (Harbor default 24 h).
+- Weights: `modal-dsv41.yaml` has commented-out `volumes` (Modal Volume at
+  `/root/.cache/huggingface`) and `secrets` (HF token) to fill in.
+- Verified: the server process survives `serve` -> `bench` (same PID, one server start in the log);
+  the shared-mode serve verifier reaches `127.0.0.1`; the separate-mode bench verifier receives
+  `/app/results` and `check_result.py` passes.
+- Not verified: NCCL TP=8 under gVisor on H200:8 (the dsv41 task).
+- Smoke run (2026-11-02, filled copy of the template): 1×L4, Qwen2.5-0.5B-Instruct, sglang v0.5.23
+  (`lmsysorg/sglang:v0.5.23-runtime`), reward 1.0.
