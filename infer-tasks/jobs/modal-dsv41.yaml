@@ -1,0 +1,23 @@
+# Harbor 0.25.0 JobConfig: run dsv41-flash-h200-fp4-lowlatency on Modal (H200:8) with the oracle agent.
+# Run from infer-tasks/:  harbor run -c jobs/modal-dsv41.yaml -y
+# Auth: MODAL_TOKEN_ID and MODAL_TOKEN_SECRET in the environment (or ~/.modal.toml).
+job_name: modal-dsv41-flash-h200-fp4-lowlatency
+jobs_dir: runs                           # trial outputs; relative to the working directory
+n_attempts: 1
+n_concurrent_trials: 1
+# Default environment start timeout is 600 s; H200:8 queueing plus the image pull needs more.
+environment_build_timeout_multiplier: 3.0
+agents:
+  - name: oracle
+environment:
+  type: modal
+  kwargs:
+    sandbox_timeout_secs: 14400          # serve (<= 3600 s) + bench + margin
+    # Weights cache: Modal Volume mounted at the HF cache so reruns skip the download.
+    # Harbor looks the Volume up by name and does not create it; create it once with
+    # `modal volume create hf-cache`. The model is public, so no HF token secret is needed.
+    volumes:
+      /root/.cache/huggingface: hf-cache
+    # region: us-east                    # optional: pin scheduling to a Modal region
+tasks:
+  - path: dsv41-flash-h200-fp4-lowlatency

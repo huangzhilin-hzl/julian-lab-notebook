@@ -1,0 +1,119 @@
+# Harbor multi-step task: step "serve" launches an sglang server, step "bench" runs one fixed-load
+# bench_serving pass per concurrency in BENCH_CONC_LIST against it and keeps the result JSON lines. Both steps share one container.
+# Every value marked TODO(...) must be filled before running. Grep: `rg TODO task.toml steps/`
+# Format reference: harbor v0.25.0 docs-mintlify/tasks/{configuration,multi-step}.mdx (schema 1.4).
+schema_version = "1.4"
+
+# Trial reward = the last executed step's reward (src/harbor/trial/trial.py _select_multi_step_reward).
+# serve passes -> bench's 0/1; serve fails -> serve's 0 (min_reward stops the trial);
+# bench healthcheck fails -> no verifier result, so no reward. "mean" would report 1.0 in that
+# last case and 0.5 for "server up, benchmark broken".
+multi_step_reward_strategy = "final"
+
+# Collected after every step; copied into the separate bench verifier at the same path
+# (docs-mintlify/tasks/artifacts.mdx).
+artifacts = ["/app/results"]
+
+[task]
+name = "molou/TODO-task-name"          # TODO(task-name): org/name, e.g. molou/dsv41-flash-h200-fp4-lowlatency
+description = "TODO(description): one line, e.g. 'DSv4.1 Flash on 8xH200, cookbook low-latency recipe, ISL/OSL=1k/1k, conc=1'"
+authors = [{ name = "zhilin huang" }]
+keywords = ["sglang", "inference-benchmark"]
+
+[metadata]
+source = "TODO(source): cookbook/blog URL or 'zhilin instruction <date>'"
+category = "inference-benchmark"
+
+[metadata.harbor.lint]
+# The serve step's verifier must share the agent container to reach the server on 127.0.0.1.
+ignore = ["shared-verifier"]
+
+[environment]
+docker_image = "TODO_SGLANG_IMAGE"     # TODO(image): e.g. lmsysorg/sglang:<tag>; prefer a digest-pinned ref
+gpus = 1                               # TODO(gpu-count): must equal the server's TP*DP*... world size
+gpu_types = ["TODO_GPU_TYPE"]          # TODO(gpu-type): e.g. "H200". Docker ignores it; GKE maps it to a node selector
+cpus = 16                              # TODO(cpus)
+memory_mb = 65536                      # TODO(memory)
+storage_mb = 204800                    # TODO(storage): weights live here if downloaded at runtime
+network_mode = "public"                # needed if MODEL_PATH is a HF id (weight download)
+
+[environment.env]
+# Persistent env for every exec in the agent sandbox (agent, oracle, healthchecks, shared verifier).
+# ${VAR} is resolved from the *host* running harbor (docs: tasks/configuration.mdx, environment.env).
+HF_TOKEN = "${HF_TOKEN:-}"
+MODEL_PATH = "TODO_MODEL_PATH"         # TODO(model): HF id or path inside the container
+SERVER_PORT = "30000"
+# Full server command, copied verbatim from the source (cookbook/blog). Executed with `bash -c`.
+# It must bind to SERVER_PORT. Keep model/host/port inside this string so it reads like the source.
+SGLANG_LAUNCH_CMD = "TODO_LAUNCH_CMD"  # TODO(launch): e.g. "sglang serve --model-path $MODEL_PATH --tp 8 --host 127.0.0.1 --port 30000 <flags Y>"
+SERVER_READY_TIMEOUT_SEC = "2400"      # serve/solve.sh gives up after this; keep below the serve agent timeout
+# Benchmark client. sglang.bench_serving is deprecated on sglang main (now sglang.benchmark.serving)
+# but still works there and is the only name in older images.
+BENCH_MODULE = "sglang.bench_serving"
+BENCH_DATASET = "random-ids"           # random-ids: synthetic ids, no download; "random" downloads ShareGPT from HF
+BENCH_INPUT_LEN = "TODO_ISL"           # TODO(load)
+BENCH_OUTPUT_LEN = "TODO_OSL"          # TODO(load)
+BENCH_RANGE_RATIO = "1.0"              # 1.0 = fixed lengths; sglang default is 0.0 (lengths sampled)
+# One bench_serving run per entry, ascending, same warm server; each appends one line to bench.jsonl.
+BENCH_CONC_LIST = "1"                  # TODO(load): space-separated, e.g. "1 2 4 8 16"
+# Per run: num_prompts = conc * BENCH_PROMPTS_PER_CONC, warmup = conc * BENCH_WARMUPS_PER_CONC.
+# 10 and 2 are InferenceX's fixed-seq-len rules (see dsv41-flash-h200-fp4-lowlatency/SOURCES.md).
+BENCH_PROMPTS_PER_CONC = "10"
+BENCH_WARMUPS_PER_CONC = "2"
+BENCH_REQUEST_RATE = "inf"
+BENCH_SEED = "42"
+BENCH_EXTRA_ARGS = "--flush-cache"     # flush radix cache after warmup, before each measured run
+
+# ---------------------------------------------------------------------------------------------
+# Step 1: serve. Start the server in the background, wait for /health. Gates step 2.
+# ---------------------------------------------------------------------------------------------
+[[steps]]
+name = "serve"
+min_reward = 1.0                       # server not healthy -> skip bench
+
+[steps.agent]
+# Covers image pull + weight load + CUDA graph capture.
+timeout_sec = 3600.0                   # TODO(serve-timeout): size for the model; big MoE loads can take >20 min
+
+[steps.verifier]
+# Shared: the server listens only inside the agent container.
+environment_mode = "shared"
+timeout_sec = 120.0                    # step verifiers default to 600 s; the task-level value is not inherited
+
+# ---------------------------------------------------------------------------------------------
+# Step 2: bench. One bench_serving pass per concurrency; graded from artifacts in a CPU-only container.
+# ---------------------------------------------------------------------------------------------
+[[steps]]
+name = "bench"
+
+[steps.agent]
+timeout_sec = 1800.0                   # TODO(bench-timeout): size for the load
+
+[steps.healthcheck]
+# The server must have survived the end of step 1 (unverified until the first real run).
+command = "python3 -c \"import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ['SERVER_PORT'], timeout=10)\""
+interval_sec = 10.0
+timeout_sec = 20.0
+retries = 3
+
+[steps.verifier]
+environment_mode = "separate"          # image from steps/bench/tests/Dockerfile
+timeout_sec = 300.0
+
+[steps.verifier.environment]
+gpus = 0
+cpus = 1
+memory_mb = 1024
+network_mode = "no-network"
+
+[steps.verifier.env]
+# Must mirror the load in [environment.env]; the verifier checks the result was produced with it.
+EXPECTED_CONC_LIST = "1"               # TODO(load): = BENCH_CONC_LIST; one result line per entry, same order
+EXPECTED_PROMPTS_PER_CONC = "10"       # = BENCH_PROMPTS_PER_CONC; completed must equal conc * this
+EXPECTED_INPUT_LEN = "TODO_ISL"
+EXPECTED_OUTPUT_LEN = "TODO_OSL"
+EXPECTED_RANGE_RATIO = "1.0"           # = BENCH_RANGE_RATIO; empty disables the check
+NUM_GPUS = "1"                         # TODO(gpu-count): = [environment] gpus; divisor for *_tput_per_gpu
+# Optional JSON object of top-level server_info keys that must match, e.g. '{"tp_size": 8}'.
+# Leave empty until the keys are confirmed against a real run of the target image.
+EXPECTED_SERVER_INFO_JSON = ""
