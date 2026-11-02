@@ -12,8 +12,9 @@ Sources and line refs: `SOURCES.md`.
 ## Load
 
 The cookbook gives no load for this cell. The task applies InferenceX's fixed-seq-len rules
-(`SemiAnalysisAI/InferenceX@de8884c`) to the **cookbook** server config: ISL/OSL 8192/1024, `random`,
-range ratio 0.8, `num_prompts = 10 × conc`, `2 × conc` warmups, request rate `inf`, ignore EOS.
+(`SemiAnalysisAI/InferenceX@de8884c`) to the **cookbook** server config: ISL/OSL 8192/1024,
+synthetic token ids (sglang `random-ids`), range ratio 0.8, `num_prompts = 10 × conc`,
+`2 × conc` warmups, request rate `inf`, ignore EOS.
 Concurrency list, 8k/1k only, and the sglang client are zhilin's choices (2026-11-02).
 
 Not comparable to any InferenceX number:
@@ -25,8 +26,9 @@ Not comparable to any InferenceX number:
 - Warmup differs: InferenceX warms up with the full first prompt and full output length; sglang
   `bench_serving` reuses the first prompt but caps warmup output at 32 tokens.
 - Client differs: sglang `bench_serving --backend sglang` (`/generate`) instead of InferenceX's own
-  client over OpenAI completions. `random` in sglang samples ShareGPT tokens; InferenceX's `random`
-  builds synthetic token ids.
+  client over OpenAI completions. Both build prompts from synthetic token ids (sglang `random-ids`,
+  InferenceX `random`), but InferenceX re-encodes each prompt until it is exactly the target length;
+  sglang decodes the ids to text once, so the server-side token count can drift from the target.
 - All points share one warm server (run ascending, `--flush-cache` after each warmup).
 
 ## Run

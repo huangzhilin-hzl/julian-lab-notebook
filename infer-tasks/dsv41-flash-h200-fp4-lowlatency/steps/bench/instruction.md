@@ -1,10 +1,10 @@
 The DeepSeek-V4.1-Flash sglang server from the previous step is running on `127.0.0.1:30000`.
 Do not restart it or change its flags.
 
-Benchmark it with the InferenceX fixed-seq-len load (8k/1k, `random`, range ratio 0.8, request rate
-inf) and no other traffic: one run per concurrency in `$BENCH_CONC_LIST` (`1 2 4 8 16`),
-in the listed order, all appending to the same result file. Start from an empty
-`/app/results/bench.jsonl`.
+Benchmark it with the InferenceX fixed-seq-len load (8k/1k, synthetic token ids `random-ids`,
+range ratio 0.8, request rate inf) and no other traffic: one run per concurrency in
+`$BENCH_CONC_LIST` (`1 2 4 8 16`), in the listed order, all appending to the same result file.
+Start from an empty `/app/results/bench.jsonl`.
 
 ```bash
 for c in $BENCH_CONC_LIST; do

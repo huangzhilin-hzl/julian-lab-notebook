@@ -49,7 +49,7 @@ BENCH_MODULE = "sglang.bench_serving"  # cookbook benchmark doc uses `python -m 
 # Load: the cookbook gives none for this cell. InferenceX fixed-seq-len rules applied to the cookbook
 # server; InferenceX has no fixed-load dsv41flash result to compare against (README, SOURCES.md).
 # The bench step runs one bench_serving pass per BENCH_CONC_LIST entry against the same warm server.
-BENCH_DATASET = "random"               # [IX1] fixed_seq.py:41
+BENCH_DATASET = "random-ids"           # synthetic ids like InferenceX `random` [IX1][S7]; sglang `random` downloads ShareGPT
 BENCH_INPUT_LEN = "8192"               # [IX2] 8k1k = (8192, 1024), generate.py:30; [Z] 8k/1k only
 BENCH_OUTPUT_LEN = "1024"              # [IX2]; [Z]
 BENCH_RANGE_RATIO = "0.8"              # [IX3] srt_slurm/generate.py:31; sglang default is 0.0 [S3], so pass it
@@ -76,8 +76,8 @@ name = "bench"
 
 [steps.agent]
 # TODO(bench-timeout): no measured rate for this model/cell yet. Reasoned budget: 5 points x 10 rounds
-# (num_prompts = 10*conc) x (1024 tok x 50 ms TPOT + 5 s TTFT) ~= 2.8 ks, plus ShareGPT download and
-# prompt sampling. Assumed TPOT/TTFT bounds, not data; tighten after the first run.
+# (num_prompts = 10*conc) x (1024 tok x 50 ms TPOT + 5 s TTFT) ~= 2.8 ks, plus tokenizer load and
+# prompt generation. Assumed TPOT/TTFT bounds, not data; tighten after the first run.
 timeout_sec = 3600.0
 
 [steps.healthcheck]

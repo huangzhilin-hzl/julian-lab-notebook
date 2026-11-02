@@ -24,7 +24,7 @@ InferenceX: `SemiAnalysisAI/InferenceX` @ `de8884cda8ba8b5c54576289d4f63098963eb
 
 | Key | File:line | Used for |
 | --- | --- | --- |
-| IX1 | `infx/bench/fixed_seq.py:41` | `--dataset-name random` -> `BENCH_DATASET` |
+| IX1 | `infx/bench/fixed_seq.py:41`; `infx/bench_serving/benchmark_serving.py:273, 332-350` | `--dataset-name random`: synthetic ids `(offset + i + j) % vocab_size`, re-encoded until exactly the target length -> `BENCH_DATASET = random-ids` (S7) |
 | IX2 | `infx/matrix/generate.py:30` | `"8k1k": (8192, 1024)` -> `BENCH_INPUT_LEN` / `BENCH_OUTPUT_LEN`. All 84 `isl:` entries in `configs/{nvidia,amd}-master.yaml` are 8192/1024 |
 | IX3 | `infx/srt_slurm/generate.py:31`; passed at `infx/bench/fixed_seq.py:44` | `RANDOM_RANGE_RATIO = "0.8"`; lengths uniform in `[int(len*0.8), len]` (`infx/bench_serving/benchmark_serving.py:265-269`) |
 | IX4 | `infx/bench/fixed_seq.py:103` (single node), `:155` (sweep) | `num_prompts = 10 * conc` -> `BENCH_PROMPTS_PER_CONC = 10` |
@@ -51,10 +51,10 @@ sglang client: `sgl-project/sglang` @ `4ae54e94588380c45565eb3edee73ad6435d7d9a`
 | S4 | 2466-2470, 703, 2556 | `--request-rate` default inf; `ignore_eos = not --disable-ignore-eos` (on by default) |
 | S5 | 1468-1501 | Warmup reuses `input_requests[0]` with `output_len = min(output_len, 32)`, under the concurrency semaphore. Differs from IX5 |
 | S6 | 1517-1523, 1010-1031, 2697 | `--flush-cache` POSTs `/flush_cache` after warmup, before the measured run |
-| S7 | `datasets/random.py:84-92`; `datasets/__init__.py:25` | `random` samples ShareGPT tokens (downloads from HF); InferenceX's `random` builds synthetic ids (`benchmark_serving.py:334`) |
+| S7 | `serving.py:2336-2337`; `datasets/__init__.py:25-26`; `datasets/random.py:39, 65-74, 84-92, 145-163` | `random-ids` is a valid `--dataset-name` and uses the same `RandomDataset` as `random` (same `--random-input-len/-output-len/-range-ratio` via S3); only `random` samples ShareGPT (HF download). `random-ids` builds ids `(offset + i + j) % vocab_size` like IX1, then decodes them to text once without IX1's re-encode loop |
 
 Differences from InferenceX that make numbers non-comparable: server flags (C3 vs IX11), warmup
-(S5 vs IX5), prompt tokens (S7), client backend (sglang `/generate` vs OpenAI completions,
+(S5 vs IX5), prompt length fix-up (S7 vs IX1), client backend (sglang `/generate` vs OpenAI completions,
 `fixed_seq.py:37-38`), p99.9 not emitted (S2).
 
 ## Not in the cookbook (left as TODO)
