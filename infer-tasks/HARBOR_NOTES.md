@@ -1,69 +1,131 @@
-# Harbor 任务格式笔记（面向 sglang 推理 benchmark）
+# Harbor task format notes (sglang inference benchmarks)
 
-读的版本：`github.com/laude-institute/harbor`（clone 后 docs 内链接已指向 `github.com/harbor-framework/harbor`），
-commit `00dc6a7003be8202e4e5ef6ac79c347c1b26033f`（2026-11-02 11:12 UTC+8），包版本 `harbor 0.25.0`（PyPI 同版本）。
-文档源：仓库 `docs-mintlify/`（下文路径都相对该 commit）。本机副本：`/workspace/harbor`。
+Version read: `github.com/harbor-framework/harbor` (formerly `laude-institute/harbor`), commit
+`00dc6a7003be8202e4e5ef6ac79c347c1b26033f` (2026-11-02 11:12 UTC+8), package `harbor 0.25.0`.
+Doc paths below are relative to `docs-mintlify/` at that commit; source paths to `src/harbor/`.
 
-## 1. 目录结构（`docs-mintlify/tasks/overview.mdx`）
+## 1. Layout
+
+Single-step (`tasks/overview.mdx`):
 
 ```
 my-task/
-├── instruction.md      # 给 agent 的任务说明（必需，不能为空）
-├── task.toml           # 配置 + 元数据
-├── environment/        # Dockerfile / docker-compose.yaml / Apptainer.def；若 task.toml 设了 docker_image 可省略
-├── solution/solve.sh   # 可选，oracle agent 用来证明任务可解（tasks/solution.mdx）
-└── tests/test.sh       # verifier 入口（必需）；separate 模式下可带 tests/Dockerfile
+├── instruction.md      # agent prompt (required, non-empty)
+├── task.toml           # config + metadata
+├── environment/        # Dockerfile / docker-compose.yaml; optional if task.toml sets docker_image
+├── solution/solve.sh   # optional oracle (tasks/solution.mdx)
+└── tests/test.sh       # verifier entry point; may carry tests/Dockerfile in separate mode
 ```
-- 还支持多步任务 `steps/step-N/{instruction.md,tests,solution,workdir/setup.sh}`（tasks/multi-step.mdx）。
-- `tests/`、`solution/` 内可放 `.harborignore`（git ignore 语法）。
-- `harbor task init org/name` 生成的脚手架：上述文件 + `tests/Dockerfile` + `README.md` + `.gitignore`，并默认 `verifier.environment_mode = "separate"`（本机实测）。
 
-## 2. task.toml 字段（`tasks/configuration.mdx`，源码 `src/harbor/models/task/config.py`）
+Multi-step (`tasks/multi-step.mdx`), used by the tasks in this directory: the task-root
+`instruction.md`, `solution/`, and `tests/` are replaced by `steps/<name>/{instruction.md,
+solution/solve.sh, tests/test.sh, workdir/}`, declared in order as `[[steps]]` in `task.toml`.
+An optional task-level `tests/` holds shared helpers, overlaid by each step's `tests/`.
 
-- 顶层：`schema_version`（当前 `"1.4"`）、`artifacts = [...]`（必须写在所有 section 之前）、`source`、`multi_step_reward_strategy`。
-- `[task]`：可选；有则 `name`（`org/name`）必填，另有 `description`、`authors`、`keywords`、`version`。
-- `[metadata]`：任意键值。`[metadata.harbor.lint]` 用来配置 lint 规则。
-- `[agent]`：`timeout_sec`、`user`、`network_mode`、`allowed_hosts`。
-- `[verifier]`：`timeout_sec`（默认 600）、`env`、`user`、`environment_mode = "shared"|"separate"`、`[verifier.environment]`（与 `[environment]` 同 schema）。
-- `[solution.env]`：只在 oracle 执行 solve.sh 时注入。
-- `[environment]`：`docker_image`、`build_timeout_sec`（默认 600）、`os`、`cpus`、`memory_mb`、`storage_mb`、**`gpus`、`gpu_types`**、`tpu`、`network_mode`（public/allowlist/no-network）、`allowed_hosts`、`env`、`healthcheck`、`workdir`、`mcp_servers`、`skills_dir`。
-- `[environment.env]` 是该 sandbox 内所有 exec 的持久环境变量，值支持 `${VAR}` / `${VAR:-default}`，从**运行 harbor 的宿主机**取值（config.py `EnvironmentConfig.env`，`environments/base.py` L391-402）。
-- `harbor task schema` 可打印完整 JSON Schema。
+## 2. task.toml fields (`tasks/configuration.mdx`, `models/task/config.py`)
 
-## 3. 打分 / reward（`tasks/verifier.mdx`，源码 `src/harbor/verifier/verifier.py`、`models/trial/paths.py`）
+- Top level: `schema_version` (`"1.4"`), `artifacts = [...]`, `source`, `multi_step_reward_strategy`
+  (`"mean"` | `"final"`, `MultiStepRewardStrategy`).
+- `[task]`: `name` (`org/name`), `description`, `authors`, `keywords`, `version`.
+- `[metadata]`: free-form. `[metadata.harbor.lint]` configures lint (`ignore`, `extend-select`).
+- `[agent]`: `timeout_sec`, `user`, `network_mode`, `allowed_hosts`.
+- `[verifier]`: `timeout_sec` (default 600), `env`, `user`, `environment_mode = "shared" | "separate"`,
+  `[verifier.environment]` (same schema as `[environment]`; implies `"separate"`, conflicts with `"shared"`).
+- `[environment]`: `docker_image`, `cpus`, `memory_mb`, `storage_mb`, `gpus`, `gpu_types`,
+  `network_mode` (public / allowlist / no-network), `env`, `healthcheck`, `workdir`, ...
+- `[environment.env]`: persistent env for every exec in the agent sandbox (agent, oracle,
+  healthchecks, shared verifier). Values support `${VAR}` / `${VAR:-default}`, resolved on the host
+  running harbor (`environments/base.py` L391-402).
+- `[[steps]]` (`StepConfig`): `name`, `agent`, `verifier`, `min_reward` (number gates key `reward`;
+  a table gates each key), `healthcheck` (`HealthcheckConfig`: `command`, `interval_sec`,
+  `timeout_sec`, `start_period_sec`, `start_interval_sec`, `retries`), `artifacts`.
+- `harbor task schema` prints the full JSON Schema.
 
-- `tests/test.sh` 跑完后必须写 `/logs/verifier/reward.txt`（单个数字）或 `/logs/verifier/reward.json`（标签→有限数值的扁平对象）；两者都有时优先 json。
-- 注意：`harbor task init` 生成的 test.sh 注释写的是 `rewards.json`，但代码里的路径是 `reward.json`（paths.py L48/L286）。以代码为准。
-- shared 模式：tests 上传到 agent 容器的 `/tests/` 后执行。separate 模式：另起一个 verifier sandbox。镜像选择优先级为 `[verifier.environment].docker_image` > `tests/Dockerfile` > agent 镜像（`tasks/separate-verifier.mdx`）。agent 产物只能通过 `artifacts` 或 `/logs/artifacts/` 传过去，并保持原路径（`tasks/artifacts.mdx`）。
-- separate 模式支持对已有 trial 重新打分（regrade，`jobs/regrade.mdx`）。
+## 3. Rewards and verifiers (`tasks/verifier.mdx`, `verifier/verifier.py`)
 
-## 4. 校验与运行（CLI，`harbor --help`，0.25.0 本机实测）
+- `test.sh` writes `/logs/verifier/reward.txt` (one number) or `/logs/verifier/reward.json` (flat
+  label -> number); json wins if both exist. (`harbor task init` comments say `rewards.json`; the
+  code path is `reward.json`, `models/trial/paths.py`.)
+- Shared mode: tests are uploaded to `/tests/` in the agent container. Separate mode: a new
+  sandbox; image precedence `[verifier.environment].docker_image` > `tests/Dockerfile` > agent image
+  (`tasks/separate-verifier.mdx`). Agent outputs reach it only via `artifacts` or `/logs/artifacts/`,
+  restored at their original paths (`tasks/artifacts.mdx`).
 
-- `harbor lint <task>`：静态检查，不起 sandbox（`tasks/lint.mdx`）。默认规则包括 invalid-task-config、unknown-config-field（会提示拼写，实测把 `gpus` 写成 `gpuz` 会报错）、invalid-task-files、shared-verifier、unpinned-python-dependency、verifier-runtime-install、agent-image-test-leak 等。`root-agent` 和 `unpinned-image` 需要 `--extend-select` 才开。
-- `harbor check <task>`：用 LLM agent（默认 claude-code + claude-sonnet-4-6）按 rubric 审任务质量，需要 API key，本次没跑。
-- `harbor run -p <task> -a oracle -e <env>`：用 solve.sh 跑一遍；`-a <agent> -m <model>` 则让真 agent 跑。
-- `harbor task start-env`：只把环境拉起来，便于调试。
+## 4. Multi-step behavior (`trial/multi_step.py`, `models/task/verifier_mode.py`)
 
-## 5. GPU / 镜像 / k8s（`tasks/resources.mdx`，`src/harbor/environments/`）
+- All steps run in one agent environment; it is not restarted between steps. The docs promise
+  filesystem persistence only. **Process persistence (our server surviving from `serve` into
+  `bench`) is not documented and is unverified until a real GPU run.** Each step's oracle runs
+  `solve.sh` through `environment.exec`, so the server must be detached (`setsid nohup`, all
+  std streams redirected) for that exec to return.
+- Step verifier mode: `[steps.verifier].environment_mode` if set; else `[steps.verifier.environment]`
+  implies `"separate"`; else the task-level mode; default `"shared"` (`resolve_step_verifier_mode`).
+  Mixed shared/separate steps are supported.
+- Separate verifier on the **last** step: Harbor stops the agent environment before verifying, so
+  the server is torn down there.
+- Separate image for a step: step `tests/Dockerfile` > task verifier image > task `tests/Dockerfile`
+  > agent image. A bundled step image does not receive task-level `tests/`.
+- `min_reward`: a missing verifier result or key counts as `-inf`; failure skips the remaining
+  steps. A step that errors (for example its healthcheck fails) without a verifier result also stops.
+- Trial reward: `"final"` = last executed step's verifier result (`None` if that step has none);
+  `"mean"` = per-key mean over steps that have a result (`trial/trial.py` `_select_multi_step_reward`).
+- `steps.verifier.timeout_sec` defaults to 600 and does not inherit the task-level value; set it per step.
+- Task-level `[verifier.env]` is merged into every step's verifier, so step-specific vars go in
+  `[steps.verifier.env]`.
+- Between steps Harbor empties `/logs/agent` (unless resuming) and, after a shared verifier,
+  `/logs/verifier`. Keep server logs under `/app/results`.
 
-- `gpus` 和 `gpu_types` 没有 enforcement policy，会直接透传给 provider。文档列出的支持 GPU 分配的 provider：`beam, daytona, gke, modal, opensandbox, prime, docker`。
-  - docker：用 compose 的 nvidia device request 预留 `count: gpus` 张卡，**忽略 `gpu_types`**（docker/docker.py L229）。
-  - gke：设置 `nvidia.com/gpu` 的 requests/limits，用 `gpu_types[0]` 映射 `cloud.google.com/gke-accelerator` 节点选择器（h200→`nvidia-h200-141gb`），有 GPU 时 pod ready 超时为 1200s（gke.py L69-83、L780-805、L893）。它强依赖 GCP：preflight 要求有 `gcloud`，构造函数需要 `cluster_name/region/namespace/registry_location/registry_name`。设了 `docker_image` 时用预构建镜像（gke.py L2085）。pod 的 `volume_mounts=[]`，不挂 PVC，也不设 shm/ipc。
-  - openshift 和 ack 也是基于 k8s 的 provider，但不分配 GPU（openshift.py L179 `gpus=False`；resources.mdx 的 GPU 列表里没有它们）。
-- 自定义镜像：`[environment].docker_image` 指定任意镜像，或者用 `environment/Dockerfile` 构建。
-- 自定义 sandbox：实现 `BaseEnvironment`（start/stop/exec/upload_*/download_*），通过 `-e module.path:ClassName` 使用（`sandboxes/custom-sandboxes.mdx`）。
+## 5. CLI (`harbor --help`, 0.25.0)
 
-## 6. 本模板的设计取舍
+- `harbor lint <task>`: static checks, no sandbox (`tasks/lint.mdx`). `shared-verifier` is a default
+  rule; `root-agent` and `unpinned-image` are opt-in.
+- `harbor check <task>`: LLM agent reviews the task against a rubric inside a sandbox (default
+  docker + claude-code); needs docker and an API key.
+- `harbor run -p <task> -a oracle -e <env>`: runs each step's `solve.sh` then its verifier.
 
-- 所有可调参数都放在 `[environment.env]`，solve.sh 里不写死任何值。做 A/B 时复制任务，只改 `SGLANG_LAUNCH_CMD`，review 时直接 diff 两份 task.toml。
-- separate verifier 用 CPU 小容器（`gpus = 0`），只读 artifact `/app/results`。verifier 只验证"跑了、JSON 完整、负载参数对得上"，**不设性能阈值**。指标写到 `/logs/verifier/metrics.json`，`reward.txt` 是 0/1。
-- bench 结果字段取自 sglang `python/sglang/benchmark/serving.py` L1855-1908（sglang main `4ae54e9`，2026-11-02）。`--output-file` 是**追加**写 JSONL，所以 verifier 要求文件里恰好有 1 行。
-- `--dataset-name random` 会从 HF 下载 ShareGPT（datasets/random.py L84-92），`random-ids` 不用下载（datasets/__init__.py L39、random.py L39）。`sglang.bench_serving` 在 main 上已标为 deprecated，实现迁到了 `sglang.benchmark.serving`，旧名仍然能用。
+## 6. GPUs, images, k8s (`tasks/resources.mdx`, `environments/`)
 
-## 7. 本次校验结果（2026-11-02，harbor 0.25.0）
+- `gpus` / `gpu_types` are passed to the provider. Providers with GPU allocation: `beam, daytona,
+  gke, modal, opensandbox, prime, docker`.
+  - docker: compose nvidia device reservation of `count: gpus`; ignores `gpu_types` (docker/docker.py L229).
+  - gke: `nvidia.com/gpu` requests/limits, `gpu_types[0]` -> `cloud.google.com/gke-accelerator`
+    (h200 -> `nvidia-h200-141gb`), 1200 s pod-ready timeout with GPUs. Requires `gcloud` and
+    GCP registry config. Pods get no volume mounts (no PVC) and no shm/ipc settings.
+  - openshift and ack are k8s-based but allocate no GPUs.
+- No `task.toml` field for `--shm-size` / `--ipc=host` (cookbook `docker run` flags). For the docker
+  provider an `environment/docker-compose.yaml` overlay on service `main` may work (`tasks/multi-container.mdx`);
+  untested.
+- Custom sandbox: implement `BaseEnvironment`, use `-e module.path:ClassName` (`sandboxes/custom-sandboxes.mdx`).
 
-- `harbor lint sglang-bench-template dsv41-flash-h200-fp4-lowlatency`：默认规则全部通过，exit 0。
-- `harbor lint --extend-select ALL`：只剩 3 条 opt-in 警告，分别是 root-agent、`docker_image` 没有 pin digest、`tests/Dockerfile` 的 FROM 没有 pin digest。
-- 用 harbor 自己的 `TaskConfig` 能正常解析两份 task.toml，verifier 解析为 SEPARATE、gpus=0。
-- `check_result.py` 用合成 fixture 自测过（不是 benchmark 数据）：完整结果 → 0；completed 不符、指标为 null、文件缺失 → 1。
-- 没跑 `harbor run`（box 上没有 docker 和 GPU），也没跑 `harbor check`（需要 LLM API key）。
+## 7. Design choices in these tasks
+
+- Every knob lives in `[environment.env]`; scripts hardcode nothing. An A/B pair differs only in
+  `SGLANG_LAUNCH_CMD` (and `task.name`), so review is a diff of two `task.toml` files.
+- Steps: `serve` (shared verifier: `/health` + `/server_info`, `min_reward = 1.0`, long agent timeout
+  for weight loading) then `bench` (step healthcheck on `/health`, separate CPU-only verifier on the
+  `/app/results` artifact). Lint rule `shared-verifier` is ignored per task for the serve step.
+- `multi_step_reward_strategy = "final"`: the trial reward is the benchmark's 0/1. `"mean"` would give
+  0.5 for "server up, benchmark broken" and 1.0 if bench never got a verifier result.
+- More load points later = more bench steps against the same warm server.
+- The bench verifier checks "ran, JSON complete, load matches"; **no performance thresholds**.
+  Metrics go to `/logs/verifier/metrics.json`; `reward.txt` is 0/1.
+- Result keys from sglang `python/sglang/benchmark/serving.py` L1855-1908 (main `4ae54e9`). `--output-file`
+  appends JSONL, so the verifier requires exactly one line.
+- `--dataset-name random` downloads ShareGPT from HF (datasets/random.py L84-92); `random-ids` does not.
+  `sglang.bench_serving` is deprecated on main in favor of `sglang.benchmark.serving`; the old name works.
+- `/get_server_info` is deprecated on sglang main (`d952161`) in favor of `/server_info`; the serve
+  verifier tries `/server_info` first.
+
+## 8. Validation (2026-11-02, harbor 0.25.0)
+
+- `harbor lint sglang-bench-template dsv41-flash-h200-fp4-lowlatency`: no findings, exit 0.
+- `harbor lint --extend-select ALL`: only opt-in findings (root-agent per step, unpinned
+  `docker_image`, unpinned `FROM` in `steps/bench/tests/Dockerfile`) plus the ignored `shared-verifier`.
+- Harbor's own `Task` / `resolve_step_verifier_mode` parse both tasks: serve -> shared, bench -> separate
+  built from `steps/bench/tests/Dockerfile` with `gpus = 0`.
+- Local smoke test without docker/GPU, using a fake HTTP server as `SGLANG_LAUNCH_CMD` and a fake bench
+  module: serve `solve.sh` returns while the detached server keeps running; serve verifier, bench
+  healthcheck, bench `solve.sh` and verifier all pass; after killing the server the healthcheck and
+  serve verifier fail. `check_result.py` synthetic fixtures (not benchmark data) fail as expected on
+  load mismatch, two lines, null metric, missing file.
+- Not run: `harbor run` (no docker/GPU on the box), `harbor check` (needs docker + LLM API key).

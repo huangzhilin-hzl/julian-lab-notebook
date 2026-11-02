@@ -1,12 +1,14 @@
 # DeepSeek-V4.1 Flash, 8x H200, FP4, Low-Latency, single node — sglang cookbook recipe.
-# Generated from sglang-bench-template. Every value cites its source; see SOURCES.md for the
-# [C#] keys. TODO(...) = the cookbook does not specify it; never filled by guessing.
+# Generated from sglang-bench-template (multi-step: "serve" then "bench", one shared container).
+# Every value cites its source; see SOURCES.md for the [C#] keys.
+# TODO(...) = the cookbook does not specify it; never filled by guessing.
 #   [C1] cookbook page .md, line 23 (NVIDIA image)
 #   [C2] Deploy-panel config embedded in the page HTML: dockerImages.h200, modelNames["flash|fp4"]
 #   [C3] Deploy-panel cell {hw:h200, variant:flash, quant:fp4, strategy:low-latency, nodes:single}
 #        (= cell #3 in _sources/cookbook_cells_dsv41.txt), verified:true, nnodes:1, no env
 #   [C4] Deploy-panel placeholders: HOST_IP default 0.0.0.0, PORT default 30000
 schema_version = "1.4"
+multi_step_reward_strategy = "final"   # trial reward = bench's 0/1, or serve's 0 if the server never came up
 artifacts = ["/app/results"]
 
 [task]
@@ -21,8 +23,8 @@ source_fetched_at = "2026-11-02T12:39+08:00"
 cookbook_cell_verified = true          # [C3] verified:true
 category = "inference-benchmark"
 
-[agent]
-timeout_sec = 3600.0                   # TODO(agent-timeout): cookbook gives no load/startup time; template default
+[metadata.harbor.lint]
+ignore = ["shared-verifier"]           # serve verifier must reach the server inside the agent container
 
 [environment]
 docker_image = "lmsysorg/sglang:dev-dsv41"   # [C1][C2] preview build; tag is mutable, TODO(pin digest)
@@ -51,21 +53,42 @@ BENCH_REQUEST_RATE = "TODO_REQUEST_RATE" # TODO(load)
 BENCH_SEED = "42"                      # sglang bench_serving default (--seed 42), not cookbook
 BENCH_EXTRA_ARGS = ""
 
-[verifier]
-timeout_sec = 300.0
-environment_mode = "separate"
+[[steps]]
+name = "serve"
+min_reward = 1.0                       # server not healthy -> skip bench
 
-[verifier.environment]
+[steps.agent]
+timeout_sec = 3600.0                   # TODO(serve-timeout): cookbook gives no startup time; template default
+
+[steps.verifier]
+environment_mode = "shared"            # server listens only inside the agent container
+timeout_sec = 120.0
+
+[[steps]]
+name = "bench"
+
+[steps.agent]
+timeout_sec = 1800.0                   # TODO(bench-timeout): depends on TODO(load); template default
+
+[steps.healthcheck]
+command = "python3 -c \"import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ['SERVER_PORT'], timeout=10)\""
+interval_sec = 10.0
+timeout_sec = 20.0
+retries = 3
+
+[steps.verifier]
+environment_mode = "separate"          # CPU-only image from steps/bench/tests/Dockerfile
+timeout_sec = 300.0
+
+[steps.verifier.environment]
 gpus = 0
 cpus = 1
 memory_mb = 1024
 network_mode = "no-network"
 
-[verifier.env]
+[steps.verifier.env]
 EXPECTED_NUM_PROMPTS = "TODO_NUM_PROMPTS"
 EXPECTED_INPUT_LEN = "TODO_ISL"
 EXPECTED_OUTPUT_LEN = "TODO_OSL"
 EXPECTED_MAX_CONCURRENCY = "TODO_CONC"
 EXPECTED_SERVER_INFO_JSON = ""         # TODO(server-info): confirm key names (e.g. tp_size) on a real dev-dsv41 run first
-
-[solution.env]

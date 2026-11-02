@@ -30,7 +30,7 @@ from the panel's config in the HTML.
    `--max-running-requests 256`.
 2. "Do not override the backends" (C1 L92-96) vs. the H200 cell passing
    `--attention-backend dsv4 --moe-runner-backend flashinfer_mxfp4` explicitly.
-3. Docker flags `--shm-size 32g --ipc=host` (C1 L29, L33) have no `task.toml` field; see NOTES.md.
+3. Docker flags `--shm-size 32g --ipc=host` (C1 L29, L33) have no `task.toml` field; see `../HARBOR_NOTES.md`.
 
 ## Related but not used
 
