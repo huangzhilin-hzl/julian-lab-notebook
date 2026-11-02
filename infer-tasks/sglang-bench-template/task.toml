@@ -1,5 +1,5 @@
 # Harbor multi-step task: step "serve" launches an sglang server, step "bench" runs one fixed-load
-# bench_serving pass against it and keeps the result JSON. Both steps share one container.
+# bench_serving pass per concurrency in BENCH_CONC_LIST against it and keeps the result JSON lines. Both steps share one container.
 # Every value marked TODO(...) must be filled before running. Grep: `rg TODO task.toml steps/`
 # Format reference: harbor v0.25.0 docs-mintlify/tasks/{configuration,multi-step}.mdx (schema 1.4).
 schema_version = "1.4"
@@ -54,11 +54,15 @@ BENCH_DATASET = "random-ids"           # random-ids: synthetic ids, no download;
 BENCH_INPUT_LEN = "TODO_ISL"           # TODO(load)
 BENCH_OUTPUT_LEN = "TODO_OSL"          # TODO(load)
 BENCH_RANGE_RATIO = "1.0"              # 1.0 = fixed lengths; sglang default is 0.0 (lengths sampled)
-BENCH_NUM_PROMPTS = "TODO_NUM_PROMPTS" # TODO(load)
-BENCH_MAX_CONCURRENCY = "TODO_CONC"    # TODO(load)
+# One bench_serving run per entry, ascending, same warm server; each appends one line to bench.jsonl.
+BENCH_CONC_LIST = "1"                  # TODO(load): space-separated, e.g. "1 2 4 8 16"
+# Per run: num_prompts = conc * BENCH_PROMPTS_PER_CONC, warmup = conc * BENCH_WARMUPS_PER_CONC.
+# 10 and 2 are InferenceX's fixed-seq-len rules (see dsv41-flash-h200-fp4-lowlatency/SOURCES.md).
+BENCH_PROMPTS_PER_CONC = "10"
+BENCH_WARMUPS_PER_CONC = "2"
 BENCH_REQUEST_RATE = "inf"
 BENCH_SEED = "42"
-BENCH_EXTRA_ARGS = ""                  # e.g. "--warmup-requests 4"
+BENCH_EXTRA_ARGS = "--flush-cache"     # flush radix cache after warmup, before each measured run
 
 # ---------------------------------------------------------------------------------------------
 # Step 1: serve. Start the server in the background, wait for /health. Gates step 2.
@@ -77,7 +81,7 @@ environment_mode = "shared"
 timeout_sec = 120.0                    # step verifiers default to 600 s; the task-level value is not inherited
 
 # ---------------------------------------------------------------------------------------------
-# Step 2: bench. One fixed-load bench_serving pass; graded from artifacts in a CPU-only container.
+# Step 2: bench. One bench_serving pass per concurrency; graded from artifacts in a CPU-only container.
 # ---------------------------------------------------------------------------------------------
 [[steps]]
 name = "bench"
@@ -104,10 +108,12 @@ network_mode = "no-network"
 
 [steps.verifier.env]
 # Must mirror the load in [environment.env]; the verifier checks the result was produced with it.
-EXPECTED_NUM_PROMPTS = "TODO_NUM_PROMPTS"
+EXPECTED_CONC_LIST = "1"               # TODO(load): = BENCH_CONC_LIST; one result line per entry, same order
+EXPECTED_PROMPTS_PER_CONC = "10"       # = BENCH_PROMPTS_PER_CONC; completed must equal conc * this
 EXPECTED_INPUT_LEN = "TODO_ISL"
 EXPECTED_OUTPUT_LEN = "TODO_OSL"
-EXPECTED_MAX_CONCURRENCY = "TODO_CONC"
+EXPECTED_RANGE_RATIO = "1.0"           # = BENCH_RANGE_RATIO; empty disables the check
+NUM_GPUS = "1"                         # TODO(gpu-count): = [environment] gpus; divisor for *_tput_per_gpu
 # Optional JSON object of top-level server_info keys that must match, e.g. '{"tp_size": 8}'.
 # Leave empty until the keys are confirmed against a real run of the target image.
 EXPECTED_SERVER_INFO_JSON = ""

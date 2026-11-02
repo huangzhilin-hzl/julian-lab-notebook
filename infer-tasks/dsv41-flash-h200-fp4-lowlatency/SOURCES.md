@@ -14,12 +14,53 @@ The URL hash (`#hw=h200&variant=flash&quant=fp4&strategy=low-latency&nodes=singl
 cell in the JS Deploy panel; the `.md` export does not contain the generated command, so C3 was read
 from the panel's config in the HTML.
 
+## Benchmark load (not in the cookbook)
+
+The page renders `Deployment` without a `benchmarks` prop, so this cell has no benchmark card and no
+reference numbers. The load applies InferenceX's fixed-seq-len rules to the cookbook server config.
+
+InferenceX: `SemiAnalysisAI/InferenceX` @ `de8884cda8ba8b5c54576289d4f63098963eb91b` (2026-11-02
+14:28 UTC+8). Paths relative to `inferencex-e2e/`.
+
+| Key | File:line | Used for |
+| --- | --- | --- |
+| IX1 | `infx/bench/fixed_seq.py:41` | `--dataset-name random` -> `BENCH_DATASET` |
+| IX2 | `infx/matrix/generate.py:30` | `"8k1k": (8192, 1024)` -> `BENCH_INPUT_LEN` / `BENCH_OUTPUT_LEN`. All 84 `isl:` entries in `configs/{nvidia,amd}-master.yaml` are 8192/1024 |
+| IX3 | `infx/srt_slurm/generate.py:31`; passed at `infx/bench/fixed_seq.py:44` | `RANDOM_RANGE_RATIO = "0.8"`; lengths uniform in `[int(len*0.8), len]` (`infx/bench_serving/benchmark_serving.py:265-269`) |
+| IX4 | `infx/bench/fixed_seq.py:103` (single node), `:155` (sweep) | `num_prompts = 10 * conc` -> `BENCH_PROMPTS_PER_CONC = 10` |
+| IX5 | `infx/bench/fixed_seq.py:50` | `--num-warmups 2 * conc` -> `BENCH_WARMUPS_PER_CONC = 2`. Warmup uses `input_requests[0]` at full output length under the concurrency limit (`benchmark_serving.py:537-571`) |
+| IX6 | `infx/bench/fixed_seq.py:47-48` | `--request-rate inf`, `--ignore-eos` |
+| IX7 | `infx/results/fixed_sequence.py:192-206` | `tput_per_gpu = total/num_gpus`, `output_tput_per_gpu`, `input_tput_per_gpu = (total - output)/num_gpus`, `intvty = 1000/tpot_ms` -> `check_result.py` |
+| IX8 | `configs/nvidia-master.yaml:7660-7674` | `dsv41flash-fp4-h200-sglang-agentic-dspark`: `conc-list: [1, 2, 4, 8, 16]` (agentic scenario) |
+| IX9 | `infx/bench/fixed_seq.py:121-166` | Multi-node `srt-sweep` loops `CONC_LIST` against one live server: precedent for one bench step looping concurrencies |
+| IX10 | `docs/MODELS.md:129` | `dsv41flash` active scenarios: agentic coding only. No fixed-seq-len result exists to compare against |
+| IX11 | `benchmarks/single_node/srt-slurm-recipes/dsv41flash/sglang/h200-fp4-mtp/agentic.yaml:23,27,32,41` | InferenceX's H200 server: `expert-parallel-size 1`, `moe-runner-backend marlin`, `mem-fraction-static 0.70`, `speculative-algorithm DSPARK`. Not used; differs from C3 |
+
+zhilin's decisions (Z, 2026-11-02): ISL/OSL 8k/1k only; concurrency `1 2 4 8 16`; client = sglang
+`bench_serving`, not InferenceX's `infx.bench_serving`.
+
+sglang client: `sgl-project/sglang` @ `4ae54e94588380c45565eb3edee73ad6435d7d9a`,
+`python/sglang/benchmark/serving.py` (`python -m sglang.bench_serving` re-exports it,
+`python/sglang/bench_serving.py:10-23`).
+
+| Key | Line | Fact |
+| --- | --- | --- |
+| S1 | 2301, 2314, 2317, 2328, 2379, 2394, 2412, 2418, 2424, 2466, 2478, 2490, 2554, 2697, 2708 | Flags exist: `--backend --host --port --dataset-name --model --num-prompts --random-input-len --random-output-len --random-range-ratio --request-rate --max-concurrency --output-file --seed --flush-cache --warmup-requests` |
+| S2 | 1855-1908, 1961 | Result keys incl. `p90_/p99_{ttft,tpot,itl}_ms`, `p90_/p99_e2e_latency_ms`, `max_concurrency`, `completed`; one line appended per run. No p99.9 |
+| S3 | 2424-2426; `datasets/common.py:56-65` | `--random-range-ratio` default 0.0; lengths uniform in `[max(int(len*ratio),1), len]`, same as IX3 |
+| S4 | 2466-2470, 703, 2556 | `--request-rate` default inf; `ignore_eos = not --disable-ignore-eos` (on by default) |
+| S5 | 1468-1501 | Warmup reuses `input_requests[0]` with `output_len = min(output_len, 32)`, under the concurrency semaphore. Differs from IX5 |
+| S6 | 1517-1523, 1010-1031, 2697 | `--flush-cache` POSTs `/flush_cache` after warmup, before the measured run |
+| S7 | `datasets/random.py:84-92`; `datasets/__init__.py:25` | `random` samples ShareGPT tokens (downloads from HF); InferenceX's `random` builds synthetic ids (`benchmark_serving.py:334`) |
+
+Differences from InferenceX that make numbers non-comparable: server flags (C3 vs IX11), warmup
+(S5 vs IX5), prompt tokens (S7), client backend (sglang `/generate` vs OpenAI completions,
+`fixed_seq.py:37-38`), p99.9 not emitted (S2).
+
 ## Not in the cookbook (left as TODO)
 
-- Benchmark load: dataset, ISL/OSL, range ratio, num prompts, max concurrency, request rate.
-  The page renders `Deployment` without a `benchmarks` prop, so this cell has no benchmark card and
-  no reference numbers (no TTFT/TPOT/throughput to compare against).
-- CPU / memory / storage, startup and agent timeouts.
+- CPU / memory / storage, startup timeout, serve timeout. Bench timeout is a reasoned 3600 s budget
+  (comment in `task.toml`), not measured.
 - Image digest (`dev-dsv41` is a mutable preview tag).
 
 ## Contradictions inside the page (we follow the C3 cell)
@@ -37,4 +78,5 @@ from the panel's config in the HTML.
 The page's Agentic section embeds InferenceX data for H200 (`inferencex-e2e/benchmarks/single_node/
 srt-slurm-recipes/dsv41flash/sglang/h200-fp4-mtp/agentic.yaml`, sha `5bfd5559…`, run
 `39318221321/attempts/1`, status verified). That is a different config (agentic replay with DSpark/MTP),
-so none of its values are used here.
+so none of its server values are used here; only InferenceX's
+fixed-seq-len client rules are (above).

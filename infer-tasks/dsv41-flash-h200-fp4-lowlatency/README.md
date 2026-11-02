@@ -6,11 +6,30 @@ Sources and line refs: `SOURCES.md`.
 
 - `steps/serve`: the cookbook launch command (`SGLANG_LAUNCH_CMD`), shared verifier on `/health` and
   `/server_info`, `min_reward = 1.0`.
-- `steps/bench`: one `bench_serving` pass, graded in a separate CPU-only container. The load is
-  `TODO(load)`: the cookbook gives none for this cell.
+- `steps/bench`: one `sglang.bench_serving` run per concurrency `1 2 4 8 16` against the same warm
+  server, graded in a separate CPU-only container (5 result lines, `metrics.json` with one point each).
 
-Before running: fill every `TODO(load)` in `[environment.env]` (and the matching `EXPECTED_*` in the
-bench step's `[steps.verifier.env]`), then
+## Load
+
+The cookbook gives no load for this cell. The task applies InferenceX's fixed-seq-len rules
+(`SemiAnalysisAI/InferenceX@de8884c`) to the **cookbook** server config: ISL/OSL 8192/1024, `random`,
+range ratio 0.8, `num_prompts = 10 × conc`, `2 × conc` warmups, request rate `inf`, ignore EOS.
+Concurrency list, 8k/1k only, and the sglang client are zhilin's choices (2026-11-02).
+
+Not comparable to any InferenceX number:
+
+- InferenceX has **no fixed-load result for dsv41flash**; it benchmarks this model only as agentic
+  coding (trace replay), with different server flags: EP 1, `marlin` MoE runner, MTP/DSpark
+  speculative decoding, `mem-fraction-static 0.70`. The cookbook cell uses EP 8, `flashinfer_mxfp4`,
+  0.8, no speculative decoding.
+- Warmup differs: InferenceX warms up with the full first prompt and full output length; sglang
+  `bench_serving` reuses the first prompt but caps warmup output at 32 tokens.
+- Client differs: sglang `bench_serving --backend sglang` (`/generate`) instead of InferenceX's own
+  client over OpenAI completions. `random` in sglang samples ShareGPT tokens; InferenceX's `random`
+  builds synthetic token ids.
+- All points share one warm server (run ascending, `--flush-cache` after each warmup).
+
+## Run
 
 ```bash
 harbor lint .
@@ -18,4 +37,5 @@ harbor run -p . -a oracle -e <env>   # needs 8x H200; see ../HARBOR_NOTES.md for
 ```
 
 Open points: the server surviving from `serve` into `bench` is unverified until the first real run;
-the cookbook's `docker run` flags `--shm-size 32g --ipc=host` have no `task.toml` field (SOURCES.md).
+the bench timeout (3600 s) is a reasoned budget, not measured; the cookbook's `docker run` flags
+`--shm-size 32g --ipc=host` have no `task.toml` field (SOURCES.md).

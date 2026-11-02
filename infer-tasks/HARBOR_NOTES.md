@@ -106,11 +106,16 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
   `/app/results` artifact). Lint rule `shared-verifier` is ignored per task for the serve step.
 - `multi_step_reward_strategy = "final"`: the trial reward is the benchmark's 0/1. `"mean"` would give
   0.5 for "server up, benchmark broken" and 1.0 if bench never got a verifier result.
-- More load points later = more bench steps against the same warm server.
-- The bench verifier checks "ran, JSON complete, load matches"; **no performance thresholds**.
-  Metrics go to `/logs/verifier/metrics.json`; `reward.txt` is 0/1.
+- Load points: one `bench` step loops `BENCH_CONC_LIST` (ascending) against the same warm server,
+  one `bench_serving` run per concurrency (as InferenceX's multi-node `srt-sweep` does). One step per
+  point would duplicate instruction/solve/tests per point, and `final` reward would see only the last.
+  `--flush-cache` clears the radix cache after each run's warmup.
+- The bench verifier checks "ran, JSON complete, load matches" per concurrency; **no performance
+  thresholds**. Metrics go to `/logs/verifier/metrics.json` as `{"points": [...]}`, one per concurrency,
+  with InferenceX-style `*_tput_per_gpu` and `*_intvty = 1000/tpot_ms` (InferenceX names); `reward.txt` is 0/1.
 - Result keys from sglang `python/sglang/benchmark/serving.py` L1855-1908 (main `4ae54e9`). `--output-file`
-  appends JSONL, so the verifier requires exactly one line.
+  appends JSONL, so the verifier requires exactly one line per `EXPECTED_CONC_LIST` entry, in order,
+  and `solve.sh` deletes `bench.jsonl` first.
 - `--dataset-name random` downloads ShareGPT from HF (datasets/random.py L84-92); `random-ids` does not.
   `sglang.bench_serving` is deprecated on main in favor of `sglang.benchmark.serving`; the old name works.
 - `/get_server_info` is deprecated on sglang main (`d952161`) in favor of `/server_info`; the serve
@@ -118,7 +123,8 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
 
 ## 8. Validation (2026-11-02, harbor 0.25.0)
 
-- `harbor lint sglang-bench-template dsv41-flash-h200-fp4-lowlatency`: no findings, exit 0.
+- `harbor lint sglang-bench-template dsv41-flash-h200-fp4-lowlatency`: no findings, exit 0
+  (re-run after the concurrency loop change).
 - `harbor lint --extend-select ALL`: only opt-in findings (root-agent per step, unpinned
   `docker_image`, unpinned `FROM` in `steps/bench/tests/Dockerfile`) plus the ignored `shared-verifier`.
 - Harbor's own `Task` / `resolve_step_verifier_mode` parse both tasks: serve -> shared, bench -> separate
@@ -127,5 +133,7 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
   module: serve `solve.sh` returns while the detached server keeps running; serve verifier, bench
   healthcheck, bench `solve.sh` and verifier all pass; after killing the server the healthcheck and
   serve verifier fail. `check_result.py` synthetic fixtures (not benchmark data) fail as expected on
-  load mismatch, two lines, null metric, missing file.
+  load mismatch, two lines, null metric, missing file. After the loop change: the dsv41 env produces 5
+  lines and passes; a missing concurrency, wrong order, wrong `completed`, wrong ISL/OSL, ratio, or a
+  non-finite p90 all fail.
 - Not run: `harbor run` (no docker/GPU on the box), `harbor check` (needs docker + LLM API key).
