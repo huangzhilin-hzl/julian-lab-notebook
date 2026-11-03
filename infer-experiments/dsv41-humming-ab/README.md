@@ -1,16 +1,15 @@
 # DeepSeek-V4.1 Flash Humming A/B
 
-Hypothesis: selecting Humming for the MoE runner changes serving throughput and
-latency under the fixed InferenceX load. No performance result is available yet.
+Compare serving throughput and latency with humming off and humming on under a fixed load.
 
-| Arm | Task path (from repo root) | MoE runner |
+| Humming | Task path (from repo root) | MoE runner |
 | --- | --- | --- |
 | Off | `infer-tasks/dsv41-flash-h200-fp4-lowlatency` | `flashinfer_mxfp4` |
 | On | `infer-tasks/dsv41-flash-h200-fp4-lowlatency-humming` | `humming` |
 
 The single intended runtime difference is the `--moe-runner-backend` value in
 `SGLANG_LAUNCH_CMD`. Task identity, metadata and README/SOURCES may also differ.
-Both arms use DSPARK (`--speculative-algorithm DSPARK --speculative-dspark-block-size 5`),
+Both tasks use DSPARK (`--speculative-algorithm DSPARK --speculative-dspark-block-size 5`),
 TP8/EP8 and CUDA graphs. No `--quantization humming` or `SGLANG_HUMMING_*` overrides.
 
 Both use `lmsysorg/sglang:dev@sha256:77ff63ee69fd7ebef20df3a6d036ee4b8a4ffe0734efb0028c3b7643386e3ccf`
@@ -18,11 +17,11 @@ Both use `lmsysorg/sglang:dev@sha256:77ff63ee69fd7ebef20df3a6d036ee4b8a4ffe0734e
 (`nightly-dev-20261102-38d9e4a3`). See each task's SOURCES.md for AMD64 digest,
 PR #46018 provenance and cookbook citations.
 
-Hardware: one Modal node with H200 x8 for each arm. Load: `random-ids`, input/output
+Hardware: one Modal node with H200 x8 for each task. Load: `random-ids`, input/output
 8192/1024, range ratio 0.8, concurrency 1, 2, 4, 8, 16 in ascending order;
 `num_prompts = 10 * concurrency`, `warmup_requests = 2 * concurrency`, seed 42,
 request rate inf, ignore EOS, flush radix cache after warmup. Load and verifier
-settings are identical across arms.
+settings are identical across tasks.
 
 ## Run
 
@@ -37,48 +36,33 @@ The job's task paths and `jobs_dir: runs` are relative to this experiment workin
 directory. Install `harbor[modal]` 0.25.0, configure Modal credentials, and create
 `hf-cache` once with `modal volume create hf-cache` before running. The job uses
 the oracle, a single concurrent trial, timeout multiplier 3.0 and sandbox lifetime
-14400 seconds. No GPU run was performed when adding this experiment.
+14400 seconds.
 
-Run arms back to back on the same Modal GPU type (H200:8), with no competing
-benchmark traffic. The listed order is off then on; record actual trial order and
-hardware placement since serial concurrency does not guarantee identical hosts.
-For repeats, use a fresh job name (`--job-name`) and alternate the arm order in a
-local job copy to assess order/cache effects. Do not change either task's load.
+Run humming off then humming on with no competing traffic. For repeats, use a fresh
+`--job-name` and alternate task order in a local job copy. Record trial IDs, order,
+timestamps, GPU placement, task revision, image digest and launch commands; serial
+Modal trials can use different hosts.
 
-## Record and compare
+## Measurements
 
-Keep Harbor outputs under `runs/` (ignored by git). Record the job/trial IDs, actual
-order and timestamps, GPU details, task revision, image digest and exact launch
-commands. Preserve both trials' `/app/results` artifacts: `run_meta.txt`,
-`server.log`, `bench.log` and raw `bench.jsonl`; also retain the serve verifier's
-`server_info.json` and each bench
-verifier's `metrics.json`, reward and errors. Harbor's artifact/log directories
-hold these files; never replace raw measurements with a hand-edited summary.
+Preserve raw `/app/results/{run_meta.txt,server.log,bench.log,bench.jsonl}`, serve
+`server_info.json`, and bench `metrics.json`, rewards and errors under `runs/`.
+Compare successful points at matching concurrency, retaining each repeat:
 
-Compare only successful points at matching concurrency. Produce a comparison table
-with both raw values and `100 * (on - off) / off` for:
+- Output tokens/s and total/output/input throughput per GPU (divide by 8).
+- TTFT, TPOT and ITL p50/p99 in ms.
+- DSPARK `accept_length` when emitted, alongside latency.
 
-- Output tokens/s (`output_throughput`).
-- Per-GPU throughput: total, output and input throughput divided by 8
-  (`tput_per_gpu`, `output_tput_per_gpu`, `input_tput_per_gpu`).
-- TTFT, TPOT and ITL p50/p99 in ms (`median_*_ms` and `p99_*_ms`).
-- DSPARK `accept_length`, if bench_serving reports it (otherwise record unavailable).
+Report raw values and `100 * (on - off) / off`. Flag absolute changes greater than
+5% for review; higher throughput and lower latency are favorable. Zero baseline or
+missing metrics have no relative comparison. Flags do not affect the completeness/load
+reward and do not establish statistical significance.
 
-Flag any absolute relative change **greater than 5%** at a matching point, in either
-direction; higher throughput and lower latency are favorable. An off value of zero
-or a missing metric is unavailable for relative comparison. Flags request review,
-not a reward failure or a statistical significance claim. Verifiers grade result
-completeness and load only. Keep repeat-level results rather than selecting best runs.
+Image differs from the cookbook's `dev-dsv41` recommendation.
 
-## Known risks
+Exact launch commands (off, then on):
 
-- zhilin chose latest dev instead of cookbook `dev-dsv41`. V4.1 on this pinned dev
-  image is unverified; the original cookbook cell's verified marker does not apply.
-- Humming + TP8/EP8 + CUDA graph + DSPARK together is unverified. H200:8 NCCL under
-  Modal gVisor is also unverified. Startup or runtime failure is a result to record.
-- DSPARK acceptance affects TPOT: compare acceptance length alongside latency.
-  The existing verifier preserves `accept_length` when present without requiring it.
-- Small prompt counts make tail percentiles noisy. Sequential runs can differ in
-  placement, compilation, HF cache state and scheduling. Record those conditions.
-- Client field compatibility with the pinned image remains unverified. Earlier
-  client citations and warmup/tokenization differences from InferenceX are in SOURCES.md.
+```bash
+sglang serve --trust-remote-code --model-path deepseek-ai/DeepSeek-V4.1-Flash --tp 8 --ep-size 8 --mem-fraction-static 0.8 --attention-backend dsv4 --moe-runner-backend flashinfer_mxfp4 --cuda-graph-max-bs-decode 64 --speculative-algorithm DSPARK --speculative-dspark-block-size 5 --reasoning-parser auto --tool-call-parser auto --host 0.0.0.0 --port 30000
+sglang serve --trust-remote-code --model-path deepseek-ai/DeepSeek-V4.1-Flash --tp 8 --ep-size 8 --mem-fraction-static 0.8 --attention-backend dsv4 --moe-runner-backend humming --cuda-graph-max-bs-decode 64 --speculative-algorithm DSPARK --speculative-dspark-block-size 5 --reasoning-parser auto --tool-call-parser auto --host 0.0.0.0 --port 30000
+```

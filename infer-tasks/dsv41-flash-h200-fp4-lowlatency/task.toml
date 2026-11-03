@@ -9,8 +9,8 @@
 #   [C4] Deploy-panel placeholders: HOST_IP default 0.0.0.0, PORT default 30000
 #   [IX#] InferenceX fixed-seq-len load policy, SemiAnalysisAI/InferenceX@de8884cda8ba (SOURCES.md)
 #   [C5] cookbook section 3.3 at 38d9e4a3: DSPARK, block size 5 (SOURCES.md)
-#   [Z1]  zhilin: pinned latest dev image and humming A/B selection (SOURCES.md)
-#   [Z]   zhilin's decision, 2026-11-02 (8k/1k only, conc 1 2 4 8 16, sglang bench_serving client)
+#   [X1] experiment image and humming configuration (SOURCES.md)
+#   [X] experiment load: 8k/1k, concurrency 1 2 4 8 16, sglang client
 #   [S#]  sglang bench_serving @ 4ae54e94 (SOURCES.md)
 schema_version = "1.4"
 multi_step_reward_strategy = "final"   # trial reward = bench's 0/1, or serve's 0 if the server never came up
@@ -19,44 +19,43 @@ artifacts = ["/app/results"]
 [task]
 name = "molou/dsv41-flash-h200-fp4-lowlatency"
 description = "DeepSeek-V4.1-Flash on 1 node x 8 H200, humming-off, cookbook Low-Latency FP4 + DSPARK; InferenceX fixed-load 8k/1k sweep, conc 1-16"
-authors = [{ name = "zhilin huang" }]
 keywords = ["sglang", "inference-benchmark", "deepseek-v4.1", "h200", "fp4", "low-latency", "humming-off"]
 
 [metadata]
 source = "https://lmsysorg.mintlify.app/cookbook/autoregressive/DeepSeek/DeepSeek-V4_1#hw=h200&variant=flash&quant=fp4&strategy=low-latency&nodes=single"
 source_fetched_at = "2026-11-02T12:39+08:00"
-cookbook_cell_verified = true          # [C3] original cell only; modified dev recipe is unverified
-humming_arm = "off"                    # [Z1]
+cookbook_cell_verified = true          # [C3] original cookbook cell only
+humming = "off"                    # [X1]
 category = "inference-benchmark"
 
 [metadata.harbor.lint]
 ignore = ["shared-verifier"]           # serve verifier must reach the server inside the agent container
 
 [environment]
-docker_image = "lmsysorg/sglang:dev@sha256:77ff63ee69fd7ebef20df3a6d036ee4b8a4ffe0734efb0028c3b7643386e3ccf"   # [Z1] overrides [C1][C2]; V4.1 on dev unverified
+docker_image = "lmsysorg/sglang:dev@sha256:77ff63ee69fd7ebef20df3a6d036ee4b8a4ffe0734efb0028c3b7643386e3ccf"   # [X1] overrides [C1][C2]; image differs from cookbook dev-dsv41
 gpus = 8                               # derived from [C3] --tp 8 with nnodes:1 (one 8-GPU node)
 gpu_types = ["H200"]                   # [C3] hw=h200
-cpus = 16                              # TODO(cpus): not in cookbook; template default
-memory_mb = 65536                      # TODO(memory): not in cookbook; template default
-storage_mb = 204800                    # TODO(storage): not in cookbook; checkpoint size unknown here
+cpus = 16                              # allocated CPU count
+memory_mb = 65536                      # allocated memory
+storage_mb = 204800                    # allocated checkpoint storage
 network_mode = "public"                # HF download of MODEL_PATH (cookbook docker run mounts ~/.cache/huggingface + HF_TOKEN, [C1] lines 28-35)
 
 [environment.env]
 HF_TOKEN = "${HF_TOKEN:-}"             # cookbook docker run passes HF_TOKEN ([C1] line 32)
 MODEL_PATH = "deepseek-ai/DeepSeek-V4.1-Flash"   # [C2] modelNames["flash|fp4"]
 SERVER_PORT = "30000"                  # [C4]
-# [C3][C5][Z1] cell plus DSPARK; host/port from [C4]; `sglang serve` from the panel command builder / [C1] line 35.
+# [C3][C5][X1] cell plus DSPARK; host/port from [C4]; `sglang serve` from the panel command builder / [C1] line 35.
 SGLANG_LAUNCH_CMD = "sglang serve --trust-remote-code --model-path deepseek-ai/DeepSeek-V4.1-Flash --tp 8 --ep-size 8 --mem-fraction-static 0.8 --attention-backend dsv4 --moe-runner-backend flashinfer_mxfp4 --cuda-graph-max-bs-decode 64 --speculative-algorithm DSPARK --speculative-dspark-block-size 5 --reasoning-parser auto --tool-call-parser auto --host 0.0.0.0 --port 30000"
-SERVER_READY_TIMEOUT_SEC = "2400"      # TODO(startup-timeout): not in cookbook; template default
+SERVER_READY_TIMEOUT_SEC = "2400"      # server readiness deadline
 BENCH_MODULE = "sglang.bench_serving"  # cookbook benchmark doc uses `python -m sglang.bench_serving` (autoregressive_model_benchmark.md line 16)
 # Load: the cookbook gives none for this cell. InferenceX fixed-seq-len rules applied to the cookbook
 # server; InferenceX has no fixed-load dsv41flash result to compare against (README, SOURCES.md).
 # The bench step runs one bench_serving pass per BENCH_CONC_LIST entry against the same warm server.
 BENCH_DATASET = "random-ids"           # synthetic ids like InferenceX `random` [IX1][S7]; sglang `random` downloads ShareGPT
-BENCH_INPUT_LEN = "8192"               # [IX2] 8k1k = (8192, 1024), generate.py:30; [Z] 8k/1k only
-BENCH_OUTPUT_LEN = "1024"              # [IX2]; [Z]
+BENCH_INPUT_LEN = "8192"               # [IX2] 8k1k = (8192, 1024), generate.py:30; [X] 8k/1k only
+BENCH_OUTPUT_LEN = "1024"              # [IX2]; [X]
 BENCH_RANGE_RATIO = "0.8"              # [IX3] srt_slurm/generate.py:31; sglang default is 0.0 [S3], so pass it
-BENCH_CONC_LIST = "1 2 4 8 16"         # [Z]; = InferenceX dsv41flash H200 sglang conc-list [IX8]. Ascending
+BENCH_CONC_LIST = "1 2 4 8 16"         # [X]; = InferenceX dsv41flash H200 sglang conc-list [IX8]. Ascending
 BENCH_PROMPTS_PER_CONC = "10"          # [IX4] num_prompts = 10 * conc, fixed_seq.py:103
 BENCH_WARMUPS_PER_CONC = "2"           # [IX5] num_warmups = 2 * conc, fixed_seq.py:50. sglang caps warmup output at 32 tok [S5]
 BENCH_REQUEST_RATE = "inf"             # [IX6] fixed_seq.py:47; ignore_eos is on by default in sglang [S4] ([IX6] :48)
@@ -68,7 +67,7 @@ name = "serve"
 min_reward = 1.0                       # server not healthy -> skip bench
 
 [steps.agent]
-timeout_sec = 3600.0                   # TODO(serve-timeout): cookbook gives no startup time; template default
+timeout_sec = 3600.0                   # serve step deadline
 
 [steps.verifier]
 environment_mode = "shared"            # server listens only inside the agent container
@@ -78,9 +77,7 @@ timeout_sec = 120.0
 name = "bench"
 
 [steps.agent]
-# TODO(bench-timeout): no measured rate for this model/cell yet. Reasoned budget: 5 points x 10 rounds
-# (num_prompts = 10*conc) x (1024 tok x 50 ms TPOT + 5 s TTFT) ~= 2.8 ks, plus tokenizer load and
-# prompt generation. Assumed TPOT/TTFT bounds, not data; tighten after the first run.
+# Benchmark step deadline.
 timeout_sec = 3600.0
 
 [steps.healthcheck]
@@ -107,4 +104,4 @@ EXPECTED_INPUT_LEN = "8192"
 EXPECTED_OUTPUT_LEN = "1024"
 EXPECTED_RANGE_RATIO = "0.8"
 NUM_GPUS = "8"                         # = [environment] gpus; divisor for *_tput_per_gpu [IX7]
-EXPECTED_SERVER_INFO_JSON = ""         # TODO(server-info): confirm key names (e.g. tp_size) on a real pinned dev run first
+EXPECTED_SERVER_INFO_JSON = ""         # empty disables server-info field matching

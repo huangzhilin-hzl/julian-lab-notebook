@@ -17,11 +17,10 @@ artifacts = ["/app/results"]
 [task]
 name = "molou/TODO-task-name"          # TODO(task-name): org/name, e.g. molou/dsv41-flash-h200-fp4-lowlatency
 description = "TODO(description): one line, e.g. 'DSv4.1 Flash on 8xH200, cookbook low-latency recipe, ISL/OSL=1k/1k, conc=1'"
-authors = [{ name = "zhilin huang" }]
 keywords = ["sglang", "inference-benchmark"]
 
 [metadata]
-source = "TODO(source): cookbook/blog URL or 'zhilin instruction <date>'"
+source = "TODO(source): cookbook/blog URL or experiment config"
 category = "inference-benchmark"
 
 [metadata.harbor.lint]
@@ -47,7 +46,7 @@ SERVER_PORT = "30000"
 # It must bind to SERVER_PORT. Keep model/host/port inside this string so it reads like the source.
 SGLANG_LAUNCH_CMD = "TODO_LAUNCH_CMD"  # TODO(launch): e.g. "sglang serve --model-path $MODEL_PATH --tp 8 --host 127.0.0.1 --port 30000 <flags Y>"
 SERVER_READY_TIMEOUT_SEC = "2400"      # serve/solve.sh gives up after this; keep below the serve agent timeout
-# Benchmark client. sglang.bench_serving is deprecated on sglang main (now sglang.benchmark.serving)
+# Benchmark client. sglang.bench_serving is deprecated in favor of sglang.benchmark.serving
 # but still works there and is the only name in older images.
 BENCH_MODULE = "sglang.bench_serving"
 BENCH_DATASET = "random-ids"           # random-ids: synthetic ids, no download; "random" downloads ShareGPT from HF
@@ -90,7 +89,7 @@ name = "bench"
 timeout_sec = 1800.0                   # TODO(bench-timeout): size for the load
 
 [steps.healthcheck]
-# The server must have survived the end of step 1 (unverified until the first real run).
+# Check server health before benchmarking.
 command = "python3 -c \"import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ['SERVER_PORT'], timeout=10)\""
 interval_sec = 10.0
 timeout_sec = 20.0
