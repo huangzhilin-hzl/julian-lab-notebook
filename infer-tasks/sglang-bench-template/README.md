@@ -1,72 +1,40 @@
 # sglang-bench-template
 
-Minimal multi-step Harbor task: launch an sglang server with model X and flags Y, run one
-`sglang.bench_serving` pass per concurrency in `BENCH_CONC_LIST` at a fixed load, keep the result JSON
-lines, and record throughput (total and per GPU) / TTFT / TPOT / ITL / E2E (mean, p50, p90, p99) and
-interactivity (1000/TPOT). No performance thresholds: numbers are recorded, not judged.
+Two-step Harbor 0.25.0 template: launch sglang, then run a fixed-load concurrency sweep.
+Fill the placeholders in `task.toml` before running:
 
-## Steps
-
-Both steps run in one container, in order (`[[steps]]` in `task.toml`).
-
-| Step | Agent / oracle does | Verifier | Gate |
-| --- | --- | --- | --- |
-| `serve` | start the server detached (`setsid nohup`), wait for `/health` | **shared** (agent container): `/health` = 200 and `/server_info` returns JSON | `min_reward = 1.0` |
-| `bench` | step healthcheck re-checks `/health`, then one `bench_serving` run per `BENCH_CONC_LIST` entry | **separate** CPU-only container: `check_result.py` on the `/app/results` artifact | — |
-
-Trial reward uses `multi_step_reward_strategy = "final"`: bench's 0/1, or serve's 0 if the server
-never came up. If the bench healthcheck fails, bench has no verifier result and the trial has no reward.
-
-## Caveats
-
-1. Harbor documents that the filesystem persists between steps, not processes. The container
-   is not restarted between steps (`src/harbor/trial/multi_step.py`), so the detached server
-   should still be running in `bench`. This is unverified until the first real GPU run; the bench
-   healthcheck fails fast if it is not.
-2. The serve verifier must share the agent container, because the server listens only there.
-   The task ignores lint rule `shared-verifier` for that reason (`[metadata.harbor.lint]`).
-
-## Fill in (all knobs live in `task.toml`)
-
-`rg -n TODO task.toml steps/` lists every placeholder:
-
-| Placeholder | Where |
+| Setting | Template value |
 | --- | --- |
-| image | `[environment].docker_image` |
-| GPU count / type | `[environment].gpus`, `gpu_types` |
-| model | `[environment.env].MODEL_PATH` |
-| launch command (flags Y) | `[environment.env].SGLANG_LAUNCH_CMD` (verbatim from the source) and `steps/serve/instruction.md` |
-| load | `[environment.env].BENCH_*` (incl. `BENCH_CONC_LIST`) **and** the matching `EXPECTED_*` / `NUM_GPUS` in the bench step's `[steps.verifier.env]` |
-| timeouts | `[steps.agent].timeout_sec` per step (serve covers weight load + CUDA graph capture) |
+| Image / sglang build | `TODO_SGLANG_IMAGE`; pin a digest and record its build commit |
+| Launch command | `SGLANG_LAUNCH_CMD = "TODO_LAUNCH_CMD"` |
+| Model | `TODO_MODEL_PATH` |
+| Hardware | 1× `TODO_GPU_TYPE`, 16 CPUs, 65536 MiB RAM, 204800 MiB storage |
+| Load | `random-ids`, `TODO_ISL`/`TODO_OSL`, ratio 1.0, concurrency 1 |
+| Sampling | 10× concurrency prompts, 2× concurrency warmups, seed 42, rate `inf`, ignore EOS |
+| Cache | `--flush-cache` after warmup |
 
-For an A/B comparison (for example, a flag on vs. off), copy the task twice. The copies differ
-only in `SGLANG_LAUNCH_CMD` and `task.name`, so a reviewer can diff the two `task.toml` files.
+Set matching `EXPECTED_*` and `NUM_GPUS` values in the bench verifier environment.
+Copy the exact launch command into `steps/serve/instruction.md`. Set timeouts for the
+model and load; template agent deadlines are 3600 s for serve and 1800 s for bench.
 
-## Layout
-
-```
-task.toml                        config, every knob (env vars), [[steps]]
-steps/serve/instruction.md       start the server, leave it running
-steps/serve/solution/solve.sh    oracle: detached server, wait /health, write server.pid
-steps/serve/tests/test.sh        reward.txt = 1 iff check_server.py passes
-steps/serve/tests/check_server.py  /health + /server_info (falls back to /get_server_info)
-steps/bench/instruction.md       literal bench_serving loop
-steps/bench/solution/solve.sh    oracle: one bench_serving run per concurrency -> /app/results/bench.jsonl
-steps/bench/tests/Dockerfile     CPU-only verifier image (python:3.12-slim, stdlib only)
-steps/bench/tests/test.sh        reward.txt = 1 iff check_result.py passes
-steps/bench/tests/check_result.py  one line per concurrency, finite metrics, load matches, metrics.json
-```
-
-Outputs: `/app/results/{server.log,server.pid,run_meta.txt,bench.jsonl,bench.log}` (artifact, collected
-after each step), serve `/logs/verifier/{reward.txt,server_info.json}`, bench
-`/logs/verifier/{reward.txt,metrics.json}`.
-
-## Run
+From this directory, run on a configured GPU host:
 
 ```bash
 harbor lint .
-harbor run -p . -a oracle -e docker     # GPU host with docker + nvidia runtime
+harbor run -p . -a oracle -e docker
 ```
 
-`steps/bench/solution/solve.sh` and `steps/bench/tests/check_result.py` are byte-identical across
-tasks; only `task.toml` and the instructions differ.
+For Modal credentials and job configuration, see [Harbor notes](../HARBOR_NOTES.md).
+
+The serve oracle starts a detached server; its shared verifier checks `/health` and
+`/server_info` (fallback `/get_server_info`), gating bench at reward 1.0. The bench
+healthcheck requires the server to remain running. One benchmark invocation per
+`BENCH_CONC_LIST` entry appends a JSONL point. A separate CPU-only verifier checks
+completeness, finite metrics and matching load, without performance thresholds.
+The trial uses the final step reward; a bench healthcheck failure has no verifier reward.
+
+`/app/results/{server.log,server.pid,run_meta.txt,bench.jsonl,bench.log}` is collected
+after each step. Verifier outputs include `reward.txt`, serve `server_info.json` and
+bench `metrics.json`: throughput (total and per GPU), TTFT/TPOT/ITL/E2E latency
+(mean/p50/p90/p99) and interactivity (1000/TPOT). Benchmark oracle and verifier
+scripts are byte-identical across tasks.

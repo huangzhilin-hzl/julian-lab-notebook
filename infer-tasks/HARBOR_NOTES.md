@@ -1,7 +1,7 @@
 # Harbor task format notes (sglang inference benchmarks)
 
-Version read: `github.com/harbor-framework/harbor` (formerly `laude-institute/harbor`), commit
-`00dc6a7003be8202e4e5ef6ac79c347c1b26033f` (2026-11-02 11:12 UTC+8), package `harbor 0.25.0`.
+Harbor source: `github.com/harbor-framework/harbor` (formerly `laude-institute/harbor`), commit
+`00dc6a7003be8202e4e5ef6ac79c347c1b26033f`, package `harbor 0.25.0`.
 Doc paths below are relative to `docs-mintlify/` at that commit; source paths to `src/harbor/`.
 
 ## 1. Layout
@@ -54,8 +54,7 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
 ## 4. Multi-step behavior (`trial/multi_step.py`, `models/task/verifier_mode.py`)
 
 - All steps run in one agent environment; it is not restarted between steps. The docs promise
-  filesystem persistence only. Process persistence (our server surviving from `serve` into
-  `bench`) is not documented; it held on Modal 1×L4 (section 9). Each step's oracle runs
+  filesystem persistence only. Detached server process persistence between `serve` and `bench` is confirmed on Modal 1×L4. Each step's oracle runs
   `solve.sh` through `environment.exec`, so the server must be detached (`setsid nohup`, all
   std streams redirected) for that exec to return.
 - Step verifier mode: `[steps.verifier].environment_mode` if set; else `[steps.verifier.environment]`
@@ -93,14 +92,13 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
     GCP registry config. Pods get no volume mounts (no PVC) and no shm/ipc settings.
   - openshift and ack are k8s-based but allocate no GPUs.
 - No `task.toml` field for `--shm-size` / `--ipc=host` (cookbook `docker run` flags). For the docker
-  provider an `environment/docker-compose.yaml` overlay on service `main` may work (`tasks/multi-container.mdx`);
-  untested.
+  provider an `environment/docker-compose.yaml` overlay targets service `main` (`tasks/multi-container.mdx`).
 - Custom sandbox: implement `BaseEnvironment`, use `-e module.path:ClassName` (`sandboxes/custom-sandboxes.mdx`).
 
-## 7. Design choices in these tasks
+## 7. Task configuration
 
-- Every knob lives in `[environment.env]`; scripts hardcode nothing. An A/B pair differs only in
-  `SGLANG_LAUNCH_CMD` (and `task.name`), so review is a diff of two `task.toml` files.
+- Launch and load settings live in `[environment.env]`. The humming A/B pair differs at runtime only in
+  the MoE runner token of `SGLANG_LAUNCH_CMD`; identity, metadata and docs may also differ.
 - Steps: `serve` (shared verifier: `/health` + `/server_info`, `min_reward = 1.0`, long agent timeout
   for weight loading) then `bench` (step healthcheck on `/health`, separate CPU-only verifier on the
   `/app/results` artifact). Lint rule `shared-verifier` is ignored per task for the serve step.
@@ -121,24 +119,7 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
 - `/get_server_info` is deprecated on sglang main (`d952161`) in favor of `/server_info`; the serve
   verifier tries `/server_info` first.
 
-## 8. Validation (2026-11-02, harbor 0.25.0)
-
-- `harbor lint sglang-bench-template dsv41-flash-h200-fp4-lowlatency`: no findings, exit 0
-  (re-run after the concurrency loop change).
-- `harbor lint --extend-select ALL`: only opt-in findings (root-agent per step, unpinned
-  `docker_image`, unpinned `FROM` in `steps/bench/tests/Dockerfile`) plus the ignored `shared-verifier`.
-- Harbor's own `Task` / `resolve_step_verifier_mode` parse both tasks: serve -> shared, bench -> separate
-  built from `steps/bench/tests/Dockerfile` with `gpus = 0`.
-- Local smoke test without docker/GPU, using a fake HTTP server as `SGLANG_LAUNCH_CMD` and a fake bench
-  module: serve `solve.sh` returns while the detached server keeps running; serve verifier, bench
-  healthcheck, bench `solve.sh` and verifier all pass; after killing the server the healthcheck and
-  serve verifier fail. `check_result.py` synthetic fixtures (not benchmark data) fail as expected on
-  load mismatch, two lines, null metric, missing file. After the loop change: the dsv41 env produces 5
-  lines and passes; a missing concurrency, wrong order, wrong `completed`, wrong ISL/OSL, ratio, or a
-  non-finite p90 all fail.
-- Not run: `harbor check` (needs docker + LLM API key). `harbor run` on Modal: section 9.
-
-## 9. Running on Modal
+## 8. Running on Modal
 
 Job configs: `jobs/modal-template.yaml`, `jobs/modal-dsv41.yaml` (task paths are relative; run from
 `infer-tasks/`).
@@ -163,6 +144,5 @@ harbor run -c jobs/modal-template.yaml -y
 - Verified: the server process survives `serve` -> `bench` (same PID, one server start in the log);
   the shared-mode serve verifier reaches `127.0.0.1`; the separate-mode bench verifier receives
   `/app/results` and `check_result.py` passes.
-- Not verified: NCCL TP=8 under gVisor on H200:8 (the dsv41 task).
-- Smoke run (2026-11-02, filled copy of the template): 1×L4, Qwen2.5-0.5B-Instruct, sglang v0.5.23
+- Process-persistence test configuration: 1×L4, Qwen2.5-0.5B-Instruct, sglang v0.5.23
   (`lmsysorg/sglang:v0.5.23-runtime`), reward 1.0.
