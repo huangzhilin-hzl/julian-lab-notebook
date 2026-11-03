@@ -18,3 +18,5 @@ This repository stores project notes and generated visual assets.
 | Profile | [profile/README.md](profile/README.md) |
 | SGLang | [sglang/README.md](sglang/README.md) |
 | TokenSpeed Modal | [tokenspeed-modal/README.md](tokenspeed-modal/README.md) |
+
+Inference experiment: [DeepSeek-V4.1 Flash Humming A/B](infer-experiments/dsv41-humming-ab/README.md).

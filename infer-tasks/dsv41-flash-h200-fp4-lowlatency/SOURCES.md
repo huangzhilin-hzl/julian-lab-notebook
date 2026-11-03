@@ -61,11 +61,10 @@ Differences from InferenceX that make numbers non-comparable: server flags (C3 v
 
 - CPU / memory / storage, startup timeout, serve timeout. Bench timeout is a reasoned 3600 s budget
   (comment in `task.toml`), not measured.
-- Image digest (`dev-dsv41` is a mutable preview tag).
 
-## Contradictions inside the page (we follow the C3 cell)
+## Cookbook differences (C3 plus C5 and Z1)
 
-1. Prose says the Low-Latency recipe turns DSpark on (C1 L74, L163: `--speculative-algorithm DSPARK
+1. Both arms now follow the prose (C5) by adding DSPARK with block size 5. Prose says the Low-Latency recipe turns DSpark on (C1 L74, L163: `--speculative-algorithm DSPARK
    --speculative-dspark-block-size 5`). The H200 low-latency cell has no DSpark flags; the B200, B300,
    GB300 and MI355X low-latency cells do. H200 low-latency vs high-throughput differ only by
    `--max-running-requests 256`.
@@ -80,3 +79,23 @@ srt-slurm-recipes/dsv41flash/sglang/h200-fp4-mtp/agentic.yaml`, sha `5bfd5559…
 `39318221321/attempts/1`, status verified). That is a different config (agentic replay with DSpark/MTP),
 so none of its server values are used here; only InferenceX's
 fixed-seq-len client rules are (above).
+
+## Pinned A/B decisions (2026-11-02)
+
+| Key | Source | Decision |
+| --- | --- | --- |
+| C5 | [sglang cookbook section 3.3 at 38d9e4a3](https://github.com/sgl-project/sglang/blob/38d9e4a3fe4a493b0ae468477a274e83defda81a/docs/cookbook/autoregressive/DeepSeek/DeepSeek-V4_1.mdx) | Both arms add `--speculative-algorithm DSPARK --speculative-dspark-block-size 5` from the Low-Latency recipe. |
+| Z1 | zhilin's explicit experiment decisions | Both arms use the pinned latest `dev` image below instead of cookbook `dev-dsv41`. Off uses `flashinfer_mxfp4`; on uses `humming`. No `--quantization humming` or `SGLANG_HUMMING_*` overrides; use defaults. |
+
+Image: `lmsysorg/sglang:dev@sha256:77ff63ee69fd7ebef20df3a6d036ee4b8a4ffe0734efb0028c3b7643386e3ccf` (index digest).
+AMD64 manifest: `sha256:c6da252c6837bb062184b01c7aa2df7a2aadb1ed4944f236d7027174c73c45fa`.
+Build: `sgl-project/sglang@38d9e4a3fe4a493b0ae468477a274e83defda81a`,
+`nightly-dev-20261102-38d9e4a3`. Per the supplied provenance, it contains
+[PR #46018](https://github.com/sgl-project/sglang/pull/46018), merge
+`ca939407423088dffd33304e0ea7d092cba355d2`, `humming-kernels 0.1.18` and `flashinfer 0.7.2`.
+These pins are supplied by zhilin; no image or GPU runtime validation was performed here.
+
+The original cell's `verified:true` does not validate these modifications. Running V4.1 on
+this dev image is unverified, as is Humming with TP8/EP8, CUDA graphs and DSPARK together.
+Earlier S# client citations describe the previously inspected commit; compatibility with the
+pinned build must be checked on the first run. The fixed-load policy is unchanged.
