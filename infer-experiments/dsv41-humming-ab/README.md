@@ -29,7 +29,6 @@ settings are identical across arms.
 From the repo root:
 
 ```bash
-./infer-experiments/dsv41-humming-ab/check_arms.py
 cd infer-experiments/dsv41-humming-ab
 harbor run -c job.yaml -y
 ```

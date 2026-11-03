@@ -101,7 +101,6 @@ An optional task-level `tests/` holds shared helpers, overlaid by each step's `t
 
 - Every knob lives in `[environment.env]`; scripts hardcode nothing. The humming A/B pair differs at runtime only in
   the MoE runner token of `SGLANG_LAUNCH_CMD`; identity, metadata and docs may also differ.
-  `../infer-experiments/dsv41-humming-ab/check_arms.py` checks the allowed differences.
 - Steps: `serve` (shared verifier: `/health` + `/server_info`, `min_reward = 1.0`, long agent timeout
   for weight loading) then `bench` (step healthcheck on `/health`, separate CPU-only verifier on the
   `/app/results` artifact). Lint rule `shared-verifier` is ignored per task for the serve step.
